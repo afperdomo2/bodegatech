@@ -1,8 +1,9 @@
 package com.afperdomo.bodegatech.module.product;
 
 import com.afperdomo.bodegatech.module.product.controller.ProductController;
-import com.afperdomo.bodegatech.module.product.dto.ProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductResponse;
+import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.ProductDto;
+import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
 import com.afperdomo.bodegatech.common.response.ApiResponse;
 import com.afperdomo.bodegatech.common.response.PagedResponse;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -39,42 +39,51 @@ class ProductControllerTest {
     @InjectMocks
     private ProductController productController;
 
-    private ProductResponse productResponse;
-    private ProductRequest productRequest;
+    private ProductDto productDto;
+    private CreateProductRequest createRequest;
+    private UpdateProductRequest updateRequest;
     private UUID productId;
 
     @BeforeEach
     void setUp() {
         productId = UUID.randomUUID();
 
-        productRequest = new ProductRequest();
-        productRequest.setName("Laptop Dell");
-        productRequest.setDescription("Laptop de 15 pulgadas");
-        productRequest.setPrice(new BigDecimal("1500.00"));
-        productRequest.setStock(10);
-        productRequest.setSku("DELL-LAPTOP-001");
-        productRequest.setCategory("Electrónica");
-        productRequest.setImageUrl("https://example.com/images/laptop.jpg");
+        createRequest = new CreateProductRequest();
+        createRequest.setName("Laptop Dell");
+        createRequest.setDescription("Laptop de 15 pulgadas");
+        createRequest.setPrice(new BigDecimal("1500.00"));
+        createRequest.setStock(10);
+        createRequest.setSku("DELL-LAPTOP-001");
+        createRequest.setCategory("Electrónica");
+        createRequest.setImageUrl("https://example.com/images/laptop.jpg");
 
-        productResponse = new ProductResponse();
-        productResponse.setId(productId);
-        productResponse.setName("Laptop Dell");
-        productResponse.setDescription("Laptop de 15 pulgadas");
-        productResponse.setPrice(new BigDecimal("1500.00"));
-        productResponse.setStock(10);
-        productResponse.setSku("DELL-LAPTOP-001");
-        productResponse.setCategory("Electrónica");
-        productResponse.setImageUrl("https://example.com/images/laptop.jpg");
-        productResponse.setIsActive(true);
-        productResponse.setCreatedAt(LocalDateTime.now());
-        productResponse.setUpdatedAt(LocalDateTime.now());
+        updateRequest = new UpdateProductRequest();
+        updateRequest.setName("Laptop Dell Pro");
+        updateRequest.setDescription("Laptop de 15 pulgadas actualizada");
+        updateRequest.setPrice(new BigDecimal("1800.00"));
+        updateRequest.setStock(5);
+        updateRequest.setCategory("Electrónica");
+        updateRequest.setImageUrl("https://example.com/images/laptop-pro.jpg");
+
+        productDto = new ProductDto();
+        productDto.setId(productId);
+        productDto.setName("Laptop Dell");
+        productDto.setDescription("Laptop de 15 pulgadas");
+        productDto.setPrice(new BigDecimal("1500.00"));
+        productDto.setStock(10);
+        productDto.setSku("DELL-LAPTOP-001");
+        productDto.setCategory("Electrónica");
+        productDto.setImageUrl("https://example.com/images/laptop.jpg");
+        productDto.setIsActive(true);
+        productDto.setCreatedAt(LocalDateTime.now());
+        productDto.setUpdatedAt(LocalDateTime.now());
     }
 
     @Test
     void testGetAllProductsSuccess() {
         // Arrange
-        PagedResponse<ProductResponse> pagedResponse = new PagedResponse<>();
-        pagedResponse.setContent(List.of(productResponse));
+        PagedResponse<ProductDto> pagedResponse = new PagedResponse<>();
+        pagedResponse.setContent(List.of(productDto));
         pagedResponse.setPage(0);
         pagedResponse.setSize(10);
         pagedResponse.setTotalElements(1);
@@ -84,7 +93,7 @@ class ProductControllerTest {
         when(productService.findAllProducts(any(Pageable.class))).thenReturn(pagedResponse);
 
         // Act
-        ResponseEntity<ApiResponse<PagedResponse<ProductResponse>>> response =
+        ResponseEntity<ApiResponse<PagedResponse<ProductDto>>> response =
                 productController.getAllProducts(0, 10, "createdAt", Sort.Direction.DESC);
 
         // Assert
@@ -98,10 +107,10 @@ class ProductControllerTest {
     @Test
     void testGetProductByIdSuccess() {
         // Arrange
-        when(productService.findProductById(productId)).thenReturn(productResponse);
+        when(productService.findProductById(productId)).thenReturn(productDto);
 
         // Act
-        ResponseEntity<ApiResponse<ProductResponse>> response = productController.getProductById(productId);
+        ResponseEntity<ApiResponse<ProductDto>> response = productController.getProductById(productId);
 
         // Assert
         assertNotNull(response);
@@ -121,75 +130,75 @@ class ProductControllerTest {
                 ));
 
         // Act & Assert
-        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () -> {
-            productController.getProductById(nonExistentId);
-        });
+        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () ->
+                productController.getProductById(nonExistentId)
+        );
         verify(productService, times(1)).findProductById(nonExistentId);
     }
 
     @Test
     void testCreateProductSuccess() {
         // Arrange
-        when(productService.createProduct(any(ProductRequest.class))).thenReturn(productResponse);
+        when(productService.createProduct(any(CreateProductRequest.class))).thenReturn(productDto);
 
         // Act
-        ResponseEntity<ApiResponse<ProductResponse>> response = productController.createProduct(productRequest);
+        ResponseEntity<ApiResponse<ProductDto>> response = productController.createProduct(createRequest);
 
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Laptop Dell", response.getBody().getData().getName());
-        verify(productService, times(1)).createProduct(any(ProductRequest.class));
+        verify(productService, times(1)).createProduct(any(CreateProductRequest.class));
     }
 
     @Test
     void testCreateProductWithDuplicateSku() {
         // Arrange
-        when(productService.createProduct(any(ProductRequest.class)))
+        when(productService.createProduct(any(CreateProductRequest.class)))
                 .thenThrow(new com.afperdomo.bodegatech.common.exception.BusinessException(
                         "DUPLICATE_SKU", "SKU duplicado"
                 ));
 
         // Act & Assert
-        assertThrows(com.afperdomo.bodegatech.common.exception.BusinessException.class, () -> {
-            productController.createProduct(productRequest);
-        });
-        verify(productService, times(1)).createProduct(any(ProductRequest.class));
+        assertThrows(com.afperdomo.bodegatech.common.exception.BusinessException.class, () ->
+                productController.createProduct(createRequest)
+        );
+        verify(productService, times(1)).createProduct(any(CreateProductRequest.class));
     }
 
     @Test
     void testUpdateProductSuccess() {
         // Arrange
-        when(productService.updateProduct(eq(productId), any(ProductRequest.class)))
-                .thenReturn(productResponse);
+        when(productService.updateProduct(eq(productId), any(UpdateProductRequest.class)))
+                .thenReturn(productDto);
 
         // Act
-        ResponseEntity<ApiResponse<ProductResponse>> response =
-                productController.updateProduct(productId, productRequest);
+        ResponseEntity<ApiResponse<ProductDto>> response =
+                productController.updateProduct(productId, updateRequest);
 
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Laptop Dell", response.getBody().getData().getName());
-        verify(productService, times(1)).updateProduct(eq(productId), any(ProductRequest.class));
+        verify(productService, times(1)).updateProduct(eq(productId), any(UpdateProductRequest.class));
     }
 
     @Test
     void testUpdateProductNotFound() {
         // Arrange
         UUID nonExistentId = UUID.randomUUID();
-        when(productService.updateProduct(eq(nonExistentId), any(ProductRequest.class)))
+        when(productService.updateProduct(eq(nonExistentId), any(UpdateProductRequest.class)))
                 .thenThrow(new com.afperdomo.bodegatech.common.exception.ResourceNotFoundException(
                         "Producto no encontrado"
                 ));
 
         // Act & Assert
-        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () -> {
-            productController.updateProduct(nonExistentId, productRequest);
-        });
-        verify(productService, times(1)).updateProduct(eq(nonExistentId), any(ProductRequest.class));
+        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () ->
+                productController.updateProduct(nonExistentId, updateRequest)
+        );
+        verify(productService, times(1)).updateProduct(eq(nonExistentId), any(UpdateProductRequest.class));
     }
 
     @Test
@@ -215,9 +224,9 @@ class ProductControllerTest {
         )).when(productService).deleteProduct(nonExistentId);
 
         // Act & Assert
-        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () -> {
-            productController.deleteProduct(nonExistentId);
-        });
+        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () ->
+                productController.deleteProduct(nonExistentId)
+        );
         verify(productService, times(1)).deleteProduct(nonExistentId);
     }
 }

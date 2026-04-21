@@ -1,7 +1,8 @@
 package com.afperdomo.bodegatech.module.product.mapper;
 
-import com.afperdomo.bodegatech.module.product.dto.ProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductResponse;
+import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.ProductDto;
+import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
@@ -15,19 +16,19 @@ import org.mapstruct.ReportingPolicy;
 public interface ProductMapper {
 
     /**
-     * Convierte una entidad Product a un DTO ProductResponse.
+     * Convierte una entidad Product a ProductDto.
      */
-    ProductResponse toResponse(Product product);
+    ProductDto toDto(Product product);
 
     /**
-     * Convierte un DTO ProductRequest a una entidad Product.
-     * Los campos id, createdAt, updatedAt e isActive se establecen en el servicio.
+     * Convierte un CreateProductRequest a entidad Product.
+     * Los campos id, createdAt, updatedAt e isActive se gestionan en el servicio.
      */
-    Product toEntity(ProductRequest request);
+    Product toEntity(CreateProductRequest request);
 
     /**
-     * Actualiza una entidad Product existente con los datos de un ProductRequest.
-     * Preserva id, createdAt, updatedAt e isActive.
+     * Actualiza una entidad Product existente con datos de UpdateProductRequest.
+     * Preserva id, sku, createdAt, updatedAt e isActive.
      */
-    void updateEntity(ProductRequest request, @MappingTarget Product product);
+    void updateEntity(UpdateProductRequest request, @MappingTarget Product product);
 }

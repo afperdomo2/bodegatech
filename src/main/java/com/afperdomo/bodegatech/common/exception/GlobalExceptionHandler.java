@@ -1,25 +1,55 @@
 package com.afperdomo.bodegatech.common.exception;
 
-import com.afperdomo.bodegatech.common.response.ApiResponse;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 
-import java.util.HashMap;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * Manejador global de excepciones.
- * Captura y procesa todas las excepciones lanzadas en los controladores.
+ * Las respuestas de error siguen el estándar RFC 9457 (ProblemDetail).
  */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final String BASE_TYPE = "https://bodegatech.com/errors/";
+
+    // -------------------------------------------------------------------------
+    // Helpers privados
+    // -------------------------------------------------------------------------
+
+    private ProblemDetail buildProblem(HttpStatus status, String typeSlug,
+            String title, String detail, String instance) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
+        problem.setType(URI.create(BASE_TYPE + typeSlug));
+        problem.setTitle(title);
+        problem.setInstance(URI.create(instance));
+        problem.setProperty("timestamp", LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS).toString());
+        return problem;
+    }
+
+    private String traducirTipo(Class<?> tipo) {
+        if (tipo == Integer.class || tipo == Long.class) return "un número entero";
+        if (tipo == BigDecimal.class || tipo == Double.class) return "un número decimal";
+        if (tipo == Boolean.class) return "un valor true o false";
+        if (tipo == LocalDateTime.class) return "una fecha con formato yyyy-MM-ddTHH:mm:ss";
+        return "un valor de tipo " + tipo.getSimpleName();
+    }
 
     /**
      * Verifica si la excepción proviene de SpringDoc y debe ser ignorada.
@@ -27,7 +57,6 @@ public class GlobalExceptionHandler {
     private boolean isSpringDocException(Throwable ex) {
         if (ex == null) return false;
 
-        // Verificar excepción actual
         String className = ex.getClass().getName();
         if (className.startsWith("org.springdoc")
                 || className.contains("springdoc")
@@ -35,7 +64,6 @@ public class GlobalExceptionHandler {
             return true;
         }
 
-        // Verificar cadena de causas para excepciones de SpringDoc
         Throwable cause = ex.getCause();
         while (cause != null && cause != ex) {
             String causeClassName = cause.getClass().getName();
@@ -61,90 +89,140 @@ public class GlobalExceptionHandler {
                 || path.contains("/webjars");
     }
 
-    /**
-     * Maneja excepciones de recurso no encontrado (404).
-     */
+    // -------------------------------------------------------------------------
+    // 404 — Recurso no encontrado
+    // -------------------------------------------------------------------------
+
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(
-            ResourceNotFoundException ex,
-            WebRequest request) {
-        log.warn("Recurso no encontrado: {}", ex.getMessage());
+    public ResponseEntity<ProblemDetail> handleResourceNotFound(
+            ResourceNotFoundException ex, HttpServletRequest request) {
 
-        ApiResponse<Void> response = ApiResponse.<Void>builder()
-                .success(false)
-                .message(ex.getMessage())
-                .build();
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    /**
-     * Maneja excepciones de negocio (422).
-     */
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>> handleBusinessException(
-            BusinessException ex,
-            WebRequest request) {
-        log.warn("Error de negocio [{}]: {}", ex.getCode(), ex.getMessage());
-
-        Map<String, String> details = new HashMap<>();
-        details.put("code", ex.getCode());
-
-        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
-                .success(false)
-                .message(ex.getMessage())
-                .data(details)
-                .build();
-
-        return new ResponseEntity<>(response, HttpStatus.UNPROCESSABLE_ENTITY);
-    }
-
-    /**
-     * Maneja errores de validación de argumentos (400).
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex,
-            WebRequest request) {
-        log.warn("Error de validación en los argumentos del método");
-
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
+        ProblemDetail problem = buildProblem(
+                HttpStatus.NOT_FOUND,
+                "not-found",
+                "Recurso no encontrado",
+                ex.getMessage(),
+                request.getRequestURI()
         );
 
-        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
-                .success(false)
-                .message("Error de validación en los datos enviados")
-                .data(errors)
-                .build();
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        log.warn("Recurso no encontrado en {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
     }
 
-    /**
-     * Maneja excepciones genéricas no controladas (500).
-     */
+    // -------------------------------------------------------------------------
+    // 409 — Conflicto de negocio
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ProblemDetail> handleBusiness(
+            BusinessException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.CONFLICT,
+                "conflict",
+                "Conflicto de negocio",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        log.warn("Conflicto de negocio en {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 400 — Errores de validación de campos (@Valid)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ProblemDetail> handleValidationErrors(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+
+        Map<String, String> errors = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
+
+        int count = errors.size();
+        String detail = "Se encontr" + (count == 1 ? "ó 1 error" : "aron " + count + " errores")
+                + " de validación en la solicitud";
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.BAD_REQUEST,
+                "validation-error",
+                "Errores de validación",
+                detail,
+                request.getRequestURI()
+        );
+        problem.setProperty("errors", errors);
+
+        log.warn("Validación fallida en {}: {}", request.getRequestURI(), errors);
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 400 — JSON malformado o tipo de campo incorrecto
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ProblemDetail> handleJsonParseError(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+
+        Map<String, String> errors = new LinkedHashMap<>();
+        Throwable causa = ex.getCause();
+
+        if (causa instanceof InvalidFormatException invalidFormat) {
+            String campo = invalidFormat.getPath().isEmpty()
+                    ? "desconocido"
+                    : invalidFormat.getPath().getFirst().getFieldName();
+            errors.put(campo, "Se esperaba " + traducirTipo(invalidFormat.getTargetType()));
+        } else {
+            errors.put("body", "El JSON enviado tiene un formato inválido");
+        }
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.BAD_REQUEST,
+                "validation-error",
+                "Errores de validación",
+                "Se encontró 1 error de validación en la solicitud",
+                request.getRequestURI()
+        );
+        problem.setProperty("errors", errors);
+
+        log.warn("JSON inválido en {}: {}", request.getRequestURI(), errors);
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 500 — Error inesperado
+    // -------------------------------------------------------------------------
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGlobalException(
-            Exception ex,
-            HttpServletRequest request) throws Exception {
+    public ResponseEntity<ProblemDetail> handleUnexpected(
+            Exception ex, HttpServletRequest request) throws Exception {
 
-        log.info("Excepción no controlada capturada: {}", ex.getMessage(), ex);
-
-        // Excepciones de SpringDoc o endpoints de documentación deben propagarse
-        // para que Swagger funcione correctamente
+        // Las excepciones de SpringDoc deben propagarse para que Swagger funcione
         if (isSpringDocException(ex) || isSpringDocEndpoint(request)) {
             throw ex;
         }
 
-        log.error("Error interno del servidor en {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        ProblemDetail problem = buildProblem(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "internal-error",
+                "Error interno del servidor",
+                "Ocurrió un error inesperado. Por favor intente más tarde",
+                request.getRequestURI()
+        );
 
-        ApiResponse<Void> response = ApiResponse.<Void>builder()
-                .success(false)
-                .message("Error interno del servidor. Por favor, intente más tarde.")
-                .build();
-
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        log.error("Error inesperado en {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
     }
 }

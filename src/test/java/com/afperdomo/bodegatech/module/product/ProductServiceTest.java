@@ -1,7 +1,8 @@
 package com.afperdomo.bodegatech.module.product;
 
-import com.afperdomo.bodegatech.module.product.dto.ProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductResponse;
+import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.ProductDto;
+import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
@@ -46,8 +47,9 @@ class ProductServiceTest {
     private ProductService productService;
 
     private Product product;
-    private ProductRequest productRequest;
-    private ProductResponse productResponse;
+    private CreateProductRequest createRequest;
+    private UpdateProductRequest updateRequest;
+    private ProductDto productDto;
     private UUID productId;
 
     @BeforeEach
@@ -67,27 +69,35 @@ class ProductServiceTest {
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
 
-        productRequest = new ProductRequest();
-        productRequest.setName("Laptop Dell");
-        productRequest.setDescription("Laptop de 15 pulgadas");
-        productRequest.setPrice(new BigDecimal("1500.00"));
-        productRequest.setStock(10);
-        productRequest.setSku("DELL-LAPTOP-001");
-        productRequest.setCategory("Electrónica");
-        productRequest.setImageUrl("https://example.com/images/laptop.jpg");
+        createRequest = new CreateProductRequest();
+        createRequest.setName("Laptop Dell");
+        createRequest.setDescription("Laptop de 15 pulgadas");
+        createRequest.setPrice(new BigDecimal("1500.00"));
+        createRequest.setStock(10);
+        createRequest.setSku("DELL-LAPTOP-001");
+        createRequest.setCategory("Electrónica");
+        createRequest.setImageUrl("https://example.com/images/laptop.jpg");
 
-        productResponse = new ProductResponse();
-        productResponse.setId(productId);
-        productResponse.setName("Laptop Dell");
-        productResponse.setDescription("Laptop de 15 pulgadas");
-        productResponse.setPrice(new BigDecimal("1500.00"));
-        productResponse.setStock(10);
-        productResponse.setSku("DELL-LAPTOP-001");
-        productResponse.setCategory("Electrónica");
-        productResponse.setImageUrl("https://example.com/images/laptop.jpg");
-        productResponse.setIsActive(true);
-        productResponse.setCreatedAt(LocalDateTime.now());
-        productResponse.setUpdatedAt(LocalDateTime.now());
+        updateRequest = new UpdateProductRequest();
+        updateRequest.setName("Laptop Dell Pro");
+        updateRequest.setDescription("Laptop de 15 pulgadas actualizada");
+        updateRequest.setPrice(new BigDecimal("1800.00"));
+        updateRequest.setStock(5);
+        updateRequest.setCategory("Electrónica");
+        updateRequest.setImageUrl("https://example.com/images/laptop-pro.jpg");
+
+        productDto = new ProductDto();
+        productDto.setId(productId);
+        productDto.setName("Laptop Dell");
+        productDto.setDescription("Laptop de 15 pulgadas");
+        productDto.setPrice(new BigDecimal("1500.00"));
+        productDto.setStock(10);
+        productDto.setSku("DELL-LAPTOP-001");
+        productDto.setCategory("Electrónica");
+        productDto.setImageUrl("https://example.com/images/laptop.jpg");
+        productDto.setIsActive(true);
+        productDto.setCreatedAt(LocalDateTime.now());
+        productDto.setUpdatedAt(LocalDateTime.now());
     }
 
     @Test
@@ -97,10 +107,10 @@ class ProductServiceTest {
         Page<Product> page = new PageImpl<>(List.of(product), pageable, 1);
 
         when(productRepository.findAllActive(pageable)).thenReturn(page);
-        when(productMapper.toResponse(product)).thenReturn(productResponse);
+        when(productMapper.toDto(product)).thenReturn(productDto);
 
         // Act
-        PagedResponse<ProductResponse> result = productService.findAllProducts(pageable);
+        PagedResponse<ProductDto> result = productService.findAllProducts(pageable);
 
         // Assert
         assertNotNull(result);
@@ -112,16 +122,16 @@ class ProductServiceTest {
     @Test
     void testFindProductByIdSuccess() {
         // Arrange
-        when(productRepository.findByIdActive(product.getId())).thenReturn(Optional.of(product));
-        when(productMapper.toResponse(product)).thenReturn(productResponse);
+        when(productRepository.findByIdActive(productId)).thenReturn(Optional.of(product));
+        when(productMapper.toDto(product)).thenReturn(productDto);
 
         // Act
-        ProductResponse result = productService.findProductById(product.getId());
+        ProductDto result = productService.findProductById(productId);
 
         // Assert
         assertNotNull(result);
         assertEquals("Laptop Dell", result.getName());
-        verify(productRepository, times(1)).findByIdActive(product.getId());
+        verify(productRepository, times(1)).findByIdActive(productId);
     }
 
     @Test
@@ -131,60 +141,59 @@ class ProductServiceTest {
         when(productRepository.findByIdActive(nonExistentId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            productService.findProductById(nonExistentId);
-        });
+        assertThrows(ResourceNotFoundException.class, () ->
+                productService.findProductById(nonExistentId)
+        );
         verify(productRepository, times(1)).findByIdActive(nonExistentId);
     }
 
     @Test
     void testCreateProductSuccess() {
         // Arrange
-        when(productRepository.findBySku(productRequest.getSku())).thenReturn(Optional.empty());
-        when(productMapper.toEntity(productRequest)).thenReturn(product);
+        when(productRepository.findBySku(createRequest.getSku())).thenReturn(Optional.empty());
+        when(productMapper.toEntity(createRequest)).thenReturn(product);
         when(productRepository.save(any(Product.class))).thenReturn(product);
-        when(productMapper.toResponse(product)).thenReturn(productResponse);
+        when(productMapper.toDto(product)).thenReturn(productDto);
 
         // Act
-        ProductResponse result = productService.createProduct(productRequest);
+        ProductDto result = productService.createProduct(createRequest);
 
         // Assert
         assertNotNull(result);
         assertEquals("Laptop Dell", result.getName());
-        verify(productRepository, times(1)).findBySku(productRequest.getSku());
+        verify(productRepository, times(1)).findBySku(createRequest.getSku());
         verify(productRepository, times(1)).save(any(Product.class));
     }
 
     @Test
     void testCreateProductDuplicateSku() {
         // Arrange
-        when(productRepository.findBySku(productRequest.getSku())).thenReturn(Optional.of(product));
+        when(productRepository.findBySku(createRequest.getSku())).thenReturn(Optional.of(product));
 
         // Act & Assert
-        assertThrows(BusinessException.class, () -> {
-            productService.createProduct(productRequest);
-        });
-        verify(productRepository, times(1)).findBySku(productRequest.getSku());
+        assertThrows(BusinessException.class, () ->
+                productService.createProduct(createRequest)
+        );
+        verify(productRepository, times(1)).findBySku(createRequest.getSku());
         verify(productRepository, never()).save(any());
     }
 
     @Test
     void testUpdateProductSuccess() {
         // Arrange
-        when(productRepository.findByIdActive(product.getId())).thenReturn(Optional.of(product));
-        // No necesitamos stub de findBySku porque el SKU es el mismo
-        doNothing().when(productMapper).updateEntity(productRequest, product);
+        when(productRepository.findByIdActive(productId)).thenReturn(Optional.of(product));
+        doNothing().when(productMapper).updateEntity(updateRequest, product);
         when(productRepository.save(any(Product.class))).thenReturn(product);
-        when(productMapper.toResponse(product)).thenReturn(productResponse);
+        when(productMapper.toDto(product)).thenReturn(productDto);
 
         // Act
-        ProductResponse result = productService.updateProduct(product.getId(), productRequest);
+        ProductDto result = productService.updateProduct(productId, updateRequest);
 
         // Assert
         assertNotNull(result);
-        verify(productRepository, times(1)).findByIdActive(product.getId());
+        verify(productRepository, times(1)).findByIdActive(productId);
         verify(productRepository, times(1)).save(any(Product.class));
-        verify(productMapper, times(1)).updateEntity(productRequest, product);
+        verify(productMapper, times(1)).updateEntity(updateRequest, product);
     }
 
     @Test
@@ -194,24 +203,24 @@ class ProductServiceTest {
         when(productRepository.findByIdActive(nonExistentId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            productService.updateProduct(nonExistentId, productRequest);
-        });
+        assertThrows(ResourceNotFoundException.class, () ->
+                productService.updateProduct(nonExistentId, updateRequest)
+        );
         verify(productRepository, never()).save(any());
     }
 
     @Test
     void testDeleteProductSuccess() {
         // Arrange
-        when(productRepository.findByIdActive(product.getId())).thenReturn(Optional.of(product));
+        when(productRepository.findByIdActive(productId)).thenReturn(Optional.of(product));
         when(productRepository.save(any(Product.class))).thenReturn(product);
 
         // Act
-        productService.deleteProduct(product.getId());
+        productService.deleteProduct(productId);
 
         // Assert
         assertFalse(product.getIsActive());
-        verify(productRepository, times(1)).findByIdActive(product.getId());
+        verify(productRepository, times(1)).findByIdActive(productId);
         verify(productRepository, times(1)).save(any(Product.class));
     }
 
@@ -222,9 +231,9 @@ class ProductServiceTest {
         when(productRepository.findByIdActive(nonExistentId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            productService.deleteProduct(nonExistentId);
-        });
+        assertThrows(ResourceNotFoundException.class, () ->
+                productService.deleteProduct(nonExistentId)
+        );
         verify(productRepository, never()).save(any());
     }
 }

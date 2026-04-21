@@ -1,14 +1,13 @@
 package com.afperdomo.bodegatech.module.product.controller;
 
-import com.afperdomo.bodegatech.module.product.dto.ProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductResponse;
+import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.ProductDto;
+import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
 import com.afperdomo.bodegatech.common.response.ApiResponse;
 import com.afperdomo.bodegatech.common.response.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -35,7 +34,7 @@ import java.util.UUID;
  * Proporciona endpoints para operaciones CRUD y listados con paginación.
  */
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/products")
 @RequiredArgsConstructor
 @Tag(name = "Productos", description = "API para la gestión de productos de la bodega")
 public class ProductController {
@@ -51,7 +50,7 @@ public class ProductController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<PagedResponse<ProductResponse>>> getAllProducts(
+    public ResponseEntity<ApiResponse<PagedResponse<ProductDto>>> getAllProducts(
             @Parameter(description = "Número de página (comenzando en 0)")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Cantidad de elementos por página")
@@ -62,15 +61,9 @@ public class ProductController {
             @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        PagedResponse<ProductResponse> products = productService.findAllProducts(pageable);
+        PagedResponse<ProductDto> products = productService.findAllProducts(pageable);
 
-        return ResponseEntity.ok(
-                ApiResponse.<PagedResponse<ProductResponse>>builder()
-                        .success(true)
-                        .message("Productos obtenidos exitosamente")
-                        .data(products)
-                        .build()
-        );
+        return ResponseEntity.ok(ApiResponse.success("Productos obtenidos exitosamente", products));
     }
 
     /**
@@ -83,19 +76,12 @@ public class ProductController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<ProductResponse>> getProductById(
+    public ResponseEntity<ApiResponse<ProductDto>> getProductById(
             @Parameter(description = "ID único del producto")
             @PathVariable UUID id) {
 
-        ProductResponse product = productService.findProductById(id);
-
-        return ResponseEntity.ok(
-                ApiResponse.<ProductResponse>builder()
-                        .success(true)
-                        .message("Producto obtenido exitosamente")
-                        .data(product)
-                        .build()
-        );
+        ProductDto product = productService.findProductById(id);
+        return ResponseEntity.ok(ApiResponse.success("Producto obtenido exitosamente", product));
     }
 
     /**
@@ -106,51 +92,38 @@ public class ProductController {
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Producto creado exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "422", description = "Error de validación de negocio"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Conflicto — SKU duplicado"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
+    public ResponseEntity<ApiResponse<ProductDto>> createProduct(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Datos del producto a crear", required = true)
-            @Valid @RequestBody ProductRequest request) {
+            @Valid @RequestBody CreateProductRequest request) {
 
-        ProductResponse product = productService.createProduct(request);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                ApiResponse.<ProductResponse>builder()
-                        .success(true)
-                        .message("Producto creado exitosamente")
-                        .data(product)
-                        .build()
-        );
+        ProductDto product = productService.createProduct(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Producto creado exitosamente", product));
     }
 
     /**
      * Actualiza un producto existente.
+     * El SKU no puede modificarse.
      */
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar producto", description = "Actualiza los datos de un producto existente")
+    @Operation(summary = "Actualizar producto", description = "Actualiza los datos de un producto existente. El SKU es inmutable.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "422", description = "Error de validación de negocio"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
+    public ResponseEntity<ApiResponse<ProductDto>> updateProduct(
             @Parameter(description = "ID único del producto a actualizar")
             @PathVariable UUID id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Datos del producto a actualizar", required = true)
-            @Valid @RequestBody ProductRequest request) {
+            @Valid @RequestBody UpdateProductRequest request) {
 
-        ProductResponse product = productService.updateProduct(id, request);
-
-        return ResponseEntity.ok(
-                ApiResponse.<ProductResponse>builder()
-                        .success(true)
-                        .message("Producto actualizado exitosamente")
-                        .data(product)
-                        .build()
-        );
+        ProductDto product = productService.updateProduct(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Producto actualizado exitosamente", product));
     }
 
     /**

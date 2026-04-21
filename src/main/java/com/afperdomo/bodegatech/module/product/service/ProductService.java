@@ -1,7 +1,8 @@
 package com.afperdomo.bodegatech.module.product.service;
 
-import com.afperdomo.bodegatech.module.product.dto.ProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductResponse;
+import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.ProductDto;
+import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
@@ -31,13 +32,13 @@ public class ProductService {
     private final ProductMapper productMapper;
 
     @Transactional(readOnly = true)
-    public PagedResponse<ProductResponse> findAllProducts(Pageable pageable) {
+    public PagedResponse<ProductDto> findAllProducts(Pageable pageable) {
         log.info("Obteniendo productos activos. Página: {}, Tamaño: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Page<Product> products = productRepository.findAllActive(pageable);
 
-        return PagedResponse.<ProductResponse>builder()
-                .content(products.map(productMapper::toResponse).toList())
+        return PagedResponse.<ProductDto>builder()
+                .content(products.map(productMapper::toDto).toList())
                 .page(products.getNumber())
                 .size(products.getSize())
                 .totalElements(products.getTotalElements())
@@ -47,19 +48,18 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public ProductResponse findProductById(UUID id) {
+    public ProductDto findProductById(UUID id) {
         log.info("Obteniendo producto con ID: {}", id);
 
         Product product = productRepository.findByIdActive(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
 
-        return productMapper.toResponse(product);
+        return productMapper.toDto(product);
     }
 
-    public ProductResponse createProduct(ProductRequest request) {
+    public ProductDto createProduct(CreateProductRequest request) {
         log.info("Creando nuevo producto con SKU: {}", request.getSku());
 
-        // Validar que el SKU no exista
         if (productRepository.findBySku(request.getSku()).isPresent()) {
             throw new BusinessException("DUPLICATE_SKU", "Ya existe un producto con el SKU: " + request.getSku());
         }
@@ -70,33 +70,27 @@ public class ProductService {
         Product savedProduct = productRepository.save(product);
         log.info("Producto creado exitosamente con ID: {}", savedProduct.getId());
 
-        return productMapper.toResponse(savedProduct);
+        return productMapper.toDto(savedProduct);
     }
 
-    public ProductResponse updateProduct(UUID id, ProductRequest request) {
+    public ProductDto updateProduct(UUID id, UpdateProductRequest request) {
         log.info("Actualizando producto con ID: {}", id);
 
         Product product = productRepository.findByIdActive(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
-
-        // Validar que el SKU no exista en otro producto
-        if (!product.getSku().equals(request.getSku()) &&
-                productRepository.findBySku(request.getSku()).isPresent()) {
-            throw new BusinessException("DUPLICATE_SKU", "Ya existe un producto con el SKU: " + request.getSku());
-        }
+                .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
 
         productMapper.updateEntity(request, product);
         Product updatedProduct = productRepository.save(product);
 
         log.info("Producto actualizado exitosamente con ID: {}", id);
-        return productMapper.toResponse(updatedProduct);
+        return productMapper.toDto(updatedProduct);
     }
 
     public void deleteProduct(UUID id) {
         log.info("Desactivando producto con ID: {}", id);
 
         Product product = productRepository.findByIdActive(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
 
         product.setIsActive(false);
         productRepository.save(product);
