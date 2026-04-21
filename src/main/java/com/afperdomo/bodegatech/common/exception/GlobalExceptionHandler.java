@@ -1,6 +1,7 @@
 package com.afperdomo.bodegatech.common.exception;
 
 import com.afperdomo.bodegatech.common.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,46 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * Verifica si la excepción proviene de SpringDoc y debe ser ignorada.
+     */
+    private boolean isSpringDocException(Throwable ex) {
+        if (ex == null) return false;
+
+        // Verificar excepción actual
+        String className = ex.getClass().getName();
+        if (className.startsWith("org.springdoc")
+                || className.contains("springdoc")
+                || className.startsWith("io.swagger")) {
+            return true;
+        }
+
+        // Verificar cadena de causas para excepciones de SpringDoc
+        Throwable cause = ex.getCause();
+        while (cause != null && cause != ex) {
+            String causeClassName = cause.getClass().getName();
+            if (causeClassName.startsWith("org.springdoc")
+                    || causeClassName.contains("springdoc")
+                    || causeClassName.startsWith("io.swagger")) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+
+        return false;
+    }
+
+    /**
+     * Verifica si el request es para un endpoint de SpringDoc.
+     */
+    private boolean isSpringDocEndpoint(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.contains("/docs")
+                || path.contains("/swagger-ui")
+                || path.contains("/swagger-resources")
+                || path.contains("/webjars");
+    }
 
     /**
      * Maneja excepciones de recurso no encontrado (404).
@@ -87,8 +128,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGlobalException(
             Exception ex,
-            WebRequest request) {
-        log.error("Error interno del servidor", ex);
+            HttpServletRequest request) throws Exception {
+
+        log.info("Excepción no controlada capturada: {}", ex.getMessage(), ex);
+
+        // Excepciones de SpringDoc o endpoints de documentación deben propagarse
+        // para que Swagger funcione correctamente
+        if (isSpringDocException(ex) || isSpringDocEndpoint(request)) {
+            throw ex;
+        }
+
+        log.error("Error interno del servidor en {}: {}", request.getRequestURI(), ex.getMessage(), ex);
 
         ApiResponse<Void> response = ApiResponse.<Void>builder()
                 .success(false)

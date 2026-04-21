@@ -51,9 +51,8 @@ La aplicación se ejecutará en `http://localhost:8080` (puerto por defecto).
 
 Una vez que la aplicación esté ejecutándose, accede a la documentación interactiva de la API en:
 
-```
-http://localhost:8080/swagger-ui.html
-```
+- **Swagger:** http://localhost:8080/swagger-ui/index.html
+- **Docs:** http://localhost:8080/docs
 
 Para acceder a los documentos OpenAPI JSON:
 

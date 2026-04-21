@@ -35,7 +35,7 @@ import java.util.UUID;
  * Proporciona endpoints para operaciones CRUD y listados con paginación.
  */
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/api/products")
 @RequiredArgsConstructor
 @Tag(name = "Productos", description = "API para la gestión de productos de la bodega")
 public class ProductController {
