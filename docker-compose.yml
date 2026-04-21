@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bodegatech_postgres
+    environment:
+      POSTGRES_DB: bodegatech_db
+      POSTGRES_USER: bodegatech_user
+      POSTGRES_PASSWORD: bodegatech_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bodegatech_user -d bodegatech_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bodegatech_network
+
+volumes:
+  postgres_data:
+
+networks:
+  bodegatech_network:
+    driver: bridge
