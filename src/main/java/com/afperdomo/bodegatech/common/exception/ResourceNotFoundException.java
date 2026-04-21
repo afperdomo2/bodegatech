@@ -1,4 +1,4 @@
-package com.afperdomo.bodegatech.shared.exception;
+package com.afperdomo.bodegatech.common.exception;
 
 /**
  * Excepción para recursos no encontrados (HTTP 404).

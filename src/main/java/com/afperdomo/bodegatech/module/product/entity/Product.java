@@ -1,6 +1,6 @@
 package com.afperdomo.bodegatech.module.product.entity;
 
-import com.afperdomo.bodegatech.shared.audit.BaseEntity;
+import com.afperdomo.bodegatech.common.audit.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

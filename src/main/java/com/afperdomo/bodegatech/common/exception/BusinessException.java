@@ -1,4 +1,4 @@
-package com.afperdomo.bodegatech.shared.exception;
+package com.afperdomo.bodegatech.common.exception;
 
 /**
  * Excepción para errores de negocio (HTTP 422 - Unprocessable Entity).

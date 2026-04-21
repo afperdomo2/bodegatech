@@ -1,4 +1,4 @@
-package com.afperdomo.bodegatech.shared.response;
+package com.afperdomo.bodegatech.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

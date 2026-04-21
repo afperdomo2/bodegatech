@@ -1,6 +1,6 @@
-package com.afperdomo.bodegatech.shared.exception;
+package com.afperdomo.bodegatech.common.exception;
 
-import com.afperdomo.bodegatech.shared.response.ApiResponse;
+import com.afperdomo.bodegatech.common.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

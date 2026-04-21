@@ -4,8 +4,8 @@ import com.afperdomo.bodegatech.module.product.controller.ProductController;
 import com.afperdomo.bodegatech.module.product.dto.ProductRequest;
 import com.afperdomo.bodegatech.module.product.dto.ProductResponse;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
-import com.afperdomo.bodegatech.shared.response.ApiResponse;
-import com.afperdomo.bodegatech.shared.response.PagedResponse;
+import com.afperdomo.bodegatech.common.response.ApiResponse;
+import com.afperdomo.bodegatech.common.response.PagedResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -116,12 +116,12 @@ class ProductControllerTest {
         // Arrange
         UUID nonExistentId = UUID.randomUUID();
         when(productService.findProductById(nonExistentId))
-                .thenThrow(new com.afperdomo.bodegatech.shared.exception.ResourceNotFoundException(
+                .thenThrow(new com.afperdomo.bodegatech.common.exception.ResourceNotFoundException(
                         "Producto no encontrado"
                 ));
 
         // Act & Assert
-        assertThrows(com.afperdomo.bodegatech.shared.exception.ResourceNotFoundException.class, () -> {
+        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () -> {
             productController.getProductById(nonExistentId);
         });
         verify(productService, times(1)).findProductById(nonExistentId);
@@ -147,12 +147,12 @@ class ProductControllerTest {
     void testCreateProductWithDuplicateSku() {
         // Arrange
         when(productService.createProduct(any(ProductRequest.class)))
-                .thenThrow(new com.afperdomo.bodegatech.shared.exception.BusinessException(
+                .thenThrow(new com.afperdomo.bodegatech.common.exception.BusinessException(
                         "DUPLICATE_SKU", "SKU duplicado"
                 ));
 
         // Act & Assert
-        assertThrows(com.afperdomo.bodegatech.shared.exception.BusinessException.class, () -> {
+        assertThrows(com.afperdomo.bodegatech.common.exception.BusinessException.class, () -> {
             productController.createProduct(productRequest);
         });
         verify(productService, times(1)).createProduct(any(ProductRequest.class));
@@ -181,12 +181,12 @@ class ProductControllerTest {
         // Arrange
         UUID nonExistentId = UUID.randomUUID();
         when(productService.updateProduct(eq(nonExistentId), any(ProductRequest.class)))
-                .thenThrow(new com.afperdomo.bodegatech.shared.exception.ResourceNotFoundException(
+                .thenThrow(new com.afperdomo.bodegatech.common.exception.ResourceNotFoundException(
                         "Producto no encontrado"
                 ));
 
         // Act & Assert
-        assertThrows(com.afperdomo.bodegatech.shared.exception.ResourceNotFoundException.class, () -> {
+        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () -> {
             productController.updateProduct(nonExistentId, productRequest);
         });
         verify(productService, times(1)).updateProduct(eq(nonExistentId), any(ProductRequest.class));
@@ -210,12 +210,12 @@ class ProductControllerTest {
     void testDeleteProductNotFound() {
         // Arrange
         UUID nonExistentId = UUID.randomUUID();
-        doThrow(new com.afperdomo.bodegatech.shared.exception.ResourceNotFoundException(
+        doThrow(new com.afperdomo.bodegatech.common.exception.ResourceNotFoundException(
                 "Producto no encontrado"
         )).when(productService).deleteProduct(nonExistentId);
 
         // Act & Assert
-        assertThrows(com.afperdomo.bodegatech.shared.exception.ResourceNotFoundException.class, () -> {
+        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () -> {
             productController.deleteProduct(nonExistentId);
         });
         verify(productService, times(1)).deleteProduct(nonExistentId);

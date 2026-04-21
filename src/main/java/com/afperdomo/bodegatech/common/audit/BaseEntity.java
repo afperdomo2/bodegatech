@@ -1,4 +1,4 @@
-package com.afperdomo.bodegatech.shared.audit;
+package com.afperdomo.bodegatech.common.audit;
 
 import jakarta.persistence.*;
 import lombok.Getter;

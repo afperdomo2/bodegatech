@@ -5,10 +5,10 @@ import com.afperdomo.bodegatech.module.product.dto.ProductResponse;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
-import com.afperdomo.bodegatech.module.product.service.ProductServiceImpl;
-import com.afperdomo.bodegatech.shared.exception.BusinessException;
-import com.afperdomo.bodegatech.shared.exception.ResourceNotFoundException;
-import com.afperdomo.bodegatech.shared.response.PagedResponse;
+import com.afperdomo.bodegatech.module.product.service.ProductService;
+import com.afperdomo.bodegatech.common.exception.BusinessException;
+import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
+import com.afperdomo.bodegatech.common.response.PagedResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +43,7 @@ class ProductServiceTest {
     private ProductMapper productMapper;
 
     @InjectMocks
-    private ProductServiceImpl productService;
+    private ProductService productService;
 
     private Product product;
     private ProductRequest productRequest;
