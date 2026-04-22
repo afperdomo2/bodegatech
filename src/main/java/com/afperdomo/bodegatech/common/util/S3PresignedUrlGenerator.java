@@ -1,6 +1,6 @@
 package com.afperdomo.bodegatech.common.util;
 
-import com.afperdomo.bodegatech.module.product.dto.ImageUploadUrlDto;
+import com.afperdomo.bodegatech.module.product.dto.PresignedUrlDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,31 +24,26 @@ public class S3PresignedUrlGenerator {
      * 
      * @param productId ID del producto
      * @param fileName Nombre original del archivo
-     * @return DTO con URLs pre-firmadas (uploadUrl y publicUrl)
+     * @return DTO con fileKey y uploadUrl pre-firmada
      */
-    public ImageUploadUrlDto generateUploadUrl(UUID productId, String fileName) {
+    public PresignedUrlDto generatePresignedUrl(UUID productId, String fileName) {
         log.debug("Generando URL pre-firmada para producto {} - archivo {}", productId, fileName);
+
+        // Construir fileKey: "products/{productId}/{fileName}"
+        String fileKey = String.format("products/%s/%s", productId, fileName);
 
         // TODO: Reemplazar con URL real de S3 pre-firmada (válida por 15 minutos)
         String uploadUrl = String.format(
-                "%s/%s/%s?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=PLACEHOLDER&X-Amz-Date=PLACEHOLDER&X-Amz-Expires=900&X-Amz-Signature=PLACEHOLDER",
+                "%s/%s?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=PLACEHOLDER&X-Amz-Date=PLACEHOLDER&X-Amz-Expires=900&X-Amz-Signature=PLACEHOLDER",
                 S3_BUCKET_URL,
-                productId,
-                fileName
+                fileKey
         );
 
-        // URL pública final donde quedará la imagen (sin parámetros de firma)
-        String publicUrl = String.format(
-                "%s/%s/%s",
-                S3_BUCKET_URL,
-                productId,
-                fileName
-        );
-
-        return ImageUploadUrlDto.builder()
+        return PresignedUrlDto.builder()
                 .fileName(fileName)
+                .fileKey(fileKey)
                 .uploadUrl(uploadUrl)
-                .publicUrl(publicUrl)
                 .build();
     }
 }
+

@@ -2,7 +2,6 @@ package com.afperdomo.bodegatech.module.product;
 
 import com.afperdomo.bodegatech.module.product.controller.ProductController;
 import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductCreateResponseDto;
 import com.afperdomo.bodegatech.module.product.dto.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
@@ -68,7 +67,6 @@ class ProductControllerTest {
         createRequest.setPrice(new BigDecimal("1500.00"));
         createRequest.setStock(10);
         createRequest.setCategoryId(categoryId);
-        createRequest.setImageUrl("https://example.com/images/laptop.jpg");
 
         // Setup UpdateProductRequest
         updateRequest = new UpdateProductRequest();
@@ -84,7 +82,6 @@ class ProductControllerTest {
         productDto.setStock(10);
         productDto.setSku("LAP-ELE-4F2A");
         productDto.setCategory(categorySummaryDto);
-        productDto.setImageUrl("https://example.com/images/laptop.jpg");
         productDto.setIsActive(true);
         productDto.setCreatedAt(LocalDateTime.now());
         productDto.setUpdatedAt(LocalDateTime.now());
@@ -144,29 +141,23 @@ class ProductControllerTest {
         verify(productService, times(1)).findProductById(nonExistentId);
     }
 
-    @Test
-    void testCreateProductSuccess() {
-        // Arrange
-        ProductCreateResponseDto createResponse = ProductCreateResponseDto.builder()
-                .id(productId)
-                .sku("LAP-ELE-4F2A")
-                .uploadUrls(List.of())
-                .build();
+     @Test
+     void testCreateProductSuccess() {
+         // Arrange
+         when(productService.createProduct(any(CreateProductRequest.class))).thenReturn(productDto);
 
-        when(productService.createProduct(any(CreateProductRequest.class))).thenReturn(createResponse);
+         // Act
+         ResponseEntity<ApiResponse<ProductDto>> response = productController.createProduct(createRequest);
 
-        // Act
-        ResponseEntity<ApiResponse<ProductCreateResponseDto>> response = productController.createProduct(createRequest);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertTrue(response.getBody().isSuccess());
-        assertEquals(productId, response.getBody().getData().getId());
-        assertEquals("LAP-ELE-4F2A", response.getBody().getData().getSku());
-        assertEquals(0, response.getBody().getData().getUploadUrls().size());
-        verify(productService, times(1)).createProduct(any(CreateProductRequest.class));
-    }
+         // Assert
+         assertNotNull(response);
+         assertEquals(HttpStatus.CREATED, response.getStatusCode());
+         assertTrue(response.getBody().isSuccess());
+         assertEquals(productId, response.getBody().getData().getId());
+         assertEquals("LAP-ELE-4F2A", response.getBody().getData().getSku());
+         assertEquals("Laptop Dell", response.getBody().getData().getName());
+         verify(productService, times(1)).createProduct(any(CreateProductRequest.class));
+     }
 
     @Test
     void testCreateProductMissingCategoryId() {

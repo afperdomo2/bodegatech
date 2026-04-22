@@ -1,13 +1,11 @@
 package com.afperdomo.bodegatech.module.product;
 
 import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductCreateResponseDto;
 import com.afperdomo.bodegatech.module.product.dto.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
-import com.afperdomo.bodegatech.module.product.service.ProductImageService;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import com.afperdomo.bodegatech.module.category.repository.CategoryRepository;
@@ -54,9 +52,6 @@ class ProductServiceTest {
     @Mock
     private CategoryRepository categoryRepository;
 
-    @Mock
-    private ProductImageService productImageService;
-
     @InjectMocks
     private ProductService productService;
 
@@ -92,7 +87,6 @@ class ProductServiceTest {
         product.setStock(10);
         product.setSku("LAP-ELE-4F2A");
         product.setCategory(category);
-        product.setImageUrl("https://example.com/images/laptop.jpg");
         product.setIsActive(true);
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
@@ -109,7 +103,6 @@ class ProductServiceTest {
         createRequest.setPrice(new BigDecimal("1500.00"));
         createRequest.setStock(10);
         createRequest.setCategoryId(categoryId);
-        createRequest.setImageUrl("https://example.com/images/laptop.jpg");
 
         // Setup UpdateProductRequest
         updateRequest = new UpdateProductRequest();
@@ -125,7 +118,6 @@ class ProductServiceTest {
         productDto.setStock(10);
         productDto.setSku("LAP-ELE-4F2A");
         productDto.setCategory(categorySummaryDto);
-        productDto.setImageUrl("https://example.com/images/laptop.jpg");
         productDto.setIsActive(true);
         productDto.setCreatedAt(LocalDateTime.now());
         productDto.setUpdatedAt(LocalDateTime.now());
@@ -179,27 +171,29 @@ class ProductServiceTest {
         verify(productRepository, times(1)).findByIdActive(nonExistentId);
     }
 
-    @Test
-    void testCreateProductSuccess() {
-        // Arrange
-        when(categoryRepository.findByIdActive(categoryId)).thenReturn(Optional.of(category));
-        when(skuGenerator.generateUniqueSku("Laptop Dell", "Electrónica", productRepository))
-                .thenReturn("LAP-ELE-4F2A");
-        when(productMapper.toEntity(createRequest)).thenReturn(product);
-        when(productRepository.save(any(Product.class))).thenReturn(product);
+     @Test
+     void testCreateProductSuccess() {
+         // Arrange
+         when(categoryRepository.findByIdActive(categoryId)).thenReturn(Optional.of(category));
+         when(skuGenerator.generateUniqueSku("Laptop Dell", "Electrónica", productRepository))
+                 .thenReturn("LAP-ELE-4F2A");
+         when(productMapper.toEntity(createRequest)).thenReturn(product);
+         when(productRepository.save(any(Product.class))).thenReturn(product);
+         when(productMapper.toDto(product)).thenReturn(productDto);
 
-        // Act
-        ProductCreateResponseDto result = productService.createProduct(createRequest);
+         // Act
+         ProductDto result = productService.createProduct(createRequest);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(productId, result.getId());
-        assertEquals("LAP-ELE-4F2A", result.getSku());
-        assertEquals(0, result.getUploadUrls().size());
-        verify(categoryRepository, times(1)).findByIdActive(categoryId);
-        verify(skuGenerator, times(1)).generateUniqueSku("Laptop Dell", "Electrónica", productRepository);
-        verify(productRepository, times(1)).save(any(Product.class));
-    }
+         // Assert
+         assertNotNull(result);
+         assertEquals(productId, result.getId());
+         assertEquals("LAP-ELE-4F2A", result.getSku());
+         assertEquals("Laptop Dell", result.getName());
+         verify(categoryRepository, times(1)).findByIdActive(categoryId);
+         verify(skuGenerator, times(1)).generateUniqueSku("Laptop Dell", "Electrónica", productRepository);
+         verify(productRepository, times(1)).save(any(Product.class));
+         verify(productMapper, times(1)).toDto(product);
+     }
 
     @Test
     void testCreateProductCategoryNotFound() {

@@ -54,9 +54,6 @@ public class Product extends BaseEntity {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @Column(length = 500)
-    private String imageUrl;
-
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = true;

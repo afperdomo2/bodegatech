@@ -1,8 +1,6 @@
 package com.afperdomo.bodegatech.module.product.service;
 
 import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ImageUploadUrlDto;
-import com.afperdomo.bodegatech.module.product.dto.ProductCreateResponseDto;
 import com.afperdomo.bodegatech.module.product.dto.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.entity.Product;
@@ -19,8 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -33,7 +29,6 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final SkuGenerator skuGenerator;
     private final CategoryRepository categoryRepository;
-    private final ProductImageService productImageService;
 
     @Transactional(readOnly = true)
     public Page<ProductDto> findAllProducts(Pageable pageable) {
@@ -51,7 +46,7 @@ public class ProductService {
         return productMapper.toDto(product);
     }
 
-    public ProductCreateResponseDto createProduct(CreateProductRequest request) {
+    public ProductDto createProduct(CreateProductRequest request) {
         log.info("Creando nuevo producto: {}", request.getName());
 
         // Buscar y validar la categoría
@@ -73,17 +68,7 @@ public class ProductService {
         Product savedProduct = productRepository.save(product);
         log.info("Producto creado exitosamente con ID: {} y SKU: {}", savedProduct.getId(), generatedSku);
 
-        // Procesar imágenes si se proporcionan
-        List<ImageUploadUrlDto> uploadUrls = new ArrayList<>();
-        if (request.getImageRequests() != null && !request.getImageRequests().isEmpty()) {
-            uploadUrls = productImageService.addImagesToProduct(savedProduct.getId(), request.getImageRequests());
-        }
-
-        return ProductCreateResponseDto.builder()
-                .id(savedProduct.getId())
-                .sku(generatedSku)
-                .uploadUrls(uploadUrls)
-                .build();
+        return productMapper.toDto(savedProduct);
     }
 
     public ProductDto updateProduct(UUID id, UpdateProductRequest request) {

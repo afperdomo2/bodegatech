@@ -16,15 +16,24 @@ import java.util.UUID;
 public interface ProductImageRepository extends JpaRepository<ProductImage, UUID> {
 
     /**
-     * Encuentra todas las imágenes asociadas a un producto específico.
+     * Encuentra todas las imágenes asociadas a un producto, ordenadas por fecha de creación ascendente.
      *
      * @param productId ID del producto
-     * @return Lista de imágenes ordenadas por fecha de creación descendente
+     * @return Lista de imágenes ordenadas por fecha de creación
      */
-    List<ProductImage> findByProductIdOrderByCreatedAtDesc(UUID productId);
+    List<ProductImage> findByProductIdOrderByCreatedAtAsc(UUID productId);
 
     /**
-     * Encuentra una imagen específica por su ID y verifica que perteneza al producto.
+     * Verifica si existe una imagen con un fileKey específico en un producto.
+     *
+     * @param productId ID del producto
+     * @param fileKey Clave de archivo en S3
+     * @return true si existe, false de lo contrario
+     */
+    boolean existsByProductIdAndFileKey(UUID productId, String fileKey);
+
+    /**
+     * Encuentra una imagen específica por su ID y verifica que pertenece al producto.
      *
      * @param imageId ID de la imagen
      * @param productId ID del producto

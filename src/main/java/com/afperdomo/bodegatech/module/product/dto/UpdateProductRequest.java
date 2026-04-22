@@ -46,7 +46,4 @@ public class UpdateProductRequest {
 
     @Schema(description = "ID de la categoría del producto (opcional)", example = "123e4567-e89b-12d3-a456-426614174000", nullable = true)
     private UUID categoryId;
-
-    @Schema(description = "URL de la imagen del producto (opcional)", example = "https://example.com/images/laptop-pro.jpg", nullable = true)
-    private String imageUrl;
 }

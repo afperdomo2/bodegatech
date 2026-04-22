@@ -1,10 +1,11 @@
 package com.afperdomo.bodegatech.module.product.controller;
 
 import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ImageUploadRequest;
-import com.afperdomo.bodegatech.module.product.dto.ImageUploadUrlDto;
-import com.afperdomo.bodegatech.module.product.dto.ProductCreateResponseDto;
+import com.afperdomo.bodegatech.module.product.dto.ConfirmImagesRequest;
+import com.afperdomo.bodegatech.module.product.dto.PresignedUrlDto;
+import com.afperdomo.bodegatech.module.product.dto.PresignedUrlRequest;
 import com.afperdomo.bodegatech.module.product.dto.ProductDto;
+import com.afperdomo.bodegatech.module.product.dto.ProductImageDto;
 import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.service.ProductImageService;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
@@ -66,7 +67,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener producto por ID", description = "Obtiene los detalles de un producto específico")
+    @Operation(summary = "Obtener producto con detalles", description = "Obtiene los detalles completos de un producto")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Producto encontrado"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
@@ -81,18 +82,18 @@ public class ProductController {
     }
 
     @PostMapping
-    @Operation(summary = "Crear nuevo producto", description = "Crea un nuevo producto en la bodega con imágenes opcionales")
+    @Operation(summary = "Crear nuevo producto", description = "Crea un nuevo producto sin imágenes. Las imágenes se agregan posteriormente usando los endpoints de gestión de imágenes.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Producto creado exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Conflicto — SKU duplicado"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<ProductCreateResponseDto>> createProduct(
+    public ResponseEntity<ApiResponse<ProductDto>> createProduct(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Datos del producto a crear", required = true)
             @Valid @RequestBody CreateProductRequest request) {
 
-        ProductCreateResponseDto product = productService.createProduct(request);
+        ProductDto product = productService.createProduct(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Producto creado exitosamente", product));
     }
@@ -131,23 +132,41 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{productId}/images")
-    @Operation(summary = "Agregar imágenes a un producto", description = "Agrega una o más imágenes a un producto existente y obtiene URLs pre-firmadas de S3")
+    @PostMapping("/{productId}/images/presigned")
+    @Operation(summary = "Generar URLs pre-firmadas para carga de imágenes", description = "Genera URLs pre-firmadas de S3 para que el cliente suba imágenes directamente. El cliente debe luego confirmar con el endpoint /confirm.")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Imágenes procesadas exitosamente"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "URLs pre-firmadas generadas exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<List<ImageUploadUrlDto>>> addImagesToProduct(
+    public ResponseEntity<ApiResponse<List<PresignedUrlDto>>> generatePresignedUrls(
             @Parameter(description = "ID único del producto")
             @PathVariable UUID productId,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Lista de imágenes a cargar", required = true)
-            @Valid @RequestBody List<ImageUploadRequest> imageRequests) {
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Lista de nombres de archivo a cargar", required = true)
+            @Valid @RequestBody PresignedUrlRequest request) {
 
-        List<ImageUploadUrlDto> uploadUrls = productImageService.addImagesToProduct(productId, imageRequests);
+        List<PresignedUrlDto> presignedUrls = productImageService.generatePresignedUrls(productId, request.getFileNames());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Imágenes procesadas exitosamente", uploadUrls));
+                .body(ApiResponse.success("URLs pre-firmadas generadas exitosamente", presignedUrls));
+    }
+
+    @PostMapping("/{productId}/images/confirm")
+    @Operation(summary = "Confirmar carga de imágenes", description = "Confirma que el cliente ha subido las imágenes a S3 y las registra en la base de datos.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Imágenes confirmadas exitosamente"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    public ResponseEntity<ApiResponse<List<ProductImageDto>>> confirmImages(
+            @Parameter(description = "ID único del producto")
+            @PathVariable UUID productId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Lista de fileKeys confirmados", required = true)
+            @Valid @RequestBody ConfirmImagesRequest request) {
+
+        List<ProductImageDto> confirmedImages = productImageService.confirmImages(productId, request.getFileKeys());
+        return ResponseEntity.ok(ApiResponse.success("Imágenes confirmadas exitosamente", confirmedImages));
     }
 
     @DeleteMapping("/{productId}/images/{imageId}")
