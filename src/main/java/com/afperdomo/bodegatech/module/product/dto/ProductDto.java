@@ -1,5 +1,6 @@
 package com.afperdomo.bodegatech.module.product.dto;
 
+import com.afperdomo.bodegatech.module.category.dto.CategorySummaryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -43,8 +44,8 @@ public class ProductDto {
     )
     private String sku;
 
-    @Schema(description = "Categoría del producto", example = "Electrónica")
-    private String category;
+    @Schema(description = "Categoría del producto (resumen)")
+    private CategorySummaryDto category;
 
     @Schema(description = "URL de la imagen del producto", example = "https://example.com/images/laptop.jpg")
     private String imageUrl;

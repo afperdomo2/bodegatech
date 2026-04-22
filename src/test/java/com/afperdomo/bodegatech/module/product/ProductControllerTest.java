@@ -5,6 +5,7 @@ import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
 import com.afperdomo.bodegatech.module.product.dto.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
+import com.afperdomo.bodegatech.module.category.dto.CategorySummaryDto;
 import com.afperdomo.bodegatech.common.response.ApiResponse;
 import com.afperdomo.bodegatech.common.response.PagedResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,24 +45,34 @@ class ProductControllerTest {
     private CreateProductRequest createRequest;
     private UpdateProductRequest updateRequest;
     private UUID productId;
+    private UUID categoryId;
+    private CategorySummaryDto categorySummaryDto;
 
     @BeforeEach
     void setUp() {
         productId = UUID.randomUUID();
+        categoryId = UUID.randomUUID();
 
+        // Setup CategorySummaryDto
+        categorySummaryDto = new CategorySummaryDto();
+        categorySummaryDto.setId(categoryId);
+        categorySummaryDto.setName("Electrónica");
+
+        // Setup CreateProductRequest
         createRequest = new CreateProductRequest();
         createRequest.setName("Laptop Dell");
         createRequest.setDescription("Laptop de 15 pulgadas");
         createRequest.setPrice(new BigDecimal("1500.00"));
         createRequest.setStock(10);
-        createRequest.setCategory("Electrónica");
+        createRequest.setCategoryId(categoryId);
         createRequest.setImageUrl("https://example.com/images/laptop.jpg");
 
-        // updateRequest con solo algunos campos (PATCH parcial)
+        // Setup UpdateProductRequest
         updateRequest = new UpdateProductRequest();
         updateRequest.setName("Laptop Dell Pro");
         updateRequest.setPrice(new BigDecimal("1800.00"));
 
+        // Setup ProductDto
         productDto = new ProductDto();
         productDto.setId(productId);
         productDto.setName("Laptop Dell");
@@ -69,7 +80,7 @@ class ProductControllerTest {
         productDto.setPrice(new BigDecimal("1500.00"));
         productDto.setStock(10);
         productDto.setSku("LAP-ELE-4F2A");
-        productDto.setCategory("Electrónica");
+        productDto.setCategory(categorySummaryDto);
         productDto.setImageUrl("https://example.com/images/laptop.jpg");
         productDto.setIsActive(true);
         productDto.setCreatedAt(LocalDateTime.now());
@@ -115,6 +126,7 @@ class ProductControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Laptop Dell", response.getBody().getData().getName());
+        assertEquals(categoryId, response.getBody().getData().getCategory().getId());
         verify(productService, times(1)).findProductById(productId);
     }
 
@@ -147,47 +159,52 @@ class ProductControllerTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Laptop Dell", response.getBody().getData().getName());
+        assertEquals("LAP-ELE-4F2A", response.getBody().getData().getSku());
+        assertEquals(categoryId, response.getBody().getData().getCategory().getId());
         verify(productService, times(1)).createProduct(any(CreateProductRequest.class));
     }
 
     @Test
-    void testCreateProductWithDuplicateSku() {
+    void testCreateProductMissingCategoryId() {
         // Arrange
+        CreateProductRequest invalidRequest = new CreateProductRequest();
+        invalidRequest.setName("Laptop");
+        invalidRequest.setPrice(new BigDecimal("1500.00"));
+        invalidRequest.setStock(10);
+        // categoryId no se envía
+
         when(productService.createProduct(any(CreateProductRequest.class)))
-                .thenThrow(new com.afperdomo.bodegatech.common.exception.BusinessException(
-                        "DUPLICATE_SKU", "SKU duplicado"
+                .thenThrow(new com.afperdomo.bodegatech.common.exception.ResourceNotFoundException(
+                        "Categoría no encontrada"
                 ));
 
         // Act & Assert
-        assertThrows(com.afperdomo.bodegatech.common.exception.BusinessException.class, () ->
-                productController.createProduct(createRequest)
+        assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () ->
+                productController.createProduct(invalidRequest)
         );
-        verify(productService, times(1)).createProduct(any(CreateProductRequest.class));
     }
 
     @Test
     void testUpdateProductSuccess() {
         // Arrange
-        when(productService.updateProduct(eq(productId), any(UpdateProductRequest.class)))
-                .thenReturn(productDto);
+        when(productService.updateProduct(productId, updateRequest)).thenReturn(productDto);
 
         // Act
-        ResponseEntity<ApiResponse<ProductDto>> response =
-                productController.updateProduct(productId, updateRequest);
+        ResponseEntity<ApiResponse<ProductDto>> response = productController.updateProduct(productId, updateRequest);
 
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Laptop Dell", response.getBody().getData().getName());
-        verify(productService, times(1)).updateProduct(eq(productId), any(UpdateProductRequest.class));
+        verify(productService, times(1)).updateProduct(productId, updateRequest);
     }
 
     @Test
     void testUpdateProductNotFound() {
         // Arrange
         UUID nonExistentId = UUID.randomUUID();
-        when(productService.updateProduct(eq(nonExistentId), any(UpdateProductRequest.class)))
+        when(productService.updateProduct(nonExistentId, updateRequest))
                 .thenThrow(new com.afperdomo.bodegatech.common.exception.ResourceNotFoundException(
                         "Producto no encontrado"
                 ));
@@ -196,7 +213,7 @@ class ProductControllerTest {
         assertThrows(com.afperdomo.bodegatech.common.exception.ResourceNotFoundException.class, () ->
                 productController.updateProduct(nonExistentId, updateRequest)
         );
-        verify(productService, times(1)).updateProduct(eq(nonExistentId), any(UpdateProductRequest.class));
+        verify(productService, times(1)).updateProduct(nonExistentId, updateRequest);
     }
 
     @Test

@@ -35,9 +35,15 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, SkuVali
     Optional<Product> findByIdActive(UUID id);
 
     /**
-     * Busca productos por categoría.
+     * Busca productos por categoría (UUID).
      */
-    Page<Product> findByCategoryAndIsActiveTrue(String category, Pageable pageable);
+    Page<Product> findByCategoryIdAndIsActiveTrue(UUID categoryId, Pageable pageable);
+
+    /**
+     * Cuenta productos activos de una categoría.
+     * Utilizado para validar si una categoría puede ser eliminada.
+     */
+    long countByCategoryIdAndIsActiveTrue(UUID categoryId);
 
     /**
      * Implementación del método de validación de SKU.

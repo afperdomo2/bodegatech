@@ -1,6 +1,7 @@
 package com.afperdomo.bodegatech.module.product.entity;
 
 import com.afperdomo.bodegatech.common.audit.BaseEntity;
+import com.afperdomo.bodegatech.module.category.entity.Category;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -24,7 +25,8 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "products", indexes = {
         @Index(name = "idx_sku", columnList = "sku"),
-        @Index(name = "idx_is_active", columnList = "is_active")
+        @Index(name = "idx_is_active", columnList = "is_active"),
+        @Index(name = "idx_category_id", columnList = "category_id")
 })
 @EqualsAndHashCode(callSuper = true)
 public class Product extends BaseEntity {
@@ -48,8 +50,9 @@ public class Product extends BaseEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String sku;
 
-    @Column(length = 100)
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
     @Column(length = 500)
     private String imageUrl;

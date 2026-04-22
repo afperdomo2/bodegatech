@@ -6,6 +6,8 @@ import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
+import com.afperdomo.bodegatech.module.category.entity.Category;
+import com.afperdomo.bodegatech.module.category.repository.CategoryRepository;
 import com.afperdomo.bodegatech.common.exception.BusinessException;
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
 import com.afperdomo.bodegatech.common.response.PagedResponse;
@@ -32,21 +34,12 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final SkuGenerator skuGenerator;
+    private final CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)
-    public PagedResponse<ProductDto> findAllProducts(Pageable pageable) {
+    public Page<ProductDto> findAllProducts(Pageable pageable) {
         log.info("Obteniendo productos activos. Página: {}, Tamaño: {}", pageable.getPageNumber(), pageable.getPageSize());
-
-        Page<Product> products = productRepository.findAllActive(pageable);
-
-        return PagedResponse.<ProductDto>builder()
-                .content(products.map(productMapper::toDto).toList())
-                .page(products.getNumber())
-                .size(products.getSize())
-                .totalElements(products.getTotalElements())
-                .totalPages(products.getTotalPages())
-                .last(products.isLast())
-                .build();
+        return productRepository.findAllActive(pageable).map(productMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -62,15 +55,20 @@ public class ProductService {
     public ProductDto createProduct(CreateProductRequest request) {
         log.info("Creando nuevo producto: {}", request.getName());
 
+        // Buscar y validar la categoría
+        Category category = categoryRepository.findByIdActive(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría", request.getCategoryId()));
+
         // Generar SKU único automáticamente basado en nombre y categoría
         String generatedSku = skuGenerator.generateUniqueSku(
                 request.getName(),
-                request.getCategory(),
+                category.getName(),
                 productRepository
         );
 
         Product product = productMapper.toEntity(request);
         product.setSku(generatedSku);
+        product.setCategory(category);
         product.setIsActive(true);
 
         Product savedProduct = productRepository.save(product);
@@ -85,19 +83,32 @@ public class ProductService {
         Product product = productRepository.findByIdActive(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
 
+        // Si la categoría cambió, validar que exista
+        Category newCategory = product.getCategory();
+        if (request.getCategoryId() != null && !request.getCategoryId().equals(product.getCategory().getId())) {
+            newCategory = categoryRepository.findByIdActive(request.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Categoría", request.getCategoryId()));
+        }
+
         // Regenerar SKU SOLO si cambian name o category
+        String currentCategoryName = product.getCategory().getName();
+        String newCategoryName = newCategory.getName();
+
         boolean nameChanged = request.getName() != null &&
                 !request.getName().equals(product.getName());
-        boolean categoryChanged = request.getCategory() != null &&
-                !request.getCategory().equals(product.getCategory());
+        boolean categoryChanged = request.getCategoryId() != null &&
+                !newCategoryName.equals(currentCategoryName);
 
         if (nameChanged || categoryChanged) {
             String newName = request.getName() != null ? request.getName() : product.getName();
-            String newCategory = request.getCategory() != null ? request.getCategory() : product.getCategory();
-
-            String newSku = skuGenerator.generateUniqueSku(newName, newCategory, productRepository);
+            String newSku = skuGenerator.generateUniqueSku(newName, newCategoryName, productRepository);
             product.setSku(newSku);
             log.debug("SKU regenerado para producto {}: {} → {}", id, product.getSku(), newSku);
+        }
+
+        // Asignar la nueva categoría si cambió
+        if (request.getCategoryId() != null) {
+            product.setCategory(newCategory);
         }
 
         productMapper.updateEntity(request, product);

@@ -134,6 +134,30 @@ public class GlobalExceptionHandler {
     }
 
     // -------------------------------------------------------------------------
+    // 409 — Categoría en uso (tiene productos asignados)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(CategoryInUseException.class)
+    public ResponseEntity<ProblemDetail> handleCategoryInUse(
+            CategoryInUseException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.CONFLICT,
+                "category-in-use",
+                "Categoría en uso",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        problem.setProperty("categoryName", ex.getCategoryName());
+        problem.setProperty("productCount", ex.getProductCount());
+
+        log.warn("Intento de eliminar categoría en uso en {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
     // 500 — Error en generación de SKU
     // -------------------------------------------------------------------------
 

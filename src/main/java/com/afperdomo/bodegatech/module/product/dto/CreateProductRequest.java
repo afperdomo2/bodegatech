@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * DTO para crear un nuevo producto.
@@ -42,8 +43,9 @@ public class CreateProductRequest {
     @Schema(description = "Cantidad inicial en stock", example = "10")
     private Integer stock;
 
-    @Schema(description = "Categoría del producto", example = "Electrónica")
-    private String category;
+    @NotNull(message = "La categoría es obligatoria")
+    @Schema(description = "ID de la categoría del producto", example = "123e4567-e89b-12d3-a456-426614174000")
+    private UUID categoryId;
 
     @Schema(description = "URL de la imagen del producto", example = "https://example.com/images/laptop.jpg")
     private String imageUrl;

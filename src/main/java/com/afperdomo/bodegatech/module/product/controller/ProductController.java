@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -47,21 +48,13 @@ public class ProductController {
     @GetMapping
     @Operation(
             summary = "Listar todos los productos",
-            description = """
-                    Obtiene una lista de todos los productos activos.
-
-                    **Endpoint paginado** — soporta los siguientes parámetros de paginación:
-                    - `page`: número de página (base 0, por defecto 0)
-                    - `size`: elementos por página (por defecto 10)
-                    - `sortBy`: campo de ordenamiento (por defecto `createdAt`)
-                    - `direction`: dirección del ordenamiento — `ASC` o `DESC` (por defecto `DESC`)
-                    """
+            description = "Obtiene una lista de todos los productos activos"
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<PagedResponse<ProductDto>>> getAllProducts(
+    public ResponseEntity<ApiResponse<Page<ProductDto>>> getAllProducts(
             @Parameter(description = "Número de página (comenzando en 0)")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Cantidad de elementos por página")
@@ -72,7 +65,7 @@ public class ProductController {
             @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        PagedResponse<ProductDto> products = productService.findAllProducts(pageable);
+        Page<ProductDto> products = productService.findAllProducts(pageable);
 
         return ResponseEntity.ok(ApiResponse.success("Productos obtenidos exitosamente", products));
     }

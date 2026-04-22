@@ -7,6 +7,9 @@ import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
+import com.afperdomo.bodegatech.module.category.entity.Category;
+import com.afperdomo.bodegatech.module.category.repository.CategoryRepository;
+import com.afperdomo.bodegatech.module.category.dto.CategorySummaryDto;
 import com.afperdomo.bodegatech.common.exception.BusinessException;
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
 import com.afperdomo.bodegatech.common.response.PagedResponse;
@@ -48,45 +51,69 @@ class ProductServiceTest {
     @Mock
     private SkuGenerator skuGenerator;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
     @InjectMocks
     private ProductService productService;
 
     private Product product;
+    private Category category;
     private CreateProductRequest createRequest;
     private UpdateProductRequest updateRequest;
     private ProductDto productDto;
+    private CategorySummaryDto categorySummaryDto;
     private UUID productId;
+    private UUID categoryId;
 
     @BeforeEach
     void setUp() {
         productId = UUID.randomUUID();
+        categoryId = UUID.randomUUID();
 
+        // Setup Category
+        category = new Category();
+        category.setId(categoryId);
+        category.setName("Electrónica");
+        category.setDescription("Productos electrónicos");
+        category.setIsActive(true);
+        category.setCreatedAt(LocalDateTime.now());
+        category.setUpdatedAt(LocalDateTime.now());
+
+        // Setup Product
         product = new Product();
         product.setId(productId);
         product.setName("Laptop Dell");
         product.setDescription("Laptop de 15 pulgadas");
         product.setPrice(new BigDecimal("1500.00"));
         product.setStock(10);
-        product.setSku("DELL-LAPTOP-001");
-        product.setCategory("Electrónica");
+        product.setSku("LAP-ELE-4F2A");
+        product.setCategory(category);
         product.setImageUrl("https://example.com/images/laptop.jpg");
         product.setIsActive(true);
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
 
+        // Setup CategorySummaryDto
+        categorySummaryDto = new CategorySummaryDto();
+        categorySummaryDto.setId(categoryId);
+        categorySummaryDto.setName("Electrónica");
+
+        // Setup CreateProductRequest
         createRequest = new CreateProductRequest();
         createRequest.setName("Laptop Dell");
         createRequest.setDescription("Laptop de 15 pulgadas");
         createRequest.setPrice(new BigDecimal("1500.00"));
         createRequest.setStock(10);
-        createRequest.setCategory("Electrónica");
+        createRequest.setCategoryId(categoryId);
         createRequest.setImageUrl("https://example.com/images/laptop.jpg");
 
-        // updateRequest con solo algunos campos (PATCH parcial — los demás quedan null y se ignoran)
+        // Setup UpdateProductRequest
         updateRequest = new UpdateProductRequest();
         updateRequest.setName("Laptop Dell Pro");
         updateRequest.setPrice(new BigDecimal("1800.00"));
 
+        // Setup ProductDto
         productDto = new ProductDto();
         productDto.setId(productId);
         productDto.setName("Laptop Dell");
@@ -94,7 +121,7 @@ class ProductServiceTest {
         productDto.setPrice(new BigDecimal("1500.00"));
         productDto.setStock(10);
         productDto.setSku("LAP-ELE-4F2A");
-        productDto.setCategory("Electrónica");
+        productDto.setCategory(categorySummaryDto);
         productDto.setImageUrl("https://example.com/images/laptop.jpg");
         productDto.setIsActive(true);
         productDto.setCreatedAt(LocalDateTime.now());
@@ -152,7 +179,8 @@ class ProductServiceTest {
     @Test
     void testCreateProductSuccess() {
         // Arrange
-        when(skuGenerator.generateUniqueSku(createRequest.getName(), createRequest.getCategory(), productRepository))
+        when(categoryRepository.findByIdActive(categoryId)).thenReturn(Optional.of(category));
+        when(skuGenerator.generateUniqueSku("Laptop Dell", "Electrónica", productRepository))
                 .thenReturn("LAP-ELE-4F2A");
         when(productMapper.toEntity(createRequest)).thenReturn(product);
         when(productRepository.save(any(Product.class))).thenReturn(product);
@@ -164,22 +192,44 @@ class ProductServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals("Laptop Dell", result.getName());
-        verify(skuGenerator, times(1)).generateUniqueSku(createRequest.getName(), createRequest.getCategory(), productRepository);
+        verify(categoryRepository, times(1)).findByIdActive(categoryId);
+        verify(skuGenerator, times(1)).generateUniqueSku("Laptop Dell", "Electrónica", productRepository);
         verify(productRepository, times(1)).save(any(Product.class));
     }
 
     @Test
-    void testCreateProductDuplicateSku() {
-        // Arrange (skip — la validación ahora ocurre en SkuGenerator, no aquí)
-        // Este test es obsoleto con la nueva estrategia de generación de SKU
+    void testCreateProductCategoryNotFound() {
+        // Arrange
+        UUID nonExistentCategoryId = UUID.randomUUID();
+        createRequest.setCategoryId(nonExistentCategoryId);
+        when(categoryRepository.findByIdActive(nonExistentCategoryId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () ->
+                productService.createProduct(createRequest)
+        );
+        verify(categoryRepository, times(1)).findByIdActive(nonExistentCategoryId);
+        verify(skuGenerator, never()).generateUniqueSku(anyString(), anyString(), any());
+        verify(productRepository, never()).save(any());
     }
 
      @Test
      void testUpdateProductSuccess() {
-         // Arrange - updateRequest contiene nombre y precio (nombre cambió)
+         // Arrange - updateRequest contiene nombre, precio y categoría diferente (nombre cambió)
+         UUID newCategoryId = UUID.randomUUID();
+         Category newCategory = new Category();
+         newCategory.setId(newCategoryId);
+         newCategory.setName("Informática");
+         newCategory.setDescription("Productos de informática");
+         newCategory.setIsActive(true);
+         newCategory.setCreatedAt(LocalDateTime.now());
+         newCategory.setUpdatedAt(LocalDateTime.now());
+
+         updateRequest.setCategoryId(newCategoryId);
          when(productRepository.findByIdActive(productId)).thenReturn(Optional.of(product));
-         when(skuGenerator.generateUniqueSku("Laptop Dell Pro", "Electrónica", productRepository))
-                 .thenReturn("LAP-ELE-5A3B");
+         when(categoryRepository.findByIdActive(newCategoryId)).thenReturn(Optional.of(newCategory));
+         when(skuGenerator.generateUniqueSku("Laptop Dell Pro", "Informática", productRepository))
+                 .thenReturn("LAP-INF-7C4D");
          doNothing().when(productMapper).updateEntity(updateRequest, product);
          when(productRepository.save(any(Product.class))).thenReturn(product);
          when(productMapper.toDto(product)).thenReturn(productDto);
@@ -189,49 +239,49 @@ class ProductServiceTest {
 
          // Assert
          assertNotNull(result);
-         // SKU debe regenerarse porque nombre cambió
-         verify(skuGenerator, times(1)).generateUniqueSku("Laptop Dell Pro", "Electrónica", productRepository);
+         // SKU debe regenerarse porque nombre y categoría cambiaron
+         verify(skuGenerator, times(1)).generateUniqueSku("Laptop Dell Pro", "Informática", productRepository);
          verify(productRepository, times(1)).findByIdActive(productId);
+         verify(categoryRepository, times(1)).findByIdActive(newCategoryId);
          verify(productRepository, times(1)).save(any(Product.class));
          verify(productMapper, times(1)).updateEntity(updateRequest, product);
      }
 
-     @Test
-     void testUpdateProductNotFound() {
-         // Arrange
-         UUID nonExistentId = UUID.randomUUID();
-         when(productRepository.findByIdActive(nonExistentId)).thenReturn(Optional.empty());
+    @Test
+    void testUpdateProductNotFound() {
+        // Arrange
+        UUID nonExistentId = UUID.randomUUID();
+        when(productRepository.findByIdActive(nonExistentId)).thenReturn(Optional.empty());
 
-         // Act & Assert
-         assertThrows(ResourceNotFoundException.class, () ->
-                 productService.updateProduct(nonExistentId, updateRequest)
-         );
-         verify(productRepository, never()).save(any());
-     }
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () ->
+                productService.updateProduct(nonExistentId, updateRequest)
+        );
+        verify(productRepository, never()).save(any());
+    }
 
-     @Test
-     void testUpdateProductSkuNotRegeneratedWhenOnlyPriceChanges() {
-         // Arrange - actualizar solo precio (sin cambiar nombre ni categoría)
-         UpdateProductRequest priceOnlyRequest = new UpdateProductRequest();
-         priceOnlyRequest.setPrice(new BigDecimal("2000.00"));
+    @Test
+    void testUpdateProductSkuNotRegeneratedWhenOnlyPriceChanges() {
+        // Arrange - actualizar solo precio (sin cambiar nombre ni categoría)
+        UpdateProductRequest priceOnlyRequest = new UpdateProductRequest();
+        priceOnlyRequest.setPrice(new BigDecimal("2000.00"));
 
-         when(productRepository.findByIdActive(productId)).thenReturn(Optional.of(product));
-         doNothing().when(productMapper).updateEntity(priceOnlyRequest, product);
-         when(productRepository.save(any(Product.class))).thenReturn(product);
-         when(productMapper.toDto(product)).thenReturn(productDto);
+        when(productRepository.findByIdActive(productId)).thenReturn(Optional.of(product));
+        doNothing().when(productMapper).updateEntity(priceOnlyRequest, product);
+        when(productRepository.save(any(Product.class))).thenReturn(product);
+        when(productMapper.toDto(product)).thenReturn(productDto);
 
-         // Act
-         ProductDto result = productService.updateProduct(productId, priceOnlyRequest);
+        // Act
+        ProductDto result = productService.updateProduct(productId, priceOnlyRequest);
 
-         // Assert
-         assertNotNull(result);
-         // SKU NO debe regenerarse porque ni nombre ni categoría cambiaron
-         verify(skuGenerator, never()).generateUniqueSku(anyString(), anyString(), any());
-         verify(productRepository, times(1)).findByIdActive(productId);
-         verify(productRepository, times(1)).save(any(Product.class));
-         verify(productMapper, times(1)).updateEntity(priceOnlyRequest, product);
-     }
-
+        // Assert
+        assertNotNull(result);
+        // SKU NO debe regenerarse porque ni nombre ni categoría cambiaron
+        verify(skuGenerator, never()).generateUniqueSku(anyString(), anyString(), any());
+        verify(productRepository, times(1)).findByIdActive(productId);
+        verify(productRepository, times(1)).save(any(Product.class));
+        verify(productMapper, times(1)).updateEntity(priceOnlyRequest, product);
+    }
 
     @Test
     void testDeleteProductSuccess() {

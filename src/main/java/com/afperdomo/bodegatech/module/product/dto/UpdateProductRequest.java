@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * DTO para actualizar parcialmente un producto existente.
@@ -43,8 +44,8 @@ public class UpdateProductRequest {
     @Schema(description = "Cantidad disponible en stock (opcional)", example = "5", nullable = true)
     private Integer stock;
 
-    @Schema(description = "Categoría del producto (opcional)", example = "Electrónica", nullable = true)
-    private String category;
+    @Schema(description = "ID de la categoría del producto (opcional)", example = "123e4567-e89b-12d3-a456-426614174000", nullable = true)
+    private UUID categoryId;
 
     @Schema(description = "URL de la imagen del producto (opcional)", example = "https://example.com/images/laptop-pro.jpg", nullable = true)
     private String imageUrl;
