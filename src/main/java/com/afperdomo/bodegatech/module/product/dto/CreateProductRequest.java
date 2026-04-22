@@ -1,6 +1,7 @@
 package com.afperdomo.bodegatech.module.product.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -10,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -18,6 +20,9 @@ import java.util.UUID;
  *
  * <p>El SKU se genera automáticamente por el sistema basado en el nombre y categoría.
  * No es necesario (ni permitido) enviarlo en el request.
+ *
+ * <p>Las imágenes son opcionales. Si se proporcionan, se generarán URLs pre-firmadas
+ * de S3 en la respuesta y se crearán registros en la BD.
  */
 @Data
 @Builder
@@ -49,4 +54,8 @@ public class CreateProductRequest {
 
     @Schema(description = "URL de la imagen del producto", example = "https://example.com/images/laptop.jpg")
     private String imageUrl;
+
+    @Valid
+    @Schema(description = "Lista de imágenes a cargar (opcional)")
+    private List<ImageUploadRequest> imageRequests;
 }

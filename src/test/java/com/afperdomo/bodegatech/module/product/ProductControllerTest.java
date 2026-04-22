@@ -2,6 +2,7 @@ package com.afperdomo.bodegatech.module.product;
 
 import com.afperdomo.bodegatech.module.product.controller.ProductController;
 import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.ProductCreateResponseDto;
 import com.afperdomo.bodegatech.module.product.dto.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
@@ -146,18 +147,24 @@ class ProductControllerTest {
     @Test
     void testCreateProductSuccess() {
         // Arrange
-        when(productService.createProduct(any(CreateProductRequest.class))).thenReturn(productDto);
+        ProductCreateResponseDto createResponse = ProductCreateResponseDto.builder()
+                .id(productId)
+                .sku("LAP-ELE-4F2A")
+                .uploadUrls(List.of())
+                .build();
+
+        when(productService.createProduct(any(CreateProductRequest.class))).thenReturn(createResponse);
 
         // Act
-        ResponseEntity<ApiResponse<ProductDto>> response = productController.createProduct(createRequest);
+        ResponseEntity<ApiResponse<ProductCreateResponseDto>> response = productController.createProduct(createRequest);
 
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertTrue(response.getBody().isSuccess());
-        assertEquals("Laptop Dell", response.getBody().getData().getName());
+        assertEquals(productId, response.getBody().getData().getId());
         assertEquals("LAP-ELE-4F2A", response.getBody().getData().getSku());
-        assertEquals(categoryId, response.getBody().getData().getCategory().getId());
+        assertEquals(0, response.getBody().getData().getUploadUrls().size());
         verify(productService, times(1)).createProduct(any(CreateProductRequest.class));
     }
 

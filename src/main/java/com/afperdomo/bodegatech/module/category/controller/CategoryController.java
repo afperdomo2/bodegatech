@@ -29,10 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
-/**
- * Controlador REST para categorías.
- * Expone endpoints CRUD para gestionar categorías de productos.
- */
 @RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
@@ -41,14 +37,8 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    /**
-     * Obtiene todos los categorías activas con paginación.
-     */
     @GetMapping
-    @Operation(
-            summary = "Listar todas las categorías",
-            description = "Obtiene una lista de todas las categorías activas."
-    )
+    @Operation( summary = "Listar todas las categorías", description = "Obtiene una lista de todas las categorías activas." )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de categorías obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -68,9 +58,6 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Categorías obtenidas exitosamente", result));
     }
 
-    /**
-     * Obtiene una categoría específica por su ID.
-     */
     @GetMapping("/{id}")
     @Operation(summary = "Obtener categoría por ID", description = "Obtiene los detalles de una categoría específica")
     @ApiResponses(value = {
@@ -85,9 +72,6 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Categoría obtenida exitosamente", result));
     }
 
-    /**
-     * Crea una nueva categoría.
-     */
     @PostMapping
     @Operation(summary = "Crear nueva categoría", description = "Crea una nueva categoría de productos")
     @ApiResponses(value = {
@@ -104,19 +88,8 @@ public class CategoryController {
                 .body(ApiResponse.success("Categoría creada exitosamente", result));
     }
 
-    /**
-     * Actualiza parcialmente una categoría existente (PATCH).
-     * Solo se modifican los campos presentes en el cuerpo de la solicitud.
-     */
     @PatchMapping("/{id}")
-    @Operation(
-            summary = "Actualizar categoría parcialmente",
-            description = """
-                    Actualiza los campos indicados de una categoría existente.
-                    Solo los campos presentes en el cuerpo de la solicitud son modificados;
-                    los campos ausentes conservan su valor actual.
-                    """
-    )
+    @Operation( summary = "Actualizar categoría parcialmente", description = "Actualiza los campos indicados de una categoría existente.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Categoría actualizada exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
@@ -133,9 +106,6 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Categoría actualizada exitosamente", result));
     }
 
-    /**
-     * Desactiva una categoría (soft delete).
-     */
     @DeleteMapping("/{id}")
     @Operation(summary = "Desactivar categoría", description = "Desactiva una categoría (soft delete, no se elimina de la base de datos). No se puede eliminar si tiene productos activos.")
     @ApiResponses(value = {

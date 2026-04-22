@@ -1,11 +1,13 @@
 package com.afperdomo.bodegatech.module.product;
 
 import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.ProductCreateResponseDto;
 import com.afperdomo.bodegatech.module.product.dto.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
+import com.afperdomo.bodegatech.module.product.service.ProductImageService;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import com.afperdomo.bodegatech.module.category.repository.CategoryRepository;
@@ -51,6 +53,9 @@ class ProductServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private ProductImageService productImageService;
 
     @InjectMocks
     private ProductService productService;
@@ -182,14 +187,15 @@ class ProductServiceTest {
                 .thenReturn("LAP-ELE-4F2A");
         when(productMapper.toEntity(createRequest)).thenReturn(product);
         when(productRepository.save(any(Product.class))).thenReturn(product);
-        when(productMapper.toDto(product)).thenReturn(productDto);
 
         // Act
-        ProductDto result = productService.createProduct(createRequest);
+        ProductCreateResponseDto result = productService.createProduct(createRequest);
 
         // Assert
         assertNotNull(result);
-        assertEquals("Laptop Dell", result.getName());
+        assertEquals(productId, result.getId());
+        assertEquals("LAP-ELE-4F2A", result.getSku());
+        assertEquals(0, result.getUploadUrls().size());
         verify(categoryRepository, times(1)).findByIdActive(categoryId);
         verify(skuGenerator, times(1)).generateUniqueSku("Laptop Dell", "Electrónica", productRepository);
         verify(productRepository, times(1)).save(any(Product.class));

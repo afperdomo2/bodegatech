@@ -1,8 +1,12 @@
 package com.afperdomo.bodegatech.module.product.controller;
 
 import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.ImageUploadRequest;
+import com.afperdomo.bodegatech.module.product.dto.ImageUploadUrlDto;
+import com.afperdomo.bodegatech.module.product.dto.ProductCreateResponseDto;
 import com.afperdomo.bodegatech.module.product.dto.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
+import com.afperdomo.bodegatech.module.product.service.ProductImageService;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
 import com.afperdomo.bodegatech.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,12 +31,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
-/**
- * Controlador REST para la gestión de productos.
- * Proporciona endpoints para operaciones CRUD y listados con paginación.
- */
 @RestController
 @RequestMapping("/products")
 @RequiredArgsConstructor
@@ -40,15 +41,10 @@ import java.util.UUID;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductImageService productImageService;
 
-    /**
-     * Obtiene todos los productos activos con paginación.
-     */
     @GetMapping
-    @Operation(
-            summary = "Listar todos los productos",
-            description = "Obtiene una lista de todos los productos activos"
-    )
+    @Operation( summary = "Listar todos los productos", description = "Obtiene una lista de todos los productos activos" )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -69,9 +65,6 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("Productos obtenidos exitosamente", products));
     }
 
-    /**
-     * Obtiene un producto específico por su ID.
-     */
     @GetMapping("/{id}")
     @Operation(summary = "Obtener producto por ID", description = "Obtiene los detalles de un producto específico")
     @ApiResponses(value = {
@@ -87,46 +80,25 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("Producto obtenido exitosamente", product));
     }
 
-    /**
-     * Crea un nuevo producto.
-     */
     @PostMapping
-    @Operation(summary = "Crear nuevo producto", description = "Crea un nuevo producto en la bodega")
+    @Operation(summary = "Crear nuevo producto", description = "Crea un nuevo producto en la bodega con imágenes opcionales")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Producto creado exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Conflicto — SKU duplicado"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<ProductDto>> createProduct(
+    public ResponseEntity<ApiResponse<ProductCreateResponseDto>> createProduct(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Datos del producto a crear", required = true)
             @Valid @RequestBody CreateProductRequest request) {
 
-        ProductDto product = productService.createProduct(request);
+        ProductCreateResponseDto product = productService.createProduct(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Producto creado exitosamente", product));
     }
 
-    /**
-     * Actualiza parcialmente un producto existente (PATCH).
-     * Solo se modifican los campos presentes en el cuerpo de la solicitud.
-     * El SKU es inmutable y no puede modificarse.
-     */
     @PatchMapping("/{id}")
-    @Operation(
-            summary = "Actualizar producto parcialmente",
-            description = """
-                    Actualiza los campos indicados de un producto existente.
-                    Solo los campos presentes en el cuerpo de la solicitud son modificados;
-                    los campos ausentes conservan su valor actual.
-
-                    El SKU es inmutable y no puede modificarse después de la creación.
-
-                    El campo `version` de la respuesta refleja el número de versión actual del registro
-                    (optimistic locking). Si dos procesos intentan modificar el mismo producto
-                    simultáneamente, el segundo recibirá un error **409 Conflict**.
-                    """
-    )
+    @Operation( summary = "Actualizar producto parcialmente", description = "ctualiza los campos indicados de un producto existente." )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
@@ -144,9 +116,6 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("Producto actualizado exitosamente", product));
     }
 
-    /**
-     * Desactiva un producto (soft delete).
-     */
     @DeleteMapping("/{id}")
     @Operation(summary = "Desactivar producto", description = "Desactiva un producto (soft delete, no se elimina de la base de datos)")
     @ApiResponses(value = {
@@ -159,6 +128,42 @@ public class ProductController {
             @PathVariable UUID id) {
 
         productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{productId}/images")
+    @Operation(summary = "Agregar imágenes a un producto", description = "Agrega una o más imágenes a un producto existente y obtiene URLs pre-firmadas de S3")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Imágenes procesadas exitosamente"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    public ResponseEntity<ApiResponse<List<ImageUploadUrlDto>>> addImagesToProduct(
+            @Parameter(description = "ID único del producto")
+            @PathVariable UUID productId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Lista de imágenes a cargar", required = true)
+            @Valid @RequestBody List<ImageUploadRequest> imageRequests) {
+
+        List<ImageUploadUrlDto> uploadUrls = productImageService.addImagesToProduct(productId, imageRequests);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Imágenes procesadas exitosamente", uploadUrls));
+    }
+
+    @DeleteMapping("/{productId}/images/{imageId}")
+    @Operation(summary = "Eliminar imagen de un producto", description = "Elimina una imagen específica de un producto (pendiente: eliminar de S3)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Imagen eliminada exitosamente"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto o imagen no encontrados"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    public ResponseEntity<Void> deleteImage(
+            @Parameter(description = "ID único del producto propietario de la imagen")
+            @PathVariable UUID productId,
+            @Parameter(description = "ID único de la imagen a eliminar")
+            @PathVariable UUID imageId) {
+
+        productImageService.deleteImage(productId, imageId);
         return ResponseEntity.noContent().build();
     }
 }
