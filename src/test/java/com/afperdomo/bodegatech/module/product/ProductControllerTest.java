@@ -7,13 +7,15 @@ import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
 import com.afperdomo.bodegatech.module.category.dto.CategorySummaryDto;
 import com.afperdomo.bodegatech.common.response.ApiResponse;
-import com.afperdomo.bodegatech.common.response.PagedResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -88,30 +90,25 @@ class ProductControllerTest {
         productDto.setVersion(0L);
     }
 
-    @Test
-    void testGetAllProductsSuccess() {
-        // Arrange
-        PagedResponse<ProductDto> pagedResponse = new PagedResponse<>();
-        pagedResponse.setContent(List.of(productDto));
-        pagedResponse.setPage(0);
-        pagedResponse.setSize(10);
-        pagedResponse.setTotalElements(1);
-        pagedResponse.setTotalPages(1);
-        pagedResponse.setLast(true);
+     @Test
+     void testGetAllProductsSuccess() {
+         // Arrange
+         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+         Page<ProductDto> page = new PageImpl<>(List.of(productDto), pageable, 1);
 
-        when(productService.findAllProducts(any(Pageable.class))).thenReturn(pagedResponse);
+         when(productService.findAllProducts(any(Pageable.class))).thenReturn(page);
 
-        // Act
-        ResponseEntity<ApiResponse<PagedResponse<ProductDto>>> response =
-                productController.getAllProducts(0, 10, "createdAt", Sort.Direction.DESC);
+         // Act
+         ResponseEntity<ApiResponse<Page<ProductDto>>> response =
+                 productController.getAllProducts(0, 10, "createdAt", Sort.Direction.DESC);
 
-        // Assert
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().isSuccess());
-        assertEquals(1, response.getBody().getData().getContent().size());
-        verify(productService, times(1)).findAllProducts(any(Pageable.class));
-    }
+         // Assert
+         assertNotNull(response);
+         assertEquals(HttpStatus.OK, response.getStatusCode());
+         assertTrue(response.getBody().isSuccess());
+         assertEquals(1, response.getBody().getData().getContent().size());
+         verify(productService, times(1)).findAllProducts(any(Pageable.class));
+     }
 
     @Test
     void testGetProductByIdSuccess() {

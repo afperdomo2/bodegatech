@@ -10,9 +10,7 @@ import com.afperdomo.bodegatech.module.product.service.ProductService;
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import com.afperdomo.bodegatech.module.category.repository.CategoryRepository;
 import com.afperdomo.bodegatech.module.category.dto.CategorySummaryDto;
-import com.afperdomo.bodegatech.common.exception.BusinessException;
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
-import com.afperdomo.bodegatech.common.response.PagedResponse;
 import com.afperdomo.bodegatech.common.util.SkuGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -129,24 +127,24 @@ class ProductServiceTest {
         productDto.setVersion(0L);
     }
 
-    @Test
-    void testFindAllProducts() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Product> page = new PageImpl<>(List.of(product), pageable, 1);
+     @Test
+     void testFindAllProducts() {
+         // Arrange
+         Pageable pageable = PageRequest.of(0, 10);
+         Page<Product> page = new PageImpl<>(List.of(product), pageable, 1);
 
-        when(productRepository.findAllActive(pageable)).thenReturn(page);
-        when(productMapper.toDto(product)).thenReturn(productDto);
+         when(productRepository.findAllActive(pageable)).thenReturn(page);
+         when(productMapper.toDto(product)).thenReturn(productDto);
 
-        // Act
-        PagedResponse<ProductDto> result = productService.findAllProducts(pageable);
+         // Act
+         Page<ProductDto> result = productService.findAllProducts(pageable);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getContent().size());
-        assertEquals("Laptop Dell", result.getContent().get(0).getName());
-        verify(productRepository, times(1)).findAllActive(pageable);
-    }
+         // Assert
+         assertNotNull(result);
+         assertEquals(1, result.getContent().size());
+         assertEquals("Laptop Dell", result.getContent().get(0).getName());
+         verify(productRepository, times(1)).findAllActive(pageable);
+     }
 
     @Test
     void testFindProductByIdSuccess() {

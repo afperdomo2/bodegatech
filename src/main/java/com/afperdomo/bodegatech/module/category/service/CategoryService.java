@@ -10,7 +10,6 @@ import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
 import com.afperdomo.bodegatech.common.exception.BusinessException;
 import com.afperdomo.bodegatech.common.exception.CategoryInUseException;
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
-import com.afperdomo.bodegatech.common.response.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,19 +34,9 @@ public class CategoryService {
     private final ProductRepository productRepository;
 
     @Transactional(readOnly = true)
-    public PagedResponse<CategoryDto> findAllCategories(Pageable pageable) {
+    public Page<CategoryDto> findAllCategories(Pageable pageable) {
         log.info("Obteniendo categorías activas. Página: {}, Tamaño: {}", pageable.getPageNumber(), pageable.getPageSize());
-
-        Page<Category> categories = categoryRepository.findAllActive(pageable);
-
-        return PagedResponse.<CategoryDto>builder()
-                .content(categories.map(categoryMapper::toDto).toList())
-                .page(categories.getNumber())
-                .size(categories.getSize())
-                .totalElements(categories.getTotalElements())
-                .totalPages(categories.getTotalPages())
-                .last(categories.isLast())
-                .build();
+        return categoryRepository.findAllActive(pageable).map(categoryMapper::toDto);
     }
 
     @Transactional(readOnly = true)
