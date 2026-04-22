@@ -63,19 +63,24 @@ bodegatech/
 │   │   │   │   └── OpenApiConfig.java
 │   │   │   ├── common/                              # Código transversal
 │   │   │   │   ├── audit/
-│   │   │                   │   │   └── BaseEntity.java              # UUID + createdAt + updatedAt + version (@Version)
+│   │   │   │   │   └── BaseEntity.java              # UUID + createdAt + updatedAt + version (@Version)
 │   │   │   │   ├── exception/
 │   │   │   │   │   ├── GlobalExceptionHandler.java  # RFC 9457 — ProblemDetail
 │   │   │   │   │   ├── BusinessException.java       # 409 Conflict
-│   │   │   │   │   └── ResourceNotFoundException.java # 404 Not Found
-│   │   │   │   └── response/
-│   │   │   │       ├── ApiResponse.java             # Wrapper de respuestas exitosas
-│   │   │   │       └── PagedResponse.java           # Wrapper de respuestas paginadas
+│   │   │   │   │   ├── ResourceNotFoundException.java # 404 Not Found
+│   │   │   │   │   └── SkuGenerationException.java   # 500 Internal Server Error — generación de SKU
+│   │   │   │   ├── response/
+│   │   │   │   │   ├── ApiResponse.java             # Wrapper de respuestas exitosas
+│   │   │   │   │   └── PagedResponse.java           # Wrapper de respuestas paginadas
+│   │   │   │   └── util/
+│   │   │   │       └── SkuGenerator.java            # Componente para generar SKUs únicos
 │   │   │   └── module/
 │   │   │       └── product/                         # Módulo: Productos
 │   │   │           ├── controller/ProductController.java
 │   │   │           ├── service/ProductService.java
-│   │   │           ├── repository/ProductRepository.java
+│   │   │           ├── repository/
+│   │   │           │   ├── ProductRepository.java
+│   │   │           │   └── SkuValidationRepository.java # Interfaz para validación de SKU
 │   │   │           ├── entity/Product.java
 │   │   │           ├── dto/
 │   │   │           │   ├── CreateProductRequest.java
@@ -254,6 +259,71 @@ El endpoint `PATCH /products/{id}` acepta cualquier combinación de campos; los 
   "stock": 20
 }
 ```
+
+### Generación automática de SKU
+
+Los SKU (Stock Keeping Unit) se generan automáticamente en el backend y **no deben ser enviados por el cliente**. El campo `sku` en `CreateProductRequest` no existe — será ignorado si se envía.
+
+#### Formato y estrategia
+
+- **Patrón:** `{nombre_3chars}-{categoria_3chars}-{timestamp_hex_4chars}`
+- **Ejemplo:** `LAP-ELE-4F2A` (de "Laptop" + "Electrónica")
+- **Normalización:**
+  - Se eliminan acentos y caracteres especiales
+  - Se convierten a mayúsculas
+  - Se extraen solo los primeros 3 caracteres del nombre y la categoría
+  - El timestamp en hexadecimal proporciona variabilidad para reintentos
+
+#### Comportamiento por operación
+
+**En `POST` (creación):**
+- Se genera un SKU único automáticamente
+- Si la `category` es `null`, se usa `"GEN"` como valor por defecto
+- Si ocurre una colisión (SKU duplicado), se reintenta hasta 3 veces con diferentes timestamps
+
+**En `PATCH` (actualización):**
+- El SKU se **regenera SOLO** si cambian `name` o `category`
+- Si cambias solo `price` o `stock`, el SKU existente se conserva
+- Ejemplo:
+  ```json
+  // ❌ Esto no regenerará el SKU
+  {
+    "price": 1999.99,
+    "stock": 50
+  }
+  
+  // ✅ Esto sí regenerará el SKU (nombre cambió)
+  {
+    "name": "Laptop Premium",
+    "price": 1999.99
+  }
+  ```
+
+#### Campos en request y response
+
+- **`CreateProductRequest`:** El campo `sku` **no existe** — se genera automáticamente
+- **`ProductDto` (response):** Incluye el campo `sku` con modo lectura (`READ_ONLY` en Swagger)
+
+```json
+// Response — el sku se devuelve pero no se puede cambiar directamente
+{
+  "id": "123e4567-...",
+  "name": "Laptop Dell",
+  "sku": "LAP-ELE-4F2A",
+  "category": "Electrónica",
+  "price": 1500.00,
+  "stock": 10,
+  ...
+}
+```
+
+#### Manejo de errores
+
+Si después de 3 reintentos no se logra generar un SKU único (colisión extrema), la API retorna:
+- **Código HTTP:** `500 Internal Server Error`
+- **Excepción:** `SkuGenerationException`
+
+Este escenario es muy improbable en producción debido a la combinación de nombre + categoría + timestamp.
 
 ### Formato de respuesta paginada
 

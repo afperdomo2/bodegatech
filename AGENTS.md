@@ -1,5 +1,12 @@
 # AGENTS.md — BodegaTech
 
+## Instrucciones para agentes
+
+⚠️ **IMPORTANTE:** Después de completar cualquier requerimiento:
+- **NO hagas commits automáticamente**
+- Prepara los cambios (stage, verificación) pero deja que el usuario haga el commit
+- Solo haz commits si el usuario lo solicita explícitamente
+
 ## Stack
 - Java 25 + Spring Boot 4.0.5 + Gradle
 - PostgreSQL 16 via Docker

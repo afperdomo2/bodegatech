@@ -134,6 +134,28 @@ public class GlobalExceptionHandler {
     }
 
     // -------------------------------------------------------------------------
+    // 500 — Error en generación de SKU
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(SkuGenerationException.class)
+    public ResponseEntity<ProblemDetail> handleSkuGeneration(
+            SkuGenerationException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "sku-generation-error",
+                "Error en generación de SKU",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        log.error("Error en generación de SKU en {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
     // 400 — Errores de validación de campos (@Valid)
     // -------------------------------------------------------------------------
 

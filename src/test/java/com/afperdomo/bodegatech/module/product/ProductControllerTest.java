@@ -54,7 +54,6 @@ class ProductControllerTest {
         createRequest.setDescription("Laptop de 15 pulgadas");
         createRequest.setPrice(new BigDecimal("1500.00"));
         createRequest.setStock(10);
-        createRequest.setSku("DELL-LAPTOP-001");
         createRequest.setCategory("Electrónica");
         createRequest.setImageUrl("https://example.com/images/laptop.jpg");
 
@@ -69,12 +68,13 @@ class ProductControllerTest {
         productDto.setDescription("Laptop de 15 pulgadas");
         productDto.setPrice(new BigDecimal("1500.00"));
         productDto.setStock(10);
-        productDto.setSku("DELL-LAPTOP-001");
+        productDto.setSku("LAP-ELE-4F2A");
         productDto.setCategory("Electrónica");
         productDto.setImageUrl("https://example.com/images/laptop.jpg");
         productDto.setIsActive(true);
         productDto.setCreatedAt(LocalDateTime.now());
         productDto.setUpdatedAt(LocalDateTime.now());
+        productDto.setVersion(0L);
     }
 
     @Test

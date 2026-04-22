@@ -2,7 +2,6 @@ package com.afperdomo.bodegatech.module.product.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -15,6 +14,9 @@ import java.math.BigDecimal;
 /**
  * DTO para crear un nuevo producto.
  * Utilizado en solicitudes POST /products.
+ *
+ * <p>El SKU se genera automáticamente por el sistema basado en el nombre y categoría.
+ * No es necesario (ni permitido) enviarlo en el request.
  */
 @Data
 @Builder
@@ -23,7 +25,7 @@ import java.math.BigDecimal;
 @Schema(description = "Solicitud para crear un nuevo producto")
 public class CreateProductRequest {
 
-    @NotBlank(message = "El nombre del producto es obligatorio")
+    @NotNull(message = "El nombre del producto es obligatorio")
     @Schema(description = "Nombre del producto", example = "Laptop Dell")
     private String name;
 
@@ -39,10 +41,6 @@ public class CreateProductRequest {
     @Min(value = 0, message = "El stock no puede ser negativo")
     @Schema(description = "Cantidad inicial en stock", example = "10")
     private Integer stock;
-
-    @NotBlank(message = "El SKU es obligatorio")
-    @Schema(description = "Código único del producto (SKU). No puede modificarse después de creado.", example = "DELL-LAPTOP-001")
-    private String sku;
 
     @Schema(description = "Categoría del producto", example = "Electrónica")
     private String category;

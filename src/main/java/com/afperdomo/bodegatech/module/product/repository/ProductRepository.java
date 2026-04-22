@@ -12,10 +12,10 @@ import java.util.UUID;
 
 /**
  * Repositorio para la entidad Product.
- * Proporciona operaciones CRUD y consultas personalizadas.
+ * Proporciona operaciones CRUD, consultas personalizadas y validación de SKU.
  */
 @Repository
-public interface ProductRepository extends JpaRepository<Product, UUID> {
+public interface ProductRepository extends JpaRepository<Product, UUID>, SkuValidationRepository {
 
     /**
      * Busca un producto por su SKU.
@@ -38,4 +38,16 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
      * Busca productos por categoría.
      */
     Page<Product> findByCategoryAndIsActiveTrue(String category, Pageable pageable);
+
+    /**
+     * Implementación del método de validación de SKU.
+     * Verifica si un SKU ya existe en la base de datos.
+     *
+     * @param sku el código a verificar
+     * @return true si el SKU existe, false en caso contrario
+     */
+    @Override
+    default boolean skuExists(String sku) {
+        return findBySku(sku).isPresent();
+    }
 }

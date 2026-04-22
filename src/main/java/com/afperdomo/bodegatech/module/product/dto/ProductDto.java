@@ -36,7 +36,11 @@ public class ProductDto {
     @Schema(description = "Cantidad disponible en stock", example = "10")
     private Integer stock;
 
-    @Schema(description = "Código único del producto (SKU)", example = "DELL-LAPTOP-001")
+    @Schema(
+            description = "Código único del producto (SKU) — generado automáticamente por el sistema basado en nombre y categoría",
+            example = "LAP-ELE-4F2A",
+            accessMode = Schema.AccessMode.READ_ONLY
+    )
     private String sku;
 
     @Schema(description = "Categoría del producto", example = "Electrónica")
