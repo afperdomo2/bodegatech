@@ -19,9 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -45,7 +45,18 @@ public class ProductController {
      * Obtiene todos los productos activos con paginación.
      */
     @GetMapping
-    @Operation(summary = "Listar todos los productos", description = "Obtiene una lista paginada de todos los productos activos")
+    @Operation(
+            summary = "Listar todos los productos",
+            description = """
+                    Obtiene una lista de todos los productos activos.
+
+                    **Endpoint paginado** — soporta los siguientes parámetros de paginación:
+                    - `page`: número de página (base 0, por defecto 0)
+                    - `size`: elementos por página (por defecto 10)
+                    - `sortBy`: campo de ordenamiento (por defecto `createdAt`)
+                    - `direction`: dirección del ordenamiento — `ASC` o `DESC` (por defecto `DESC`)
+                    """
+    )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -105,21 +116,36 @@ public class ProductController {
     }
 
     /**
-     * Actualiza un producto existente.
-     * El SKU no puede modificarse.
+     * Actualiza parcialmente un producto existente (PATCH).
+     * Solo se modifican los campos presentes en el cuerpo de la solicitud.
+     * El SKU es inmutable y no puede modificarse.
      */
-    @PutMapping("/{id}")
-    @Operation(summary = "Actualizar producto", description = "Actualiza los datos de un producto existente. El SKU es inmutable.")
+    @PatchMapping("/{id}")
+    @Operation(
+            summary = "Actualizar producto parcialmente",
+            description = """
+                    Actualiza los campos indicados de un producto existente.
+                    Solo los campos presentes en el cuerpo de la solicitud son modificados;
+                    los campos ausentes conservan su valor actual.
+
+                    El SKU es inmutable y no puede modificarse después de la creación.
+
+                    El campo `version` de la respuesta refleja el número de versión actual del registro
+                    (optimistic locking). Si dos procesos intentan modificar el mismo producto
+                    simultáneamente, el segundo recibirá un error **409 Conflict**.
+                    """
+    )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Conflicto de concurrencia — el registro fue modificado por otro proceso"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
     public ResponseEntity<ApiResponse<ProductDto>> updateProduct(
             @Parameter(description = "ID único del producto a actualizar")
             @PathVariable UUID id,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Datos del producto a actualizar", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Campos a actualizar (solo los campos enviados serán modificados)", required = true)
             @Valid @RequestBody UpdateProductRequest request) {
 
         ProductDto product = productService.updateProduct(id, request);

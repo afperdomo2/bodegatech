@@ -29,6 +29,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * Tests unitarios del controlador ProductController.
+ * El endpoint de actualización usa PATCH con campos opcionales.
  */
 @ExtendWith(MockitoExtension.class)
 class ProductControllerTest {
@@ -57,13 +58,10 @@ class ProductControllerTest {
         createRequest.setCategory("Electrónica");
         createRequest.setImageUrl("https://example.com/images/laptop.jpg");
 
+        // updateRequest con solo algunos campos (PATCH parcial)
         updateRequest = new UpdateProductRequest();
         updateRequest.setName("Laptop Dell Pro");
-        updateRequest.setDescription("Laptop de 15 pulgadas actualizada");
         updateRequest.setPrice(new BigDecimal("1800.00"));
-        updateRequest.setStock(5);
-        updateRequest.setCategory("Electrónica");
-        updateRequest.setImageUrl("https://example.com/images/laptop-pro.jpg");
 
         productDto = new ProductDto();
         productDto.setId(productId);

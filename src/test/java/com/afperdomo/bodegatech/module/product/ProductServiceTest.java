@@ -33,6 +33,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * Tests unitarios del servicio ProductService.
+ * La actualización usa PATCH con campos opcionales (campos null se ignoran).
  */
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
@@ -78,13 +79,10 @@ class ProductServiceTest {
         createRequest.setCategory("Electrónica");
         createRequest.setImageUrl("https://example.com/images/laptop.jpg");
 
+        // updateRequest con solo algunos campos (PATCH parcial — los demás quedan null y se ignoran)
         updateRequest = new UpdateProductRequest();
         updateRequest.setName("Laptop Dell Pro");
-        updateRequest.setDescription("Laptop de 15 pulgadas actualizada");
         updateRequest.setPrice(new BigDecimal("1800.00"));
-        updateRequest.setStock(5);
-        updateRequest.setCategory("Electrónica");
-        updateRequest.setImageUrl("https://example.com/images/laptop-pro.jpg");
 
         productDto = new ProductDto();
         productDto.setId(productId);

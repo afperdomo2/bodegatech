@@ -13,7 +13,12 @@ import java.util.UUID;
 
 /**
  * Clase base para todas las entidades con auditoría.
- * Proporciona campos comunes como id, createdAt y updatedAt.
+ * Proporciona campos comunes: id, createdAt, updatedAt y version.
+ *
+ * <p>El campo {@code version} habilita optimistic locking (JPA @Version):
+ * Hibernate lo incrementa automáticamente en cada UPDATE y lanza
+ * {@link jakarta.persistence.OptimisticLockException} si detecta que otro
+ * proceso modificó la fila entre la lectura y la escritura.
  */
 @Getter
 @Setter
@@ -32,4 +37,12 @@ public abstract class BaseEntity implements Serializable {
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    /**
+     * Campo de versión para optimistic locking.
+     * Gestionado exclusivamente por Hibernate — no asignar manualmente.
+     */
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

@@ -1,66 +1,56 @@
-# BodegaTech
+# 🏪 BodegaTech
 
-BodegaTech es una aplicación desarrollada en **Spring Boot 4.0.5** con Java 25, diseñada para gestionar operaciones de bodega y almacén.
+BodegaTech es una API REST desarrollada con **Spring Boot 4** y **Java 25**, diseñada para gestionar operaciones de bodega y almacén. Sigue una arquitectura modular por dominio, con respuestas estandarizadas y manejo de errores basado en **RFC 9457 (Problem Details)**.
 
-## Requisitos Previos
+---
 
-- **Java 25** o superior
-- **Gradle** (incluido en el proyecto)
-- **Docker** (para base de datos PostgreSQL)
+## 📋 Tabla de contenidos
+
+1. [Stack y versiones](#-stack-y-versiones)
+2. [Requisitos previos](#-requisitos-previos)
+3. [Estructura del proyecto](#-estructura-del-proyecto)
+4. [Docker — servicios e infraestructura](#-docker--servicios-e-infraestructura)
+5. [Entornos de ejecución](#-entornos-de-ejecución)
+6. [Instalación y ejecución](#-instalación-y-ejecución)
+7. [Documentación de la API (Swagger)](#-documentación-de-la-api-swagger)
+8. [Estándar de errores — RFC 9457](#-estándar-de-errores--rfc-9457)
+9. [Testing](#-testing)
+10. [Autor](#-autor)
+
+---
+
+## 🧰 Stack y versiones
+
+| Tecnología | Versión | Rol |
+|---|---|---|
+| Java | 25 | Lenguaje principal |
+| Spring Boot | 4.0.5 | Framework principal |
+| Spring Data JPA | (BOM Boot) | Persistencia / ORM — incluye optimistic locking (`@Version`) |
+| Spring Validation | (BOM Boot) | Validación de entrada |
+| PostgreSQL | 16 | Base de datos relacional |
+| SpringDoc OpenAPI | 3.0.3 | Documentación Swagger |
+| Lombok | (BOM Boot) | Reducción de boilerplate |
+| MapStruct | 1.6.0 | Mapeo entidad ↔ DTO |
+| JUnit 5 + Mockito | (BOM Boot) | Tests unitarios |
+| Testcontainers | 1.20.0 | Tests de integración con BD real |
+| Gradle | 9.x | Sistema de build |
+| Docker / Compose | cualquier versión reciente | Infraestructura local |
+
+> **Nota:** SpringDoc 3.x es requerido para Spring Boot 4.x. La versión 2.x causa `NoSuchMethodError: ControllerAdviceBean.<init>` y no es compatible.
+
+---
+
+## ✅ Requisitos previos
+
+- **Java 25** o superior instalado y configurado en `JAVA_HOME`
+- **Docker** y **Docker Compose** (para levantar PostgreSQL)
 - **Git**
 
-## Instalación y Configuración
+El wrapper de Gradle (`./gradlew`) está incluido en el repositorio; no es necesario instalar Gradle por separado.
 
-### 1. Clonar el Repositorio
+---
 
-```bash
-git clone <url-del-repositorio>
-cd bodegatech
-```
-
-### 2. Iniciar la Base de Datos (PostgreSQL con Docker)
-
-```bash
-docker-compose up -d
-```
-
-Esto iniciará PostgreSQL en `localhost:5432` con:
-- Base de datos: `bodegatech_db`
-- Usuario: `bodegatech_user`
-- Contraseña: `bodegatech_password`
-
-### 3. Compilar el Proyecto
-
-```bash
-./gradlew clean build
-```
-
-### 4. Ejecutar la Aplicación
-
-```bash
-# En desarrollo (profile dev)
-./gradlew bootRun
-
-# O alternativamente
-java -jar build/libs/bodegatech-0.0.1-SNAPSHOT.jar
-```
-
-La aplicación se ejecutará en `http://localhost:8080` (puerto por defecto).
-
-### 5. Acceder a Swagger
-
-Una vez que la aplicación esté ejecutándose, accede a la documentación interactiva de la API en:
-
-- **Swagger:** http://localhost:8080/swagger-ui/index.html
-- **Docs:** http://localhost:8080/docs
-
-Para acceder a los documentos OpenAPI JSON:
-
-```
-http://localhost:8080/docs
-```
-
-## Estructura del Proyecto
+## 🗂 Estructura del proyecto
 
 ```
 bodegatech/
@@ -68,166 +58,292 @@ bodegatech/
 │   ├── main/
 │   │   ├── java/com/afperdomo/bodegatech/
 │   │   │   ├── BodegatechApplication.java
-│   │   │   ├── config/                                    # Configuración de la aplicación
+│   │   │   ├── config/
 │   │   │   │   ├── JpaConfig.java
 │   │   │   │   └── OpenApiConfig.java
-│   │   │   ├── shared/                                    # Código compartido
+│   │   │   ├── common/                              # Código transversal
 │   │   │   │   ├── audit/
-│   │   │   │   │   └── BaseEntity.java                    # Entidad base con auditoría
+│   │   │                   │   │   └── BaseEntity.java              # UUID + createdAt + updatedAt + version (@Version)
 │   │   │   │   ├── exception/
-│   │   │   │   │   ├── GlobalExceptionHandler.java
-│   │   │   │   │   ├── BusinessException.java
-│   │   │   │   │   └── ResourceNotFoundException.java
+│   │   │   │   │   ├── GlobalExceptionHandler.java  # RFC 9457 — ProblemDetail
+│   │   │   │   │   ├── BusinessException.java       # 409 Conflict
+│   │   │   │   │   └── ResourceNotFoundException.java # 404 Not Found
 │   │   │   │   └── response/
-│   │   │   │       ├── ApiResponse.java
-│   │   │   │       └── PagedResponse.java
+│   │   │   │       ├── ApiResponse.java             # Wrapper de respuestas exitosas
+│   │   │   │       └── PagedResponse.java           # Wrapper de respuestas paginadas
 │   │   │   └── module/
-│   │   │       └── product/                               # Módulo de productos
-│   │   │           ├── controller/
-│   │   │           │   └── ProductController.java
-│   │   │           ├── service/
-│   │   │           │   ├── ProductService.java
-│   │   │           │   └── ProductServiceImpl.java
-│   │   │           ├── repository/
-│   │   │           │   └── ProductRepository.java
-│   │   │           ├── entity/
-│   │   │           │   └── Product.java
+│   │   │       └── product/                         # Módulo: Productos
+│   │   │           ├── controller/ProductController.java
+│   │   │           ├── service/ProductService.java
+│   │   │           ├── repository/ProductRepository.java
+│   │   │           ├── entity/Product.java
 │   │   │           ├── dto/
-│   │   │           │   ├── ProductRequest.java
-│   │   │           │   └── ProductResponse.java
-│   │   │           └── mapper/
-│   │   │               └── ProductMapper.java
+│   │   │           │   ├── CreateProductRequest.java
+│   │   │           │   ├── UpdateProductRequest.java
+│   │   │           │   └── ProductDto.java
+│   │   │           └── mapper/ProductMapper.java
 │   │   └── resources/
-│   │       ├── application.yml                            # Configuración base
-│   │       ├── application-dev.yml                        # Configuración desarrollo
-│   │       └── application-prod.yml                       # Configuración producción
+│   │       ├── application.yml          # Configuración base
+│   │       ├── application-dev.yml      # Perfil desarrollo
+│   │       └── application-prod.yml     # Perfil producción
 │   └── test/
 │       └── java/com/afperdomo/bodegatech/
 │           └── module/product/
 │               ├── ProductControllerTest.java
 │               └── ProductServiceTest.java
-├── gradle/
-├── docker-compose.yml                                     # Docker Compose para BD
+├── docker-compose.yml
 ├── build.gradle
 ├── settings.gradle
 └── README.md
 ```
 
-Para más detalles sobre la arquitectura del proyecto, consulta [ARQUITECTURE.md](./ARQUITECTURE.md).
+Cada módulo de negocio sigue la misma estructura interna: `controller / service / repository / entity / dto / mapper`.
 
-## Características Principales
+---
 
-- **Gestión de Productos**: Crear, actualizar, listar y desactivar productos
-- **Paginación**: Listas con soporte para paginación y ordenamiento
-- **Auditoría**: Seguimiento automático de creación y actualización
-- **Manejo de Errores**: Sistema centralizado de excepciones y respuestas
-- **Documentación API**: Swagger/OpenAPI con documentación en español
-- **Base de Datos**: PostgreSQL con Hibernate/JPA
-- **Validación**: Validación de datos de entrada con anotaciones Jakarta
+## 🐳 Docker — servicios e infraestructura
 
-## Dependencias Principales
+El archivo `docker-compose.yml` define el entorno local de desarrollo:
 
-- **Spring Boot 4.0.5**: Framework principal
-- **Spring Data JPA**: Acceso a datos y ORM
-- **PostgreSQL Driver**: Driver para base de datos PostgreSQL
-- **Springdoc OpenAPI**: Documentación Swagger 3
-- **Lombok**: Reducción de código boilerplate
-- **MapStruct**: Mapeo entre entidades y DTOs
-- **JUnit 5**: Framework de pruebas
-- **Mockito**: Mocking para pruebas unitarias
+| Servicio | Imagen | Puerto | Red |
+|---|---|---|---|
+| `postgres` | `postgres:16-alpine` | `5432:5432` | `bodegatech_network` |
 
-## Perfiles de Configuración
+**Credenciales por defecto (solo desarrollo):**
 
-El proyecto usa Spring Profiles para diferentes ambientes:
+| Parámetro | Valor |
+|---|---|
+| Base de datos | `bodegatech_db` |
+| Usuario | `bodegatech_user` |
+| Contraseña | `bodegatech_password` |
+| Host | `localhost:5432` |
 
-- **dev**: Desarrollo local con `ddl-auto: update` y logs detallados
-- **prod**: Producción con `ddl-auto: validate` y logs minimizados
-
-Para ejecutar con un perfil específico:
+Los datos se persisten en el volumen `postgres_data`. El servicio incluye un healthcheck que verifica disponibilidad cada 30 segundos.
 
 ```bash
-./gradlew bootRun --args='--spring.profiles.active=dev'
+# Iniciar
+docker-compose up -d
+
+# Detener
+docker-compose down
+
+# Detener y eliminar volúmenes (borra datos)
+docker-compose down -v
 ```
 
-O con variables de entorno:
+---
+
+## ⚙️ Entornos de ejecución
+
+El proyecto usa Spring Profiles para gestionar la configuración por ambiente.
+
+### Perfil `dev` (activo por defecto)
+
+- `ddl-auto: update` — el esquema se actualiza automáticamente
+- SQL visible en consola
+- Logs detallados (DEBUG para la aplicación, Hibernate SQL activo)
+- Conexión directa a la BD local
+
+### Perfil `prod`
+
+- `ddl-auto: validate` — solo valida el esquema; nunca lo modifica
+- Sin SQL en consola
+- Logs reducidos (WARN para root, INFO para la aplicación)
+- Configuración obligatoria mediante variables de entorno:
+
+| Variable de entorno | Descripción | Ejemplo |
+|---|---|---|
+| `DB_URL` | URL JDBC de la base de datos | `jdbc:postgresql://db-host:5432/bodegatech_db` |
+| `DB_USER` | Usuario de la base de datos | `bodegatech_user` |
+| `DB_PASSWORD` | Contraseña de la base de datos | `s3cr3t` |
+| `SERVER_PORT` | Puerto del servidor HTTP | `8080` |
+
+**Activar un perfil:**
 
 ```bash
-export SPRING_PROFILES_ACTIVE=dev
+# Via argumento
+./gradlew bootRun --args='--spring.profiles.active=prod'
+
+# Via variable de entorno
+export SPRING_PROFILES_ACTIVE=prod
+./gradlew bootRun
+
+# Via JAR
+java -jar build/libs/bodegatech-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+```
+
+---
+
+## 🚀 Instalación y ejecución
+
+```bash
+# 1. Clonar el repositorio
+git clone <url-del-repositorio>
+cd bodegatech
+
+# 2. Levantar la base de datos
+docker-compose up -d
+
+# 3. Compilar (sin tests)
+./gradlew clean build -x test
+
+# 4. Ejecutar en modo desarrollo
 ./gradlew bootRun
 ```
 
-## Pruebas
+La API estará disponible en: `http://localhost:8080/api/v1`
 
-Para ejecutar todas las pruebas:
+**Context path base:** `/api/v1`
 
-```bash
-./gradlew test
-```
+---
 
-Para ejecutar pruebas con reporte de cobertura:
+## 📖 Documentación de la API (Swagger)
 
-```bash
-./gradlew test jacocoTestReport
-```
+Una vez que la aplicación esté corriendo:
 
-Las pruebas incluyen:
-- **Tests Unitarios**: `ProductServiceTest` - Pruebas del servicio de negocio
-- **Tests de Integración**: `ProductControllerTest` - Pruebas del controlador REST
+| Recurso | URL |
+|---|---|
+| Swagger UI | `http://localhost:8080/api/v1/swagger-ui.html` |
+| OpenAPI JSON | `http://localhost:8080/api/v1/docs` |
 
-## Manejo de Errores
+La documentación está en español e incluye ejemplos de request/response para todos los endpoints.
 
-La API retorna errores estandarizados:
+### Endpoints disponibles — Productos
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/api/v1/products` | Listar productos — **paginado** |
+| `GET` | `/api/v1/products/{id}` | Obtener producto por ID |
+| `POST` | `/api/v1/products` | Crear nuevo producto |
+| `PATCH` | `/api/v1/products/{id}` | Actualizar producto parcialmente |
+| `DELETE` | `/api/v1/products/{id}` | Desactivar producto (soft delete) |
+
+### Formato de respuesta exitosa
+
+Todas las respuestas exitosas incluyen el wrapper `ApiResponse<T>`:
 
 ```json
 {
-  "success": false,
-  "message": "Descripción del error",
-  "data": null
+  "success": true,
+  "message": "Producto creado exitosamente",
+  "data": { ... }
 }
 ```
 
-**Códigos HTTP usados:**
-- `200 OK`: Solicitud exitosa
-- `201 Created`: Recurso creado exitosamente
-- `204 No Content`: Solicitud exitosa sin contenido (DELETE)
-- `400 Bad Request`: Datos inválidos
-- `404 Not Found`: Recurso no encontrado
-- `422 Unprocessable Entity`: Error de validación de negocio
-- `500 Internal Server Error`: Error interno del servidor
+### Campo `version` — optimistic locking
 
-## Construcción para Producción
+Todas las respuestas de producto incluyen el campo `version`. Este número se incrementa automáticamente en cada modificación (gestionado por Hibernate). Su propósito es detectar conflictos de concurrencia: si dos procesos intentan modificar el mismo producto simultáneamente, el segundo recibirá un **409 Conflict**.
 
-```bash
-./gradlew build
+```json
+{
+  "id": "123e4567-...",
+  "name": "Laptop Dell",
+  "version": 3,
+  ...
+}
 ```
 
-El archivo JAR compilado estará disponible en `build/libs/`.
+### PATCH — actualización parcial
 
-## Contribución
+El endpoint `PATCH /products/{id}` acepta cualquier combinación de campos; los campos ausentes conservan su valor actual:
 
-Para contribuir al proyecto:
+```json
+// Solo actualiza el precio y el stock — el resto no cambia
+{
+  "price": 1299.99,
+  "stock": 20
+}
+```
 
-1. Realiza un fork del repositorio
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
+### Formato de respuesta paginada
 
-## Licencia
+```json
+{
+  "success": true,
+  "message": "...",
+  "data": {
+    "content": [ ... ],
+    "page": 0,
+    "size": 10,
+    "totalElements": 42,
+    "totalPages": 5,
+    "last": false
+  }
+}
+```
 
-Este proyecto se encuentra bajo licencia propietaria. Consulta con el propietario para más información.
+---
 
-## Contacto
+## 🚨 Estándar de errores — RFC 9457
 
-Para preguntas o soporte, contacta a: [afperdomo@example.com]
+Todos los errores de la API siguen el estándar **RFC 9457 — Problem Details for HTTP APIs**. Las respuestas de error usan `Content-Type: application/problem+json`.
 
-## Changelog
+### Estructura de un error
 
-### v0.0.1-SNAPSHOT
-- Versión inicial del proyecto
-- Módulo de productos completamente funcional
-- Autenticación en desarrollo (preparado para JWT)
-- Documentación Swagger en español
-- Tests unitarios e integración
-- Docker Compose para PostgreSQL
-- Manejo centralizado de excepciones
+```json
+{
+  "type": "about:blank",
+  "title": "No encontrado",
+  "status": 404,
+  "detail": "Producto con ID 'abc-123' no fue encontrado",
+  "instance": "/api/v1/products/abc-123"
+}
+```
+
+Para errores de validación (400), el campo `errors` detalla cada campo inválido:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Error de validación",
+  "status": 400,
+  "detail": "La solicitud contiene campos inválidos",
+  "instance": "/api/v1/products",
+  "errors": {
+    "nombre": "no debe estar vacío",
+    "precio": "debe ser mayor que 0"
+  }
+}
+```
+
+### Códigos HTTP utilizados
+
+| Código | Situación |
+|---|---|
+| `200 OK` | Consulta exitosa |
+| `201 Created` | Recurso creado |
+| `204 No Content` | Eliminación exitosa |
+| `400 Bad Request` | Validación fallida o JSON mal formado |
+| `404 Not Found` | Recurso no encontrado |
+| `409 Conflict` | Error de negocio (`BusinessException`) o conflicto de concurrencia (optimistic locking) |
+| `500 Internal Server Error` | Error inesperado del servidor |
+
+---
+
+## 🧪 Testing
+
+```bash
+# Ejecutar todos los tests
+./gradlew test
+
+# Tests con reporte de cobertura (JaCoCo)
+./gradlew test jacocoTestReport
+```
+
+El reporte de cobertura se genera en: `build/reports/jacoco/test/html/index.html`
+
+### Suites de prueba
+
+| Archivo | Tipo | Descripción |
+|---|---|---|
+| `ProductServiceTest` | Unitario | Lógica de negocio con Mockito |
+| `ProductControllerTest` | Integración | Endpoints REST con Testcontainers + PostgreSQL real |
+
+Los tests de integración usan **Testcontainers** para levantar una instancia real de PostgreSQL en Docker, sin depender de la base de datos local.
+
+---
+
+## 👤 Autor
+
+**Andrés Felipe Perdomo**
+- GitHub: [@afperdomo2](https://github.com/afperdomo2)

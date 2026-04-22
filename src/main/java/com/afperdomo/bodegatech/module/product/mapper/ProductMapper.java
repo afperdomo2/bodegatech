@@ -4,8 +4,10 @@ import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
 import com.afperdomo.bodegatech.module.product.dto.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.entity.Product;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 /**
@@ -22,13 +24,15 @@ public interface ProductMapper {
 
     /**
      * Convierte un CreateProductRequest a entidad Product.
-     * Los campos id, createdAt, updatedAt e isActive se gestionan en el servicio.
+     * Los campos id, createdAt, updatedAt, version e isActive se gestionan en el servicio.
      */
     Product toEntity(CreateProductRequest request);
 
     /**
-     * Actualiza una entidad Product existente con datos de UpdateProductRequest.
-     * Preserva id, sku, createdAt, updatedAt e isActive.
+     * Actualiza parcialmente una entidad Product con los campos de UpdateProductRequest.
+     * Los campos null en el request se ignoran, preservando el valor actual de la entidad.
+     * Preserva siempre: id, sku, createdAt, updatedAt, version e isActive.
      */
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(UpdateProductRequest request, @MappingTarget Product product);
 }

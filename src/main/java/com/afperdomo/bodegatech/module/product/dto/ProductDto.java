@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * DTO de salida para un producto.
- * Utilizado en respuestas de GET, POST y PUT.
+ * Utilizado en respuestas de GET, POST y PATCH.
  */
 @Data
 @Builder
@@ -53,4 +53,7 @@ public class ProductDto {
 
     @Schema(description = "Fecha de última actualización del producto", example = "2024-01-15T10:30:00")
     private LocalDateTime updatedAt;
+
+    @Schema(description = "Versión del registro para optimistic locking. Enviar de vuelta en PATCH para detectar modificaciones concurrentes.", example = "0")
+    private Long version;
 }
