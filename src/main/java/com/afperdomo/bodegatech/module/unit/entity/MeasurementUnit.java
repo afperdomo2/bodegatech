@@ -1,0 +1,49 @@
+package com.afperdomo.bodegatech.module.unit.entity;
+
+import com.afperdomo.bodegatech.common.audit.BaseEntity;
+import com.afperdomo.bodegatech.module.unit.enums.UnitType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+/**
+ * Unidad de medida utilizada en el sistema.
+ * Ejemplos: kilogramo (kg), litro (L), metro (m).
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "measurement_units", indexes = {
+    @Index(name = "idx_units_type", columnList = "type"),
+    @Index(name = "idx_units_is_active", columnList = "is_active")
+})
+@EqualsAndHashCode(callSuper = true)
+public class MeasurementUnit extends BaseEntity {
+
+    @NotBlank
+    @Column(nullable = false, unique = true, length = 100)
+    private String name;
+
+    @NotBlank
+    @Column(nullable = false, unique = true, length = 20)
+    private String abbreviation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private UnitType type;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+}

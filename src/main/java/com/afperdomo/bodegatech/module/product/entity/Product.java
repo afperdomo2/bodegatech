@@ -24,9 +24,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Entity
 @Table(name = "products", indexes = {
-        @Index(name = "idx_sku", columnList = "sku"),
-        @Index(name = "idx_is_active", columnList = "is_active"),
-        @Index(name = "idx_category_id", columnList = "category_id")
+        @Index(name = "idx_products_is_active", columnList = "is_active"),
+        @Index(name = "idx_products_category_id", columnList = "category_id")
 })
 @EqualsAndHashCode(callSuper = true)
 public class Product extends BaseEntity {
@@ -35,7 +34,7 @@ public class Product extends BaseEntity {
     @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Positive

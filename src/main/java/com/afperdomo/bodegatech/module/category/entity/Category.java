@@ -22,8 +22,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Entity
 @Table(name = "categories", indexes = {
-        @Index(name = "idx_is_active", columnList = "is_active"),
-        @Index(name = "idx_name", columnList = "name")
+        @Index(name = "idx_categories_is_active", columnList = "is_active")
 })
 @EqualsAndHashCode(callSuper = true)
 public class Category extends BaseEntity {
@@ -32,7 +31,7 @@ public class Category extends BaseEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)

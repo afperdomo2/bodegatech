@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -19,8 +20,8 @@ import java.util.UUID;
  * CREATE TABLE product_images (
  *     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
  *     product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
- *     file_key    VARCHAR(500) NOT NULL,
- *     url         VARCHAR(1000) NOT NULL,
+ *     file_key    TEXT NOT NULL,
+ *     url         TEXT NOT NULL,
  *     created_at  TIMESTAMP DEFAULT now()
  * );
  */
@@ -29,9 +30,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "product_images", indexes = {
-        @Index(name = "idx_product_id", columnList = "product_id"),
-        @Index(name = "idx_product_id_created_at", columnList = "product_id, created_at")
+        @Index(name = "idx_product_images_product_id", columnList = "product_id"),
+        @Index(name = "idx_product_images_product_id_created_at", columnList = "product_id, created_at")
 })
 public class ProductImage {
 
@@ -44,11 +46,11 @@ public class ProductImage {
     private Product product;
 
     @NotBlank
-    @Column(name = "file_key", nullable = false, length = 500)
+    @Column(name = "file_key", nullable = false, columnDefinition = "TEXT")
     private String fileKey;
 
     @NotBlank
-    @Column(name = "url", nullable = false, length = 1000)
+    @Column(name = "url", nullable = false, columnDefinition = "TEXT")
     private String url;
 
     @CreatedDate
