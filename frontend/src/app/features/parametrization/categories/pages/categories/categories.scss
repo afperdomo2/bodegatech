@@ -1,0 +1,22 @@
+:host {
+  display: block;
+}
+
+/* Animaciones para elementos de carga */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Asegurar que los inputs de la modal respeten los estilos globales */
+textarea {
+  font-family: inherit;
+}

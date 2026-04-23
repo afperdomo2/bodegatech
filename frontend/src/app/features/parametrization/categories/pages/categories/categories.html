@@ -1,0 +1,231 @@
+<div class="flex flex-col gap-6 p-6 md:p-8">
+  <!-- Page Header -->
+  <bt-page-header
+    [title]="'Categorías'"
+    [subtitle]="'Parametrización de categorías del sistema'">
+    <button
+      (click)="openCreateModal()"
+      class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors">
+      <span class="material-symbols-outlined text-lg">add</span>
+      Nueva Categoría
+    </button>
+  </bt-page-header>
+
+  <!-- Loading State -->
+  @if (state.isLoading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-on-surface-variant">Cargando categorías...</p>
+      </div>
+    </div>
+  } @else {
+    <!-- Error Banner -->
+    @if (state.generalError()) {
+      <div class="p-4 bg-error/10 border border-error rounded-lg">
+        <p class="text-sm text-error font-medium">{{ state.generalError() }}</p>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @if (state.isEmpty()) {
+      <div class="flex items-center justify-center py-12 bg-surface-container rounded-lg">
+        <div class="text-center">
+          <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4">category</span>
+          <p class="text-on-surface-variant">No hay categorías registradas</p>
+          <button
+            (click)="openCreateModal()"
+            class="mt-4 px-4 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors">
+            Crear la primera categoría
+          </button>
+        </div>
+      </div>
+    } @else {
+      <!-- Data Table -->
+      <div class="overflow-x-auto rounded-lg border border-outline-variant shadow-sm">
+        <table class="w-full text-sm">
+          <thead class="bg-surface-container border-b border-outline-variant">
+            <tr>
+              <th class="px-4 py-3 text-left font-semibold text-on-surface">Nombre</th>
+              <th class="px-4 py-3 text-left font-semibold text-on-surface">Descripción</th>
+              <th class="px-4 py-3 text-left font-semibold text-on-surface">Estado</th>
+              <th class="px-4 py-3 text-left font-semibold text-on-surface">Creado</th>
+              <th class="px-4 py-3 text-center font-semibold text-on-surface">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant">
+            @for (category of state.categories(); track category.id) {
+              <tr class="hover:bg-surface-container/50 transition-colors">
+                <td class="px-4 py-3 text-on-surface font-medium">{{ category.name }}</td>
+                <td class="px-4 py-3 text-on-surface-variant max-w-xs truncate">
+                  {{ category.description || '—' }}
+                </td>
+                <td class="px-4 py-3">
+                  <bt-badge
+                    [variant]="getStatusBadgeVariant(category.isActive)"
+                    [label]="getStatusLabel(category.isActive)">
+                  </bt-badge>
+                </td>
+                <td class="px-4 py-3 text-on-surface-variant text-xs">
+                  {{ formatDate(category.createdAt) }}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <!-- Editar -->
+                    <button
+                      (click)="openEditModal(category)"
+                      class="p-2 text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors"
+                      [attr.aria-label]="'Editar ' + category.name">
+                      <span class="material-symbols-outlined text-lg">edit</span>
+                    </button>
+                    <!-- Eliminar -->
+                    <button
+                      (click)="openDeleteModal(category)"
+                      class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
+                      [attr.aria-label]="'Eliminar ' + category.name">
+                      <span class="material-symbols-outlined text-lg">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-between py-4 px-4 bg-surface-container rounded-lg">
+        <p class="text-sm text-on-surface-variant">
+          Mostrando {{ (state.currentPage() * state.pageSize() + 1) }} a
+          {{ Math.min((state.currentPage() + 1) * state.pageSize(), state.totalElements()) }} de
+          {{ state.totalElements() }} categorías
+        </p>
+        <div class="flex items-center gap-2">
+          <button
+            (click)="onPageChange(state.currentPage() - 1)"
+            [disabled]="state.currentPage() === 0"
+            class="px-3 py-1 text-sm rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-lowest disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            Anterior
+          </button>
+          <span class="text-sm text-on-surface-variant">
+            Página {{ state.currentPage() + 1 }} de {{ state.totalPages() }}
+          </span>
+          <button
+            (click)="onPageChange(state.currentPage() + 1)"
+            [disabled]="state.isLast() || state.totalPages() === 0"
+            class="px-3 py-1 text-sm rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-lowest disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            Siguiente
+          </button>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Modal: Crear Categoría -->
+  <bt-modal
+    [isOpen]="isCreateModalOpen()"
+    [title]="'Nueva Categoría'"
+    (closeModal)="closeCreateModal()"
+    (confirmModal)="confirmCreateCategory()">
+    <form class="space-y-4">
+      <!-- Nombre -->
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-on-surface">Nombre *</label>
+        <input
+          type="text"
+          [(ngModel)]="formName"
+          [value]="formName()"
+          (input)="formName.set($any($event.target).value)"
+          placeholder="Ej: Electrónica"
+          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors">
+        @if (state.fieldErrors()['name']) {
+          <p class="text-xs text-error">{{ state.fieldErrors()['name'] }}</p>
+        }
+      </div>
+
+      <!-- Descripción -->
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-on-surface">Descripción</label>
+        <textarea
+          [(ngModel)]="formDescription"
+          [value]="formDescription()"
+          (input)="formDescription.set($any($event.target).value)"
+          placeholder="Ej: Productos electrónicos y computadoras"
+          rows="3"
+          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors resize-none">
+        </textarea>
+        @if (state.fieldErrors()['description']) {
+          <p class="text-xs text-error">{{ state.fieldErrors()['description'] }}</p>
+        }
+      </div>
+    </form>
+  </bt-modal>
+
+  <!-- Modal: Editar Categoría -->
+  <bt-modal
+    [isOpen]="isEditModalOpen()"
+    [title]="'Editar Categoría'"
+    (closeModal)="closeEditModal()"
+    (confirmModal)="confirmEditCategory()">
+    <form class="space-y-4">
+      <!-- Nombre -->
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-on-surface">Nombre *</label>
+        <input
+          type="text"
+          [value]="formName()"
+          (input)="formName.set($any($event.target).value)"
+          placeholder="Ej: Electrónica"
+          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors">
+        @if (state.fieldErrors()['name']) {
+          <p class="text-xs text-error">{{ state.fieldErrors()['name'] }}</p>
+        }
+      </div>
+
+      <!-- Descripción -->
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-on-surface">Descripción</label>
+        <textarea
+          [value]="formDescription()"
+          (input)="formDescription.set($any($event.target).value)"
+          placeholder="Ej: Productos electrónicos y computadoras"
+          rows="3"
+          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors resize-none">
+        </textarea>
+        @if (state.fieldErrors()['description']) {
+          <p class="text-xs text-error">{{ state.fieldErrors()['description'] }}</p>
+        }
+      </div>
+
+      @if (state.generalError()) {
+        <div class="p-3 bg-error/10 border border-error rounded-lg">
+          <p class="text-xs text-error">{{ state.generalError() }}</p>
+        </div>
+      }
+    </form>
+  </bt-modal>
+
+  <!-- Modal: Confirmar Eliminación -->
+  <bt-modal
+    [isOpen]="isDeleteModalOpen()"
+    [title]="'Eliminar Categoría'"
+    (closeModal)="closeDeleteModal()"
+    (confirmModal)="confirmDeleteCategory()">
+    <div class="space-y-4">
+      <p class="text-sm text-on-surface">
+        ¿Está seguro de que desea eliminar la categoría
+        <strong>{{ selectedCategory()?.name }}</strong>?
+      </p>
+
+      @if (state.generalError()) {
+        <div class="p-3 bg-error/10 border border-error rounded-lg">
+          <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
+        </div>
+      }
+
+      <p class="text-xs text-on-surface-variant italic">
+        Esta acción no se puede deshacer.
+      </p>
+    </div>
+  </bt-modal>
+</div>

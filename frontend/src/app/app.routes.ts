@@ -27,6 +27,10 @@ export const routes: Routes = [
         loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
       },
       {
+        path: 'parametrization',
+        loadChildren: () => import('./features/parametrization/parametrization.routes').then(m => m.PARAMETRIZATION_ROUTES),
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',

@@ -8,6 +8,11 @@ interface MenuItem {
   icon: string;
 }
 
+interface MenuSection {
+  title: string;
+  items: MenuItem[];
+}
+
 @Component({
   selector: 'bt-sidebar',
   standalone: true,
@@ -24,6 +29,10 @@ export class SidebarComponent {
     { label: 'Inventario', path: '/inventory', icon: 'inventory_2' },
     { label: 'Reportes', path: '/reports', icon: 'assessment' },
     { label: 'Administración', path: '/admin', icon: 'admin_panel_settings' },
+  ];
+
+  parametrizationMenuItems: MenuItem[] = [
+    { label: 'Categorías', path: '/parametrization/categories', icon: 'category' },
   ];
 
   footerMenuItems: MenuItem[] = [
@@ -46,3 +55,4 @@ export class SidebarComponent {
     return "'FILL' 0";
   }
 }
+

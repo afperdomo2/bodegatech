@@ -63,6 +63,32 @@ module/
 
 Nuevos módulos siguen exactamente esta estructura. No colocar clases fuera de ella.
 
+## Entidades JPA — Buenas prácticas
+
+Cuando se cree o modifique una entidad, cargar el skill `postgresql-optimization`
+para validar buenas prácticas SQL antes de finalizar.
+
+**Reglas establecidas en el proyecto:**
+
+### Índices
+- Columnas con `unique = true` NO necesitan `@Index` adicional — PostgreSQL ya
+  crea un índice B-tree implícito con el UNIQUE constraint. Agregar ambos es redundancia.
+- Un UNIQUE compuesto `(col_a, col_b)` cubre búsquedas por `col_a` solo — el
+  índice individual en `col_a` es redundante.
+- Nombres de índices con prefijo de tabla: `idx_{tabla}_{campo}`.
+  Ejemplos: `idx_products_is_active`, `idx_units_type`, `idx_categories_is_active`.
+
+### Tipos de columnas
+- Campos de texto libre sin límite de negocio real → `columnDefinition = "TEXT"`.
+  Ejemplos: `description`, `url`, `file_key`.
+- Campos con límite de negocio claro → `VARCHAR(n)`.
+  Ejemplos: `name`, `abbreviation`, `sku`.
+
+### Auditoría
+- Entidades que NO extienden `BaseEntity` y usan `@CreatedDate` necesitan
+  `@EntityListeners(AuditingEntityListener.class)` explícito. De lo contrario,
+  el campo no se populará automáticamente.
+
 ## Convenciones de nombres
 
 | Tipo | Patrón |
