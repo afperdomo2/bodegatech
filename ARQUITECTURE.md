@@ -196,7 +196,7 @@ El proyecto soporta múltiples perfiles de configuración:
 
 **application.yml** - Configuración base:
 - Puerto: 8080
-- Context path: /api/v1
+- Context path: /api
 - DDL: update
 - Logging: INFO/DEBUG
 
@@ -317,7 +317,7 @@ public abstract class BaseEntity {
 ### Parámetros
 
 ```
-GET /api/v1/products?page=0&size=10&sortBy=createdAt&direction=DESC
+GET /api/products?page=0&size=10&sortBy=createdAt&direction=DESC
 ```
 
 | Parámetro | Defecto | Descripción |

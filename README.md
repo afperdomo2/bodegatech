@@ -196,9 +196,9 @@ docker-compose up -d
 ./gradlew bootRun
 ```
 
-La API estará disponible en: `http://localhost:8080/api/v1`
+La API estará disponible en: `http://localhost:8080/api`
 
-**Context path base:** `/api/v1`
+**Context path base:** `/api`
 
 ---
 
@@ -208,8 +208,8 @@ Una vez que la aplicación esté corriendo:
 
 | Recurso | URL |
 |---|---|
-| Swagger UI | `http://localhost:8080/api/v1/swagger-ui.html` |
-| OpenAPI JSON | `http://localhost:8080/api/v1/docs` |
+| Swagger UI | `http://localhost:8080/swagger-ui.html` |
+| OpenAPI JSON | `http://localhost:8080/docs` |
 
 La documentación está en español e incluye ejemplos de request/response para todos los endpoints.
 
@@ -217,11 +217,11 @@ La documentación está en español e incluye ejemplos de request/response para 
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/api/v1/products` | Listar productos — **paginado** |
-| `GET` | `/api/v1/products/{id}` | Obtener producto por ID |
-| `POST` | `/api/v1/products` | Crear nuevo producto |
-| `PATCH` | `/api/v1/products/{id}` | Actualizar producto parcialmente |
-| `DELETE` | `/api/v1/products/{id}` | Desactivar producto (soft delete) |
+| `GET` | `/api/products` | Listar productos — **paginado** |
+| `GET` | `/api/products/{id}` | Obtener producto por ID |
+| `POST` | `/api/products` | Crear nuevo producto |
+| `PATCH` | `/api/products/{id}` | Actualizar producto parcialmente |
+| `DELETE` | `/api/products/{id}` | Desactivar producto (soft delete) |
 
 ### Formato de respuesta exitosa
 
@@ -356,7 +356,7 @@ Todos los errores de la API siguen el estándar **RFC 9457 — Problem Details f
   "title": "No encontrado",
   "status": 404,
   "detail": "Producto con ID 'abc-123' no fue encontrado",
-  "instance": "/api/v1/products/abc-123"
+  "instance": "/api/products/abc-123"
 }
 ```
 
@@ -368,7 +368,7 @@ Para errores de validación (400), el campo `errors` detalla cada campo inválid
   "title": "Error de validación",
   "status": 400,
   "detail": "La solicitud contiene campos inválidos",
-  "instance": "/api/v1/products",
+  "instance": "/api/products",
   "errors": {
     "nombre": "no debe estar vacío",
     "precio": "debe ser mayor que 0"

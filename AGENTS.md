@@ -34,9 +34,9 @@ docker-compose up -d
 
 ## URLs en desarrollo
 
-- Context path base: `http://localhost:8080/api/v1`
-- Swagger UI: `http://localhost:8080/api/v1/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/api/v1/docs`
+- Context path base: `http://localhost:8080/api`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/docs`
 
 ## GlobalExceptionHandler — quirk de SpringDoc
 
