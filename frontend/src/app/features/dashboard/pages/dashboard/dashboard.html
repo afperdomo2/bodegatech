@@ -1,0 +1,60 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div>
+    <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+    <p class="text-gray-500 mt-1">Bienvenido al panel de control de inventario</p>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    @for (stat of stats; track stat.label) {
+      <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm font-medium">{{ stat.label }}</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ stat.value }}</p>
+          </div>
+          <div class="text-4xl">{{ stat.icon }}</div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Chart Placeholder 1 -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Movimientos por Mes</h2>
+      <div class="h-64 bg-gray-50 rounded flex items-center justify-center text-gray-400">
+        Gráfica de líneas (próximamente)
+      </div>
+    </div>
+
+    <!-- Chart Placeholder 2 -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Productos por Categoría</h2>
+      <div class="h-64 bg-gray-50 rounded flex items-center justify-center text-gray-400">
+        Gráfica de barras (próximamente)
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Actividad Reciente</h2>
+    <div class="space-y-3">
+      <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+        <span class="text-sm text-gray-700">Entrada: 50 unidades de Producto A</span>
+        <span class="text-xs text-gray-500">hace 2 horas</span>
+      </div>
+      <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+        <span class="text-sm text-gray-700">Salida: 25 unidades de Producto B</span>
+        <span class="text-xs text-gray-500">hace 4 horas</span>
+      </div>
+      <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+        <span class="text-sm text-gray-700">Baja de stock: Producto C bajo mínimo</span>
+        <span class="text-xs text-gray-500">hace 1 día</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -96,3 +96,82 @@ Códigos HTTP: 200 OK, 201 Created, 204 No Content (DELETE), 400, 404, 422 (erro
   ```groovy
   annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.0'
   ```
+
+---
+
+## Frontend — Angular v20+ (BodegaTech UI)
+
+### Stack
+- Angular 20+ (standalone components)
+- Tailwind CSS v4
+- TypeScript con `signal()` para estado reactivo
+- SCSS para estilos de componentes
+- Prefix de componentes: `bt-`
+
+### Estructura de carpetas
+```
+frontend/src/app/
+├── core/
+│   ├── services/          # ApiService, etc.
+│   └── models/            # Interfaces globales
+├── shared/
+│   ├── components/        # Componentes reutilizables (bt-*)
+│   ├── directives/
+│   ├── pipes/
+│   └── utils/
+├── layout/
+│   ├── sidebar/
+│   ├── topbar/
+│   └── main-layout/
+├── features/              # Módulos lazy loading
+│   ├── dashboard/
+│   └── inventory/
+├── app.routes.ts
+├── app.config.ts
+└── app.ts
+```
+
+### Convenciones de nombres
+| Tipo | Patrón |
+|------|--------|
+| Componente | `*Component` (PascalCase en export) |
+| Selector | `bt-*` (kebab-case) |
+| Servicio | `*Service` |
+| Interface | `*` (PascalCase) |
+| Archivo | `*.ts`, `*.html`, `*.scss` (kebab-case) |
+
+### Comandos esenciales
+```bash
+cd frontend
+
+# Desarrollo
+pnpm start
+
+# Build producción
+pnpm build
+
+# Tests
+pnpm test
+
+# Lint
+pnpm lint
+
+# Generar componente
+pnpm ng generate component features/mi-feature/pages/mi-pagina --standalone --skip-tests
+
+# Generar servicio
+pnpm ng generate service core/services/mi-servicio
+```
+
+### URLs en desarrollo
+- Aplicación: `http://localhost:4200`
+- API Backend: `http://localhost:8080/api` (configurable en `src/environments/environment.ts`)
+
+### Pautas de desarrollo
+1. **Standalone components**: Todos los componentes nuevos deben ser standalone (`--standalone`)
+2. **Signals**: Usar `signal()` para estado, `computed()` para derivados
+3. **Lazy loading**: Los features se cargan bajo demanda en `app.routes.ts`
+4. **Prefijo bt-**: Todos los selectores de componentes deben usar este prefijo
+5. **SCSS modular**: Estilos específicos en cada componente, variables globales en `src/styles/`
+6. **Tailwind first**: Preferir clases de Tailwind sobre estilos personalizados
+7. **No cambiar nombres de componentes**: Usar el patrón generado por Angular CLI (ej: `DashboardComponent` → `src/app/.../dashboard.ts`)

@@ -390,6 +390,73 @@ Para errores de validación (400), el campo `errors` detalla cada campo inválid
 
 ---
 
+## 🎨 Frontend — BodegaTech UI
+
+La aplicación frontend está construida con **Angular 20+** y **Tailwind CSS**, en la carpeta `frontend`.
+
+### Stack Frontend
+- **Angular 20+** (standalone components)
+- **TypeScript** con signals para estado reactivo
+- **Tailwind CSS v4** para estilos
+- **SCSS** para estilos modulares
+- **Standalone routing** con lazy loading
+- **pnpm** como package manager
+
+### Requisitos Frontend
+- **Node.js** 20+
+- **pnpm** 10.30.3+
+
+### Instalación Frontend
+```bash
+cd frontend
+pnpm install
+```
+
+### Estructura
+```
+frontend/src/app/
+├── core/              # Servicios globales (ApiService, etc.)
+├── shared/            # Componentes reutilizables (bt-*)
+├── layout/            # Estructura visual (sidebar, topbar)
+├── features/          # Módulos lazy (dashboard, inventory)
+├── app.routes.ts      # Configuración de rutas
+└── environments/      # Configuración por entorno
+```
+
+### Comandos
+```bash
+cd frontend
+
+# Desarrollo (http://localhost:4200)
+pnpm start
+
+# Build producción
+pnpm build
+
+# Tests
+pnpm test
+
+# Lint
+pnpm lint
+
+# Generar componente
+pnpm ng generate component features/mi-feature/pages/mi-pagina --standalone --skip-tests
+```
+
+### API Backend
+Por defecto, el frontend consume la API en `http://localhost:8080/api`. Configurable en `src/environments/environment.ts`.
+
+### Package Manager: pnpm
+El proyecto usa **pnpm** en lugar de npm por sus ventajas:
+- ✅ Instalación más rápida
+- ✅ Menor consumo de espacio en disco
+- ✅ Mejor manejo de dependencias
+- ✅ Ideal para monorepos
+
+**Lock file:** `pnpm-lock.yaml` (debe estar en control de versiones)
+
+---
+
 ## 🧪 Testing
 
 ```bash
