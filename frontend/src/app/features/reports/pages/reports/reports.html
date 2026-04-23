@@ -1,0 +1,87 @@
+<div class="p-4 md:p-8 space-y-8">
+  <!-- Page Header with Date Range -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <bt-page-header
+      title="Reportes y Analítica"
+      subtitle="Rendimiento operativo de tu inventario">
+    </bt-page-header>
+    <div class="flex flex-wrap gap-2 bg-surface-container-lowest rounded-lg p-1 border border-outline-variant">
+      <button
+        (click)="dateRange.set('7')"
+        [class.bg-primary]="dateRange() === '7'"
+        [class.text-on-primary]="dateRange() === '7'"
+        class="px-3 md:px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+        [class.text-on-surface-variant]="dateRange() !== '7'">
+        7 Días
+      </button>
+      <button
+        (click)="dateRange.set('30')"
+        [class.bg-primary]="dateRange() === '30'"
+        [class.text-on-primary]="dateRange() === '30'"
+        class="px-3 md:px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+        [class.text-on-surface-variant]="dateRange() !== '30'">
+        30 Días
+      </button>
+      <button
+        (click)="dateRange.set('90')"
+        [class.bg-primary]="dateRange() === '90'"
+        [class.text-on-primary]="dateRange() === '90'"
+        class="px-3 md:px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+        [class.text-on-surface-variant]="dateRange() !== '90'">
+        Trimestre
+      </button>
+      <button
+        class="flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors text-sm whitespace-nowrap">
+        <span class="material-symbols-outlined text-lg">calendar_month</span>
+        <span class="hidden sm:inline">Personalizado</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+    @for (stat of stats(); track stat.title) {
+      <bt-stat-card
+        [title]="stat.title"
+        [value]="stat.value"
+        [trendValue]="stat.trendValue"
+        [trendIcon]="stat.trendIcon"
+        [icon]="stat.icon"
+        [variant]="stat.variant">
+      </bt-stat-card>
+    }
+  </div>
+
+  <!-- Charts and Top Products Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+    <!-- Line Chart -->
+    <div class="lg:col-span-2 bg-surface-container-lowest rounded-lg p-4 md:p-6 shadow-sm border border-outline-variant">
+      <h2 class="text-lg font-semibold text-on-surface mb-4">Tendencias de Entradas vs Salidas</h2>
+      <div class="relative h-72">
+        <canvas #lineChartCanvas></canvas>
+      </div>
+    </div>
+
+    <!-- Top Products Table -->
+    <div class="bg-surface-container-lowest rounded-lg p-4 md:p-6 shadow-sm border border-outline-variant">
+      <h2 class="text-lg font-semibold text-on-surface mb-4">Productos con Mayor Salida</h2>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        @for (product of topProducts(); track product.sku) {
+          <div class="flex items-center justify-between p-3 bg-surface-container rounded-lg hover:bg-surface-container-high transition-colors">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-mono text-on-surface-variant truncate">{{ product.sku }}</p>
+              <p class="text-sm font-medium text-on-surface truncate">{{ product.volume }}</p>
+            </div>
+            <span [class]="'material-symbols-outlined font-bold flex-shrink-0 ' + getTrendColor(product.trend)">
+              {{ getTrendIcon(product.trend) }}
+            </span>
+          </div>
+        }
+      </div>
+      <button
+        class="w-full mt-4 text-center text-sm text-primary font-medium hover:text-primary-700 transition-colors">
+        Ver reporte completo →
+      </button>
+    </div>
+  </div>
+</div>

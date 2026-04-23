@@ -1,1 +1,8 @@
-<p>badge works!</p>
+<span
+  [class]="'inline-flex items-center px-2.5 py-1 rounded-full text-label-caps font-medium transition-colors ' +
+           (variant() === 'success' ? 'bg-success/10 text-success' :
+            variant() === 'warning' ? 'bg-warning/10 text-amber-900' :
+            variant() === 'error' ? 'bg-error/10 text-error' :
+            'bg-surface-container text-surface-700')">
+  {{ label() }}
+</span>

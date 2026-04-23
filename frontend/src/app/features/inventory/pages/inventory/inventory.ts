@@ -1,45 +1,125 @@
 import { CommonModule } from '@angular/common';
 import { Component, signal } from '@angular/core';
+import { DataTable, DataTableColumn } from '../../../../shared/components/data-table/data-table';
+import { PageHeader } from '../../../../shared/components/page-header/page-header';
+import { SearchInput } from '../../../../shared/components/search-input/search-input';
 
 interface Product {
   id: string;
+  sku: string;
   name: string;
   category: string;
   stock: number;
   minStock: number;
   price: number;
-  status: 'available' | 'low' | 'out';
+  status: 'Disponible' | 'Bajo Stock' | 'Agotado';
+  actions: string;
 }
 
 @Component({
   selector: 'bt-inventory',
-  imports: [CommonModule],
+  standalone: true,
+  imports: [CommonModule, DataTable, PageHeader, SearchInput],
   templateUrl: './inventory.html',
   styleUrl: './inventory.scss',
 })
 export class InventoryComponent {
+  searchQuery = signal('');
+  selectedCategory = signal('');
+  selectedStatus = signal('');
+  currentPage = signal(1);
+  pageSize = signal(10);
+
+  categories = ['Energía Solar', 'Almacenamiento', 'Accesorios'];
+  statuses = ['Disponible', 'Bajo Stock', 'Agotado'];
+
   products = signal<Product[]>([
-    { id: '1', name: 'Producto A', category: 'Electrónica', stock: 150, minStock: 50, price: 99.99, status: 'available' },
-    { id: '2', name: 'Producto B', category: 'Ropa', stock: 30, minStock: 50, price: 49.99, status: 'low' },
-    { id: '3', name: 'Producto C', category: 'Alimentos', stock: 0, minStock: 100, price: 9.99, status: 'out' },
-    { id: '4', name: 'Producto D', category: 'Electrónica', stock: 200, minStock: 100, price: 199.99, status: 'available' },
+    {
+      id: '1',
+      sku: 'PS-400-001',
+      name: 'Panel Solar 400W',
+      category: 'Energía Solar',
+      stock: 150,
+      minStock: 50,
+      price: 599.99,
+      status: 'Disponible',
+      actions: 'more_vert',
+    },
+    {
+      id: '2',
+      sku: 'BAT-LFP-048',
+      name: 'Batería LiFePO4 48V',
+      category: 'Almacenamiento',
+      stock: 12,
+      minStock: 50,
+      price: 1299.99,
+      status: 'Bajo Stock',
+      actions: 'more_vert',
+    },
+    {
+      id: '3',
+      sku: 'INV-HYB-006',
+      name: 'Inversor Híbrido 6kW',
+      category: 'Almacenamiento',
+      stock: 0,
+      minStock: 20,
+      price: 2499.99,
+      status: 'Agotado',
+      actions: 'more_vert',
+    },
+    {
+      id: '4',
+      sku: 'CABLE-MC4-50',
+      name: 'Cable Tipo MC4 50M',
+      category: 'Accesorios',
+      stock: 245,
+      minStock: 100,
+      price: 79.99,
+      status: 'Disponible',
+      actions: 'more_vert',
+    },
+    {
+      id: '5',
+      sku: 'STRUCT-RAIL-10',
+      name: 'Estructura de Montaje Rail 10M',
+      category: 'Accesorios',
+      stock: 45,
+      minStock: 30,
+      price: 189.99,
+      status: 'Disponible',
+      actions: 'more_vert',
+    },
   ]);
 
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'available': return 'bg-green-100 text-green-800';
-      case 'low': return 'bg-yellow-100 text-yellow-800';
-      case 'out': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  columns: DataTableColumn[] = [
+    { key: 'sku', label: 'SKU', width: '120px', align: 'left', type: 'text' },
+    { key: 'name', label: 'Producto', width: 'auto', align: 'left', type: 'text' },
+    { key: 'category', label: 'Categoría', width: '150px', align: 'left', type: 'text' },
+    { key: 'stock', label: 'Stock Actual', width: '100px', align: 'right', type: 'number' },
+    { key: 'price', label: 'Precio Unitario', width: '120px', align: 'right', type: 'text' },
+    { key: 'status', label: 'Estado', width: '120px', align: 'left', type: 'status' },
+    { key: 'actions', label: 'Acciones', width: '80px', align: 'center', type: 'actions' },
+  ];
+
+  onSearch(query: string) {
+    this.searchQuery.set(query);
   }
 
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'available': return 'Disponible';
-      case 'low': return 'Stock bajo';
-      case 'out': return 'Agotado';
-      default: return 'Desconocido';
-    }
+  handleCategoryChange(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    this.onCategoryChange(value);
+  }
+
+  onCategoryChange(category: string) {
+    this.selectedCategory.set(category);
+  }
+
+  handleStatusChange(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    this.onStatusChange(value);
+  }
+
+  onStatusChange(status: string) {
+    this.selectedStatus.set(status);
   }
 }

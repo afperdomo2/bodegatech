@@ -1,0 +1,123 @@
+<div class="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center"
+     style="background-image: url('https://images.unsplash.com/photo-1553531088-d5b6f3fbf965?w=1200&q=80'); background-color: #003527;">
+  <!-- Overlay -->
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+  <!-- Login Card -->
+  <div class="relative z-10 w-full max-w-sm mx-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 space-y-6">
+      <!-- Logo Section -->
+      <div class="text-center space-y-3">
+        <div class="flex items-center justify-center w-16 h-16 mx-auto bg-primary/10 rounded-2xl">
+          <span class="material-symbols-outlined text-primary text-4xl">inventory_2</span>
+        </div>
+        <h1 class="text-2xl font-bold text-surface-900">BodegaTech</h1>
+        <p class="text-sm text-surface-600">Sistema de Gestión de Inventario</p>
+      </div>
+
+      <!-- Form -->
+      <form (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Email -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-surface-900">Email</label>
+          <div class="relative">
+            <span class="absolute left-3 top-3 text-surface-400 material-symbols-outlined">mail</span>
+            <input
+              type="email"
+              [(ngModel)]="email"
+              name="email"
+              placeholder="tu@email.com"
+              class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-surface-200 bg-surface-50 text-surface-900 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all">
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-sm font-medium text-surface-900">Contraseña</label>
+            <button
+              type="button"
+              (click)="onForgotPassword()"
+              class="text-sm text-primary hover:text-primary-700 font-medium transition-colors">
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+          <div class="relative">
+            <span class="absolute left-3 top-3 text-surface-400 material-symbols-outlined">lock</span>
+            <input
+              type="password"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="Contraseña"
+              class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-surface-200 bg-surface-50 text-surface-900 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all">
+          </div>
+        </div>
+
+        <!-- Remember Me -->
+        <div class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            [(ngModel)]="rememberMe"
+            name="rememberMe"
+            class="w-4 h-4 rounded border-surface-300 text-primary focus:ring-primary cursor-pointer">
+          <label for="rememberMe" class="text-sm text-surface-700 cursor-pointer font-medium">
+            Recuérdame en este dispositivo
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="w-full px-4 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-700 active:bg-primary-800 transition-colors flex items-center justify-center gap-2 group mt-2">
+          Acceder
+          <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">
+            arrow_forward
+          </span>
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-surface-200"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-white text-surface-500">o continúa con</span>
+        </div>
+      </div>
+
+      <!-- Social Buttons -->
+      <div class="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          class="flex items-center justify-center gap-2 px-4 py-2.5 border border-surface-200 rounded-lg text-surface-700 font-medium hover:bg-surface-50 transition-colors">
+          <span class="material-symbols-outlined text-xl">google</span>
+          <span class="text-sm">Google</span>
+        </button>
+        <button
+          type="button"
+          class="flex items-center justify-center gap-2 px-4 py-2.5 border border-surface-200 rounded-lg text-surface-700 font-medium hover:bg-surface-50 transition-colors">
+          <span class="material-symbols-outlined text-xl">microsoft</span>
+          <span class="text-sm">Outlook</span>
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center text-sm text-surface-600">
+        <p>¿Primera vez aquí?</p>
+        <p class="mt-1">
+          Solicita acceso a tu administrador o
+          <a href="mailto:support@bodegatech.local" class="text-primary hover:text-primary-700 font-medium">
+            contáctanos
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Copyright -->
+    <p class="text-center text-xs text-white/60 mt-6">
+      © 2024 BodegaTech. Todos los derechos reservados.
+    </p>
+  </div>
+</div>

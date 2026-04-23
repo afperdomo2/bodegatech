@@ -1,1 +1,6 @@
-<p>page-header works!</p>
+<div class="mb-8">
+  <h1 class="text-3xl font-bold text-surface-900 mb-2">{{ title() }}</h1>
+  @if (subtitle()) {
+    <p class="text-surface-600">{{ subtitle() }}</p>
+  }
+</div>

@@ -10,6 +10,7 @@ import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.service.ProductImageService;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
 import com.afperdomo.bodegatech.common.response.ApiResponse;
+import com.afperdomo.bodegatech.common.response.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -50,7 +51,7 @@ public class ProductController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<Page<ProductDto>>> getAllProducts(
+    public ResponseEntity<ApiResponse<PagedResponse<ProductDto>>> getAllProducts(
             @Parameter(description = "Número de página (comenzando en 0)")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Cantidad de elementos por página")
@@ -62,8 +63,9 @@ public class ProductController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<ProductDto> products = productService.findAllProducts(pageable);
+        PagedResponse<ProductDto> pagedResponse = new PagedResponse<>(products);
 
-        return ResponseEntity.ok(ApiResponse.success("Productos obtenidos exitosamente", products));
+        return ResponseEntity.ok(ApiResponse.success("Productos obtenidos exitosamente", pagedResponse));
     }
 
     @GetMapping("/{id}")

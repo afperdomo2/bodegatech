@@ -1,11 +1,19 @@
-import { Component } from '@angular/core';
+import { Component, output } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'bt-topbar',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './topbar.html',
   styleUrl: './topbar.scss',
 })
 export class TopbarComponent {
-  userName = 'Usuario';
+  userName = 'J. Doe';
+  
+  sidebarToggled = output<void>();
+
+  onToggleSidebar(): void {
+    this.sidebarToggled.emit();
+  }
 }

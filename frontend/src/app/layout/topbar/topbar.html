@@ -1,23 +1,33 @@
-<header class="h-16 px-6 flex items-center justify-between">
-  <!-- Left side -->
-  <div class="flex items-center space-x-4">
-    <h2 class="text-lg font-semibold text-gray-800">Gestión de Inventario</h2>
+<header class="sticky top-0 z-30 h-16 px-4 md:px-8 flex items-center justify-between bg-white/80 border-b border-outline-variant glassmorphic shadow-sm">
+
+  <!-- Left side: Hamburger (mobile only) -->
+  <div class="flex items-center gap-4">
+    <!-- Hamburger menu (mobile only) -->
+    <button
+      (click)="onToggleSidebar()"
+      class="md:hidden p-2 text-on-surface hover:bg-surface-200 rounded-lg transition-colors"
+      aria-label="Toggle sidebar">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
   </div>
 
-  <!-- Right side -->
-  <div class="flex items-center space-x-6">
+  <!-- Right side: Icons and user -->
+  <div class="flex items-center gap-4 ml-4 md:ml-8 md:pl-8 border-l border-outline-variant">
     <!-- Notifications -->
-    <button class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">
-      <span class="text-xl">🔔</span>
-      <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+    <button class="relative p-2 text-on-surface-variant hover:bg-surface-200 rounded-lg transition-colors group">
+      <span class="material-symbols-outlined">notifications</span>
+      <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full group-hover:scale-125 transition-transform"></span>
     </button>
 
-    <!-- User menu -->
-    <div class="flex items-center space-x-3 pl-6 border-l border-gray-200">
-      <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+    <!-- User Avatar & Name -->
+    <div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+      <div class="flex flex-col items-end">
+        <span class="text-sm font-medium text-on-surface">{{ userName }}</span>
+        <span class="text-xs text-on-surface-variant">Administrador</span>
+      </div>
+      <div class="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold">
         {{ userName.charAt(0) }}
       </div>
-      <span class="text-sm font-medium text-gray-700">{{ userName }}</span>
     </div>
   </div>
 </header>

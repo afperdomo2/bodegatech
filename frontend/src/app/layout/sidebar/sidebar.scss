@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+aside {
+  scrollbar-width: thin;
+  scrollbar-color: #bfc9c3 #f8f9ff;
+}
+
+aside::-webkit-scrollbar {
+  width: 6px;
+}
+
+aside::-webkit-scrollbar-track {
+  background-color: #f8f9ff;
+}
+
+aside::-webkit-scrollbar-thumb {
+  background-color: #bfc9c3;
+  border-radius: 3px;
+}
+
+aside::-webkit-scrollbar-thumb:hover {
+  background-color: #9db7a8;
+}
+
+/* Mobile overlay */
+@media (max-width: 767px) {
+  aside {
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+  }
+}

@@ -1,28 +1,75 @@
-<nav class="h-full flex flex-col">
-  <!-- Logo -->
-  <div class="p-6 border-b border-gray-200">
-    <h1 class="text-2xl font-bold text-blue-600">BodegaTech</h1>
+<aside class="
+  max-md:fixed max-md:left-0 max-md:top-0 max-md:z-40 max-md:h-screen
+  md:static md:z-auto md:h-full md:flex-shrink-0
+  w-sidebar bg-white border-r border-outline-variant flex flex-col shadow-sm transition-transform duration-300 overflow-y-auto"
+  [class.max-md:-translate-x-full]="!isSidebarOpen()"
+  [class.max-md:translate-x-0]="isSidebarOpen()">
+
+  <!-- Brand Section -->
+  <div class="px-6 py-6 border-b border-outline-variant flex-shrink-0">
+    <div class="flex items-center gap-3 mb-2">
+      <div class="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
+        <span class="material-symbols-outlined text-xl text-primary">inventory_2</span>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold text-on-surface">BodegaTech</h1>
+        <p class="text-xs text-on-surface-variant">Sistema de Inventario</p>
+      </div>
+    </div>
   </div>
 
-  <!-- Menu Items -->
-  <ul class="flex-1 p-4 space-y-2">
-    @for (item of menuItems; track item.path) {
-      <li>
-        <a
-          [routerLink]="item.path"
-          routerLinkActive="bg-blue-50 text-blue-600"
-          [routerLinkActiveOptions]="{ exact: false }"
-          class="flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
-        >
-          <span class="text-xl">{{ item.icon }}</span>
-          <span>{{ item.label }}</span>
-        </a>
-      </li>
+  <!-- CTA Button -->
+  <div class="px-4 py-4 flex-shrink-0">
+    <button
+      class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-on-primary font-medium rounded-lg hover:bg-on-primary-fixed-variant transition-colors">
+      <span class="material-symbols-outlined">add</span>
+      Añadir Producto
+    </button>
+  </div>
+
+  <!-- Main Menu -->
+  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+    @for (item of mainMenuItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        routerLinkActive="bg-primary/10 text-primary border-r-4 border-primary font-semibold"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="flex items-center gap-3 px-4 py-3 rounded-lg rounded-r-none text-on-surface-variant hover:bg-surface-container transition-all group
+        [&.router-link-active]:text-primary [&.router-link-active]:bg-primary/10"
+        (click)="closeSidebarOnMobile()">
+        <span class="material-symbols-outlined text-xl group-[&.router-link-active]:text-primary"
+          [style.fontVariationSettings]="getMenuItemFill(item.path)">
+          {{ item.icon }}
+        </span>
+        <span>{{ item.label }}</span>
+      </a>
     }
-  </ul>
+  </nav>
 
-  <!-- Footer -->
-  <div class="p-4 border-t border-gray-200 text-sm text-gray-500">
-    <p>v1.0.0</p>
+  <!-- Footer Menu -->
+  <div class="px-3 py-4 border-t border-outline-variant space-y-1 flex-shrink-0">
+    @for (item of footerMenuItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        routerLinkActive="bg-primary/10 text-primary border-r-4 border-primary font-semibold"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="flex items-center gap-3 px-4 py-3 rounded-lg rounded-r-none text-on-surface-variant hover:bg-surface-container transition-all group
+        [&.router-link-active]:text-primary [&.router-link-active]:bg-primary/10"
+        (click)="closeSidebarOnMobile()">
+        <span class="material-symbols-outlined text-xl group-[&.router-link-active]:text-primary"
+          [style.fontVariationSettings]="getMenuItemFill(item.path)">
+          {{ item.icon }}
+        </span>
+        <span>{{ item.label }}</span>
+      </a>
+    }
   </div>
-</nav>
+
+  <!-- Mobile overlay close button -->
+  <button
+    (click)="closeSidebar()"
+    class="absolute top-4 right-4 p-2 md:hidden hover:bg-surface-200 rounded-lg transition-colors"
+    aria-label="Close sidebar">
+    <span class="material-symbols-outlined">close</span>
+  </button>
+</aside>

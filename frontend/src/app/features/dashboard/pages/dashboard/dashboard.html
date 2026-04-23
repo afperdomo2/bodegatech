@@ -1,59 +1,72 @@
-<div class="space-y-6">
-  <!-- Page Header -->
-  <div>
-    <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-    <p class="text-gray-500 mt-1">Bienvenido al panel de control de inventario</p>
+<div class="p-4 md:p-8 space-y-8">
+  <!-- Page Header with Actions -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <bt-page-header
+        title="Dashboard"
+        subtitle="Resumen de tu sistema de inventario">
+      </bt-page-header>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3">
+      <button
+        class="flex items-center justify-center gap-2 px-4 py-2 bg-surface-100 text-surface-700 font-medium rounded-lg hover:bg-surface-200 transition-colors">
+        <span class="material-symbols-outlined text-lg">calendar_today</span>
+        <span class="hidden sm:inline">Hoy</span>
+      </button>
+      <button
+        class="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-on-primary font-medium rounded-lg hover:bg-on-primary-fixed-variant transition-colors">
+        <span class="material-symbols-outlined text-lg">download</span>
+        <span class="hidden sm:inline">Exportar</span>
+      </button>
+    </div>
   </div>
 
-  <!-- Stats Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    @for (stat of stats; track stat.label) {
-      <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-gray-500 text-sm font-medium">{{ stat.label }}</p>
-            <p class="text-2xl font-bold text-gray-900 mt-2">{{ stat.value }}</p>
-          </div>
-          <div class="text-4xl">{{ stat.icon }}</div>
-        </div>
-      </div>
+  <!-- KPI Cards Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    @for (stat of stats(); track stat.title) {
+      <bt-stat-card
+        [title]="stat.title"
+        [value]="stat.value"
+        [trendValue]="stat.trendValue"
+        [trendIcon]="stat.trendIcon"
+        [icon]="stat.icon"
+        [variant]="stat.variant">
+      </bt-stat-card>
     }
   </div>
 
-  <!-- Charts Section -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Chart Placeholder 1 -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Movimientos por Mes</h2>
-      <div class="h-64 bg-gray-50 rounded flex items-center justify-center text-gray-400">
-        Gráfica de líneas (próximamente)
+  <!-- Charts and Activity Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+    <!-- Bar Chart -->
+    <div class="lg:col-span-2 bg-surface-container-lowest rounded-lg p-4 md:p-6 shadow-sm border border-outline-variant">
+      <h2 class="text-lg font-semibold text-on-surface mb-4">Movimientos de Stock</h2>
+      <div class="relative h-72">
+        <canvas #barChartCanvas></canvas>
       </div>
     </div>
 
-    <!-- Chart Placeholder 2 -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Productos por Categoría</h2>
-      <div class="h-64 bg-gray-50 rounded flex items-center justify-center text-gray-400">
-        Gráfica de barras (próximamente)
-      </div>
-    </div>
-  </div>
-
-  <!-- Recent Activity -->
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">Actividad Reciente</h2>
-    <div class="space-y-3">
-      <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-        <span class="text-sm text-gray-700">Entrada: 50 unidades de Producto A</span>
-        <span class="text-xs text-gray-500">hace 2 horas</span>
-      </div>
-      <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-        <span class="text-sm text-gray-700">Salida: 25 unidades de Producto B</span>
-        <span class="text-xs text-gray-500">hace 4 horas</span>
-      </div>
-      <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-        <span class="text-sm text-gray-700">Baja de stock: Producto C bajo mínimo</span>
-        <span class="text-xs text-gray-500">hace 1 día</span>
+    <!-- Recent Activities -->
+    <div class="bg-surface-container-lowest rounded-lg p-4 md:p-6 shadow-sm border border-outline-variant">
+      <h2 class="text-lg font-semibold text-on-surface mb-4">Actividad Reciente</h2>
+      <div class="space-y-3 max-h-80 overflow-y-auto">
+        @for (activity of activities(); track activity.id) {
+          <div
+            [class]="'flex gap-3 p-3 rounded-lg ' + getActivityBgColor(activity.type)">
+            <div class="flex-shrink-0">
+              <span
+                [class]="'material-symbols-outlined flex items-center justify-center w-8 h-8 rounded-full ' +
+                         getActivityIconColor(activity.type)">
+                {{ activity.icon }}
+              </span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-on-surface line-clamp-2">
+                {{ activity.description }}
+              </p>
+              <p class="text-xs text-on-surface-variant mt-1">{{ activity.timestamp }}</p>
+            </div>
+          </div>
+        }
       </div>
     </div>
   </div>

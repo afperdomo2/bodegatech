@@ -1,0 +1,17 @@
+:host {
+  display: block;
+}
+
+/* Glassmorphic effect via class */
+.glassmorphic {
+  background-color: rgba(248, 249, 255, 0.8) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@media (max-width: 767px) {
+  header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

@@ -1,0 +1,18 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+/* Desktop: sidebar visible by default */
+@media (min-width: 768px) {
+  bt-sidebar {
+    transform: translateX(0);
+  }
+}
+
+/* Mobile: sidebar hidden by default */
+@media (max-width: 767px) {
+  bt-sidebar {
+    z-index: 40;
+  }
+}

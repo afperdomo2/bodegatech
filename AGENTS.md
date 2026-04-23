@@ -40,7 +40,7 @@ docker-compose up -d
 
 ## GlobalExceptionHandler — quirk de SpringDoc
 
-El handler en `shared/exception/GlobalExceptionHandler.java` captura `Exception.class`.  
+El handler en `common/exception/GlobalExceptionHandler.java` captura `Exception.class`.  
 Sin los checks de SpringDoc, intercepta peticiones a `/docs` y `/swagger-ui` devolviendo 500.
 
 El método `handleGlobalException` **debe** tener `throws Exception` y los helpers privados:
@@ -52,7 +52,7 @@ El parámetro debe ser `HttpServletRequest` (no `WebRequest`) para poder leer el
 ## Estructura de módulos
 
 ```
-shared/
+common/
   audit/        ← BaseEntity (id UUID, createdAt, updatedAt)
   exception/    ← GlobalExceptionHandler, BusinessException, ResourceNotFoundException
   response/     ← ApiResponse<T>, PagedResponse<T>
