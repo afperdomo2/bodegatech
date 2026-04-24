@@ -18,7 +18,7 @@ export interface DataTableColumn {
 })
 export class DataTable {
   columns = input<DataTableColumn[]>([]);
-  data = input<any[]>([]);
+  data = input<unknown[]>([]);
   currentPage = input<number>(1);
   pageSize = input<number>(10);
   totalItems = input<number>(0);
@@ -36,8 +36,9 @@ export class DataTable {
     return Array.from({ length: this.totalPagesValue }, (_, i) => i + 1);
   }
 
-  getValue(item: any, key: string) {
-    return key.split('.').reduce((obj, k) => obj?.[k], item);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getValue(item: unknown, key: string): any {
+    return key.split('.').reduce((obj: unknown, k: string) => (obj as Record<string, unknown>)?.[k], item);
   }
 
   getAlignClass(align?: string) {

@@ -41,7 +41,7 @@ export interface ProblemDetail {
   errors?: Record<string, string>; // 400 - validación por campo
   categoryName?: string;             // 409 - categoría en uso
   productCount?: number;             // 409 - cantidad de productos
-  [key: string]: any;                // Otros campos personalizados
+  [key: string]: unknown;            // Otros campos personalizados
 }
 
 /**

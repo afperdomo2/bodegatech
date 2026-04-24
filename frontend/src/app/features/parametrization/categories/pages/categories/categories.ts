@@ -1,11 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, OnInit } from '@angular/core';
+import type { OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { CategoryStateService } from '../../state/category-state.service';
-import { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../../core/models/category.models';
+import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../../core/models/category.models';
 import { Modal } from '../../../../../shared/components/modal/modal';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
-import { DataTable } from '../../../../../shared/components/data-table/data-table';
 import { Badge } from '../../../../../shared/components/badge/badge';
 
 interface DataTableColumn {
@@ -19,10 +18,8 @@ interface DataTableColumn {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     Modal,
     PageHeader,
-    DataTable,
     Badge,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

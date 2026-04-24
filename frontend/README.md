@@ -16,7 +16,7 @@ Aplicación frontend para la plataforma de gestión de inventario **BodegaTech**
 
 ## ✅ Requisitos previos
 
-- **Node.js** 20+ (incluido pnpm 10.30.3+)
+- **Node.js** 22+ (incluido pnpm 10.30.3+)
 - **pnpm** instalado globalmente: `npm install -g pnpm`
 - **Angular CLI** instalado: `pnpm add -g @angular/cli`
 - Backend en `http://localhost:8080/api` (configurable)

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../../core/services/api';
-import { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../core/models/category.models';
-import { ApiResponse, PagedResponse } from '../../../../core/models/api.models';
+import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../core/models/category.models';
+import type { ApiResponse, PagedResponse } from '../../../../core/models/api.models';
 
 /**
  * Servicio HTTP puro para categorías.

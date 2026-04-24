@@ -13,15 +13,15 @@ export class ApiService {
     return this.http.get<T>(`${this.apiUrl}${endpoint}`);
   }
 
-  post<T>(endpoint: string, body: any) {
+  post<T, B = unknown>(endpoint: string, body: B) {
     return this.http.post<T>(`${this.apiUrl}${endpoint}`, body);
   }
 
-  put<T>(endpoint: string, body: any) {
+  put<T, B = unknown>(endpoint: string, body: B) {
     return this.http.put<T>(`${this.apiUrl}${endpoint}`, body);
   }
 
-  patch<T>(endpoint: string, body: any) {
+  patch<T, B = unknown>(endpoint: string, body: B) {
     return this.http.patch<T>(`${this.apiUrl}${endpoint}`, body);
   }
 

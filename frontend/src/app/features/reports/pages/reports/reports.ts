@@ -1,4 +1,5 @@
-import { Component, signal, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import type { AfterViewInit, ElementRef, OnDestroy } from '@angular/core';
+import { Component, signal, ViewChild } from '@angular/core';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
 import { CommonModule } from '@angular/common';

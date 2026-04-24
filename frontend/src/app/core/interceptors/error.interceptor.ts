@@ -1,6 +1,6 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import type { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
-import { AppError, ProblemDetail } from '../models/api.models';
+import type { AppError, ProblemDetail } from '../models/api.models';
 
 /**
  * Interceptor funcional que normaliza todas las respuestas de error HTTP.

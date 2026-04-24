@@ -128,6 +128,7 @@ Códigos HTTP: 200 OK, 201 Created, 204 No Content (DELETE), 400, 404, 422 (erro
 ## Frontend — Angular v20+ (BodegaTech UI)
 
 ### Stack
+- Node.js 22+ (con pnpm 10.30.3+)
 - Angular 20+ (standalone components)
 - Tailwind CSS v4
 - TypeScript con `signal()` para estado reactivo

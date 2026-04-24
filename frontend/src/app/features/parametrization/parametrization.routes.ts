@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import type { Routes } from '@angular/router';
 import { CategoriesComponent } from './categories/pages/categories/categories';
 
 export const PARAMETRIZATION_ROUTES: Routes = [

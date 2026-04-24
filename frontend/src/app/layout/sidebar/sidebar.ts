@@ -8,7 +8,7 @@ interface MenuItem {
   icon: string;
 }
 
-interface MenuSection {
+interface _MenuSection {
   title: string;
   items: MenuItem[];
 }
@@ -50,7 +50,7 @@ export class SidebarComponent {
     }
   }
 
-  getMenuItemFill(path: string): string {
+  getMenuItemFill(_path: string): string {
     // Detectar si el item está activo - esto es visual, el routerLinkActive se encarga del activo real
     return "'FILL' 0";
   }

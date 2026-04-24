@@ -133,7 +133,6 @@
         <label class="text-sm font-medium text-on-surface">Nombre *</label>
         <input
           type="text"
-          [(ngModel)]="formName"
           [value]="formName()"
           (input)="formName.set($any($event.target).value)"
           placeholder="Ej: Electrónica"
@@ -147,7 +146,6 @@
       <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-on-surface">Descripción</label>
         <textarea
-          [(ngModel)]="formDescription"
           [value]="formDescription()"
           (input)="formDescription.set($any($event.target).value)"
           placeholder="Ej: Productos electrónicos y computadoras"

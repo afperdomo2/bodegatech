@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, signal } from '@angular/core';
-import { DataTable, DataTableColumn } from '../../../../shared/components/data-table/data-table';
+import type { DataTableColumn } from '../../../../shared/components/data-table/data-table';
+import { DataTable } from '../../../../shared/components/data-table/data-table';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
 import { SearchInput } from '../../../../shared/components/search-input/search-input';
 

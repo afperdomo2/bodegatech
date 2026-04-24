@@ -1,4 +1,5 @@
-import { Component, signal, ViewChild, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
+import type { ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, signal, ViewChild } from '@angular/core';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
 import { Chart } from 'chart.js/auto';

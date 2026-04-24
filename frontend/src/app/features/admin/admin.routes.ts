@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import type { Routes } from '@angular/router';
 import { AdminComponent } from './pages/admin/admin';
 
 export const ADMIN_ROUTES: Routes = [
