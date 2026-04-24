@@ -1,107 +1,140 @@
 <div class="bg-white rounded-lg shadow-sm border border-surface-200 overflow-hidden">
-  <!-- Table Container -->
-  <div class="overflow-x-auto">
-    <table class="w-full">
-      <!-- Table Head -->
-      <thead>
-        <tr class="border-b border-surface-200 bg-surface-50">
-          @for (column of columns(); track column.key) {
-            <th
-              [style.width]="column.width || 'auto'"
-              [class]="'px-6 py-3 text-left text-label-caps font-semibold text-surface-700 ' +
-                       getAlignClass(column.align)">
-              {{ column.label }}
-            </th>
-          }
-        </tr>
-      </thead>
-
-      <!-- Table Body -->
-      <tbody>
-        @for (item of paginatedData; track $index) {
-          <tr
-            class="border-b border-surface-100 hover:bg-surface-50 transition-colors">
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-on-surface-variant">Cargando datos...</p>
+      </div>
+    </div>
+  } @else {
+    <!-- Table Container -->
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <!-- Table Head -->
+        <thead>
+          <tr class="border-b border-surface-200 bg-surface-50">
             @for (column of columns(); track column.key) {
-              <td
-                [class]="'px-6 py-4 ' +
-                         (column.type === 'number' ? 'font-mono text-right' : getAlignClass(column.align))">
-                @switch (column.type) {
-                  @case ('text') {
-                    {{ getValue(item, column.key) }}
-                  }
-                  @case ('number') {
-                    {{ getValue(item, column.key) | number }}
-                  }
-                  @case ('status') {
-                    <span
-                      [class]="'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ' +
-                               (getValue(item, column.key) === 'Disponible' ? 'bg-success/10 text-success' :
-                                getValue(item, column.key) === 'Bajo Stock' ? 'bg-warning/10 text-amber-900' :
-                                'bg-error/10 text-error')">
-                      {{ getValue(item, column.key) }}
-                    </span>
-                  }
-                  @case ('actions') {
-                    <button
-                      class="p-2 hover:bg-surface-200 rounded-lg transition-colors text-surface-600 hover:text-surface-900">
-                      <span class="material-symbols-outlined text-xl">{{ getValue(item, column.key) }}</span>
-                    </button>
-                  }
-                  @default {
-                    {{ getValue(item, column.key) }}
-                  }
-                }
-              </td>
+              <th
+                [style.width]="column.width || 'auto'"
+                [class]="'px-6 py-3 text-left text-label-caps font-semibold text-surface-700 ' +
+                         getAlignClass(column.align)">
+                {{ column.label }}
+              </th>
             }
           </tr>
-        }
+        </thead>
 
-        @if (paginatedData.length === 0) {
-          <tr>
-            <td
-              [attr.colspan]="columns().length"
-              class="px-6 py-8 text-center text-surface-500">
-              No hay datos disponibles
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        <!-- Table Body -->
+        <tbody>
+          @for (item of paginatedData; track $index) {
+            <tr
+              class="border-b border-surface-100 hover:bg-surface-50 transition-colors">
+              @for (column of columns(); track column.key) {
+                <td
+                  [class]="'px-6 py-4 ' +
+                           (column.type === 'number' ? 'font-mono text-right' : getAlignClass(column.align))">
+                  @switch (column.type) {
+                    @case ('text') {
+                      {{ getValue(item, column.key) }}
+                    }
+                    @case ('number') {
+                      {{ getValue(item, column.key) | number }}
+                    }
+                    @case ('date') {
+                      {{ formatDate(getValue(item, column.key)) }}
+                    }
+                    @case ('status') {
+                      <span
+                        [class]="'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ' +
+                                 (getValue(item, column.key) === 'Disponible' ? 'bg-success/10 text-success' :
+                                  getValue(item, column.key) === 'Bajo Stock' ? 'bg-warning/10 text-amber-900' :
+                                  'bg-error/10 text-error')">
+                        {{ getValue(item, column.key) }}
+                      </span>
+                    }
+                    @case ('badge') {
+                      <span
+                        [class]="'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ' +
+                                 getBadgeClass(getValue(item, column.key))">
+                        {{ getBadgeLabel(getValue(item, column.key)) }}
+                      </span>
+                    }
+                    @case ('actions') {
+                      <div class="flex items-center justify-center gap-2">
+                        <button
+                          (click)="onEdit(item)"
+                          class="p-2 hover:bg-surface-200 rounded-lg transition-colors text-surface-600 hover:text-surface-900"
+                          aria-label="Editar">
+                          <span class="material-symbols-outlined text-xl">edit</span>
+                        </button>
+                        <button
+                          (click)="onDelete(item)"
+                          class="p-2 hover:bg-error/10 rounded-lg transition-colors text-error hover:text-error/90"
+                          aria-label="Eliminar">
+                          <span class="material-symbols-outlined text-xl">delete</span>
+                        </button>
+                      </div>
+                    }
+                    @default {
+                      {{ getValue(item, column.key) }}
+                    }
+                  }
+                </td>
+              }
+            </tr>
+          }
 
-  <!-- Pagination Footer -->
-  <div class="px-6 py-4 bg-surface-50 border-t border-surface-200 flex items-center justify-between">
-    <p class="text-sm text-surface-600">
-      Mostrando
-      <span class="font-medium">{{ (currentPage() - 1) * pageSize() + 1 }}</span>
-      a
-      <span class="font-medium">{{ minValue(currentPage() * pageSize(), totalItems()) }}</span>
-      de
-      <span class="font-medium">{{ totalItems() }}</span>
-      resultados
-    </p>
-    <div class="flex gap-2">
-      <button
-        [disabled]="currentPage() === 1"
-        class="px-3 py-2 rounded-lg border border-surface-200 text-sm font-medium text-surface-700 hover:bg-surface-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-        ← Anterior
-      </button>
-      <div class="flex gap-1 items-center">
-        @for (page of pageArray; track page) {
-          <button
-            [class.bg-primary]="page === currentPage()"
-            [class.text-white]="page === currentPage()"
-            [class]="'px-3 py-2 rounded-lg border text-sm font-medium transition-colors ' +
-                     (page === currentPage() ? 'border-primary' : 'border-surface-200 text-surface-700 hover:bg-surface-100')">
-            {{ page }}
-          </button>
-        }
-      </div>
-      <button
-        [disabled]="currentPage() === totalPagesValue"
-        class="px-3 py-2 rounded-lg border border-surface-200 text-sm font-medium text-surface-700 hover:bg-surface-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-        Siguiente →
-      </button>
+          @if (paginatedData.length === 0) {
+            <tr>
+              <td
+                [attr.colspan]="columns().length"
+                class="px-6 py-8 text-center text-surface-500">
+                No hay datos disponibles
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
-  </div>
+
+    <!-- Pagination Footer -->
+    <div class="px-6 py-4 bg-surface-50 border-t border-surface-200 flex items-center justify-between">
+      <p class="text-sm text-surface-600">
+        Mostrando
+        <span class="font-medium">{{ (currentPage() - 1) * pageSize() + 1 }}</span>
+        a
+        <span class="font-medium">{{ minValue(currentPage() * pageSize(), totalItems()) }}</span>
+        de
+        <span class="font-medium">{{ totalItems() }}</span>
+        resultados
+      </p>
+      <div class="flex gap-2">
+        <button
+          (click)="previousPage()"
+          [disabled]="currentPage() === 1"
+          class="px-3 py-2 rounded-lg border border-surface-200 text-sm font-medium text-surface-700 hover:bg-surface-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          ← Anterior
+        </button>
+        <div class="flex gap-1 items-center">
+          @for (page of pageArray; track page) {
+            <button
+              (click)="goToPage(page)"
+              [class.bg-primary]="page === currentPage()"
+              [class.text-white]="page === currentPage()"
+              [class]="'px-3 py-2 rounded-lg border text-sm font-medium transition-colors ' +
+                       (page === currentPage() ? 'border-primary' : 'border-surface-200 text-surface-700 hover:bg-surface-100')">
+              {{ page }}
+            </button>
+          }
+        </div>
+        <button
+          (click)="nextPage()"
+          [disabled]="currentPage() === totalPagesValue"
+          class="px-3 py-2 rounded-lg border border-surface-200 text-sm font-medium text-surface-700 hover:bg-surface-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          Siguiente →
+        </button>
+      </div>
+    </div>
+  }
 </div>

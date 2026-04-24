@@ -3,12 +3,23 @@
   <bt-page-header
     [title]="'Categorías'"
     [subtitle]="'Parametrización de categorías del sistema'">
-    <button
-      (click)="openCreateModal()"
-      class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors">
-      <span class="material-symbols-outlined text-lg">add</span>
-      Nueva Categoría
-    </button>
+    <div class="flex items-center gap-2">
+      <!-- Refrescar (Secondary) -->
+      <button
+        (click)="refreshCategories()"
+        class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-on-surface text-sm font-medium rounded-lg hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-lg">refresh</span>
+        Refrescar
+      </button>
+
+      <!-- Nueva Categoría (Primary) -->
+      <button
+        (click)="openCreateModal()"
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors">
+        <span class="material-symbols-outlined text-lg">add</span>
+        Nueva Categoría
+      </button>
+    </div>
   </bt-page-header>
 
   <!-- Loading State -->
@@ -41,83 +52,18 @@
         </div>
       </div>
     } @else {
-      <!-- Data Table -->
-      <div class="overflow-x-auto rounded-lg border border-outline-variant shadow-sm">
-        <table class="w-full text-sm">
-          <thead class="bg-surface-container border-b border-outline-variant">
-            <tr>
-              <th class="px-4 py-3 text-left font-semibold text-on-surface">Nombre</th>
-              <th class="px-4 py-3 text-left font-semibold text-on-surface">Descripción</th>
-              <th class="px-4 py-3 text-left font-semibold text-on-surface">Estado</th>
-              <th class="px-4 py-3 text-left font-semibold text-on-surface">Creado</th>
-              <th class="px-4 py-3 text-center font-semibold text-on-surface">Acciones</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-outline-variant">
-            @for (category of state.categories(); track category.id) {
-              <tr class="hover:bg-surface-container/50 transition-colors">
-                <td class="px-4 py-3 text-on-surface font-medium">{{ category.name }}</td>
-                <td class="px-4 py-3 text-on-surface-variant max-w-xs truncate">
-                  {{ category.description || '—' }}
-                </td>
-                <td class="px-4 py-3">
-                  <bt-badge
-                    [variant]="getStatusBadgeVariant(category.isActive)"
-                    [label]="getStatusLabel(category.isActive)">
-                  </bt-badge>
-                </td>
-                <td class="px-4 py-3 text-on-surface-variant text-xs">
-                  {{ formatDate(category.createdAt) }}
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <div class="flex items-center justify-center gap-2">
-                    <!-- Editar -->
-                    <button
-                      (click)="openEditModal(category)"
-                      class="p-2 text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors"
-                      [attr.aria-label]="'Editar ' + category.name">
-                      <span class="material-symbols-outlined text-lg">edit</span>
-                    </button>
-                    <!-- Eliminar -->
-                    <button
-                      (click)="openDeleteModal(category)"
-                      class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
-                      [attr.aria-label]="'Eliminar ' + category.name">
-                      <span class="material-symbols-outlined text-lg">delete</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div class="flex items-center justify-between py-4 px-4 bg-surface-container rounded-lg">
-        <p class="text-sm text-on-surface-variant">
-          Mostrando {{ (state.currentPage() * state.pageSize() + 1) }} a
-          {{ Math.min((state.currentPage() + 1) * state.pageSize(), state.totalElements()) }} de
-          {{ state.totalElements() }} categorías
-        </p>
-        <div class="flex items-center gap-2">
-          <button
-            (click)="onPageChange(state.currentPage() - 1)"
-            [disabled]="state.currentPage() === 0"
-            class="px-3 py-1 text-sm rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-lowest disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-            Anterior
-          </button>
-          <span class="text-sm text-on-surface-variant">
-            Página {{ state.currentPage() + 1 }} de {{ state.totalPages() }}
-          </span>
-          <button
-            (click)="onPageChange(state.currentPage() + 1)"
-            [disabled]="state.isLast() || state.totalPages() === 0"
-            class="px-3 py-1 text-sm rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-lowest disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-            Siguiente
-          </button>
-        </div>
-      </div>
+      <!-- Data Table using shared component -->
+      <bt-data-table
+        [columns]="tableColumns"
+        [data]="state.categories()"
+        [currentPage]="getCurrentPageForDataTable()"
+        [pageSize]="state.pageSize()"
+        [totalItems]="state.totalElements()"
+        [loading]="state.isLoading()"
+        (pageChange)="onPageChange($event)"
+        (editClick)="onEditClick($event)"
+        (deleteClick)="onDeleteClick($event)">
+      </bt-data-table>
     }
   }
 

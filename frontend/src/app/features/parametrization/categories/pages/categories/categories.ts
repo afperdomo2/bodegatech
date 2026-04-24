@@ -5,13 +5,7 @@ import { CategoryStateService } from '../../state/category-state.service';
 import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../../core/models/category.models';
 import { Modal } from '../../../../../shared/components/modal/modal';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
-import { Badge } from '../../../../../shared/components/badge/badge';
-
-interface DataTableColumn {
-  key: string;
-  label: string;
-  type?: 'text' | 'date' | 'status' | 'actions';
-}
+import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 
 @Component({
   selector: 'bt-categories',
@@ -20,7 +14,7 @@ interface DataTableColumn {
     CommonModule,
     Modal,
     PageHeader,
-    Badge,
+    DataTable,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './categories.html',
@@ -28,7 +22,6 @@ interface DataTableColumn {
 })
 export class CategoriesComponent implements OnInit {
   protected state = inject(CategoryStateService);
-  protected Math = Math;
 
   // ========== ESTADO DE MODALES ==========
   isCreateModalOpen = signal(false);
@@ -46,11 +39,11 @@ export class CategoriesComponent implements OnInit {
   isFormValid = computed(() => this.formName().trim().length > 0);
   isFormEmpty = computed(() => this.formName().trim().length === 0 && this.formDescription().trim().length === 0);
 
-  // Columnas de la tabla
+  // Columnas de la tabla (convertidas a DataTableColumn del shared component)
   tableColumns: DataTableColumn[] = [
     { key: 'name', label: 'Nombre', type: 'text' },
     { key: 'description', label: 'Descripción', type: 'text' },
-    { key: 'isActive', label: 'Estado', type: 'status' },
+    { key: 'isActive', label: 'Estado', type: 'badge' },
     { key: 'createdAt', label: 'Creado', type: 'date' },
     { key: 'actions', label: 'Acciones', type: 'actions' },
   ];
@@ -157,25 +150,26 @@ export class CategoriesComponent implements OnInit {
   // ========== ACCIONES DE TABLA ==========
 
   onPageChange(newPage: number): void {
-    this.state.loadCategories(newPage, this.state.pageSize());
+    // Convertir de 1-based (data-table) a 0-based (CategoryStateService)
+    this.state.loadCategories(newPage - 1, this.state.pageSize());
+  }
+
+  onEditClick(category: unknown): void {
+    this.openEditModal(category as CategoryDto);
+  }
+
+  onDeleteClick(category: unknown): void {
+    this.openDeleteModal(category as CategoryDto);
+  }
+
+  refreshCategories(): void {
+    this.state.loadCategories(this.state.currentPage(), this.state.pageSize());
   }
 
   // ========== HELPERS ==========
 
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  }
-
-  getStatusBadgeVariant(isActive: boolean): 'success' | 'warning' | 'error' | 'info' {
-    return isActive ? 'success' : 'warning';
-  }
-
-  getStatusLabel(isActive: boolean): string {
-    return isActive ? 'Activa' : 'Inactiva';
+  getCurrentPageForDataTable(): number {
+    // Convertir de 0-based (CategoryStateService) a 1-based (data-table)
+    return this.state.currentPage() + 1;
   }
 }
