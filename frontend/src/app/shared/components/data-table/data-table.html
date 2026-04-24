@@ -17,7 +17,7 @@
             @for (column of columns(); track column.key) {
               <th
                 [style.width]="column.width || 'auto'"
-                [class]="'px-6 py-3 text-left text-label-caps font-semibold text-surface-700 ' +
+                [class]="'px-6 py-3 text-label-caps font-semibold text-surface-900 ' +
                          getAlignClass(column.align)">
                 {{ column.label }}
               </th>
@@ -32,7 +32,7 @@
               class="border-b border-surface-100 hover:bg-surface-50 transition-colors">
               @for (column of columns(); track column.key) {
                 <td
-                  [class]="'px-6 py-4 ' +
+                  [class]="'px-6 py-4 text-surface-900 ' +
                            (column.type === 'number' ? 'font-mono text-right' : getAlignClass(column.align))">
                   @switch (column.type) {
                     @case ('text') {

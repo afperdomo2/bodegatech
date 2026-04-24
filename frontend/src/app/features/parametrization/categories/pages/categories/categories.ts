@@ -41,11 +41,11 @@ export class CategoriesComponent implements OnInit {
 
   // Columnas de la tabla (convertidas a DataTableColumn del shared component)
   tableColumns: DataTableColumn[] = [
-    { key: 'name', label: 'Nombre', type: 'text' },
-    { key: 'description', label: 'Descripción', type: 'text' },
-    { key: 'isActive', label: 'Estado', type: 'badge' },
-    { key: 'createdAt', label: 'Creado', type: 'date' },
-    { key: 'actions', label: 'Acciones', type: 'actions' },
+    { key: 'name', label: 'Nombre', type: 'text', align: 'left' },
+    { key: 'description', label: 'Descripción', type: 'text', align: 'left' },
+    { key: 'isActive', label: 'Estado', type: 'badge', align: 'center' },
+    { key: 'createdAt', label: 'Creado', type: 'date', align: 'center' },
+    { key: 'actions', label: 'Acciones', type: 'actions', align: 'center' },
   ];
 
   constructor() {
