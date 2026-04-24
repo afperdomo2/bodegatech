@@ -34,6 +34,7 @@ export class CategoryStateService {
 
   private _fieldErrors = signal<Record<string, string>>({});
   private _generalError = signal<string | null>(null);
+  private _operationSuccess = signal(0); // Contador que incrementa en cada operación exitosa
 
   // ========== ESTADO PÚBLICO (READ-ONLY SIGNALS) ==========
 
@@ -47,6 +48,7 @@ export class CategoryStateService {
 
   readonly fieldErrors = this._fieldErrors.asReadonly();
   readonly generalError = this._generalError.asReadonly();
+  readonly operationSuccess = this._operationSuccess.asReadonly();
 
   // ========== COMPUTED STATE ==========
 
@@ -120,6 +122,8 @@ export class CategoryStateService {
         this._fieldErrors.set({});
         // Recalcular total elementos
         this._totalElements.update(t => t + 1);
+        // Incrementar contador de éxito
+        this._operationSuccess.update(val => val + 1);
       }
     });
   }
@@ -148,6 +152,8 @@ export class CategoryStateService {
         );
         this._generalError.set(null);
         this._fieldErrors.set({});
+        // Incrementar contador de éxito
+        this._operationSuccess.update(val => val + 1);
       }
     });
   }
@@ -171,6 +177,8 @@ export class CategoryStateService {
       this._totalElements.update(t => Math.max(0, t - 1));
       this._generalError.set(null);
       this._isDeleting.set(false);
+      // Incrementar contador de éxito
+      this._operationSuccess.update(val => val + 1);
     });
   }
 

@@ -47,7 +47,16 @@ export class CategoriesComponent implements OnInit {
   ];
 
   constructor() {
-    // Limpiar errores cuando se cierre el modal
+    // ========== EFFECTS DEL COMPONENTE ==========
+
+    // Cerrar modal al completarse una operación con éxito
+    effect(() => {
+      if (this.state.operationSuccess() > 0) {
+        this.modalService.close();
+      }
+    });
+
+    // Limpiar formulario y errores cuando se cierre el modal
     effect(() => {
       if (!this.modalService.isOpen()) {
         this.state.clearErrors();
@@ -86,13 +95,6 @@ export class CategoriesComponent implements OnInit {
     };
 
     this.state.createCategory(request);
-
-    // Cerrar modal cuando se complete (sin errores de validación)
-    effect(() => {
-      if (!this.state.fieldErrors()['name'] && !this.state.generalError()) {
-        this.modalService.close();
-      }
-    }, { allowSignalWrites: true });
   }
 
   openEditModal(category: CategoryDto): void {
@@ -117,13 +119,6 @@ export class CategoriesComponent implements OnInit {
     };
 
     this.state.updateCategory(this.selectedCategory()!.id, request);
-
-    // Cerrar modal cuando se complete (sin errores de validación)
-    effect(() => {
-      if (!this.state.fieldErrors()['name'] && !this.state.generalError()) {
-        this.modalService.close();
-      }
-    }, { allowSignalWrites: true });
   }
 
   openDeleteModal(category: CategoryDto): void {
@@ -140,13 +135,6 @@ export class CategoriesComponent implements OnInit {
   confirmDeleteCategory(): void {
     if (!this.selectedCategory()) return;
     this.state.deleteCategory(this.selectedCategory()!.id);
-
-    // Cerrar modal cuando se complete (sin errores)
-    effect(() => {
-      if (!this.state.generalError()) {
-        this.modalService.close();
-      }
-    }, { allowSignalWrites: true });
   }
 
   // ========== ACCIONES DE TABLA ==========
