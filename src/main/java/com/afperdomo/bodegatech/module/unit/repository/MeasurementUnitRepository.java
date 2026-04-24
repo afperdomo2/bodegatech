@@ -29,4 +29,20 @@ public interface MeasurementUnitRepository extends JpaRepository<MeasurementUnit
 
     @Query("SELECT u FROM MeasurementUnit u WHERE u.type = :type AND u.isActive = true ORDER BY u.name")
     Page<MeasurementUnit> findByTypeAndActive(UnitType type, Pageable pageable);
+
+    /**
+     * Encuentra la unidad base de un tipo específico.
+     * @param type tipo de unidad
+     * @return la unidad base activa del tipo, si existe
+     */
+    @Query("SELECT u FROM MeasurementUnit u WHERE u.type = :type AND u.isBase = true AND u.isActive = true")
+    Optional<MeasurementUnit> findBaseUnitByType(UnitType type);
+
+    /**
+     * Verifica si una unidad base existe para un tipo específico.
+     * @param type tipo de unidad
+     * @return true si existe una unidad base activa, false en caso contrario
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM MeasurementUnit u WHERE u.type = :type AND u.isBase = true AND u.isActive = true")
+    boolean existsBaseUnitByType(UnitType type);
 }

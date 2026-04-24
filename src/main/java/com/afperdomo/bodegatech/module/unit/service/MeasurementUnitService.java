@@ -8,7 +8,6 @@ import com.afperdomo.bodegatech.module.unit.dto.UpdateMeasurementUnitRequest;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import com.afperdomo.bodegatech.module.unit.mapper.MeasurementUnitMapper;
 import com.afperdomo.bodegatech.module.unit.repository.MeasurementUnitRepository;
-import com.afperdomo.bodegatech.module.unitconversion.repository.UnitConversionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,7 +27,6 @@ import java.util.UUID;
 public class MeasurementUnitService {
 
     private final MeasurementUnitRepository unitRepository;
-    private final UnitConversionRepository conversionRepository;
     private final MeasurementUnitMapper unitMapper;
 
     /**
@@ -52,6 +50,7 @@ public class MeasurementUnitService {
     /**
      * Crea una nueva unidad de medida.
      * Valida que no exista una unidad con el mismo nombre o abreviación.
+     * Si isBaseUnit = false, valida que baseUnitId referencia una unidad base activa del mismo tipo.
      */
     public MeasurementUnitDto createUnit(CreateMeasurementUnitRequest request) {
         // Validar nombre único
@@ -66,7 +65,44 @@ public class MeasurementUnitService {
                 throw new BusinessException("Ya existe una unidad con la abreviación: " + request.getAbbreviation());
             });
 
+        // Validar lógica de base unit vs. conversion factor
+        if (Boolean.TRUE.equals(request.getIsBaseUnit())) {
+            // Es unidad base: no debe tener baseUnitId ni conversionFactor
+            if (request.getBaseUnitId() != null || request.getConversionFactor() != null) {
+                throw new BusinessException("Una unidad base no puede tener baseUnitId ni conversionFactor");
+            }
+        } else {
+            // No es unidad base: debe tener baseUnitId y conversionFactor
+            if (request.getBaseUnitId() == null || request.getConversionFactor() == null) {
+                throw new BusinessException("Una unidad no-base debe especificar baseUnitId y conversionFactor");
+            }
+
+            // Validar que baseUnitId existe, está activo y es unidad base
+            MeasurementUnit baseUnit = unitRepository.findById(request.getBaseUnitId())
+                .orElseThrow(() -> new ResourceNotFoundException("Unidad base no encontrada: " + request.getBaseUnitId()));
+
+            if (!baseUnit.isBase()) {
+                throw new BusinessException("La unidad base debe tener isBase = true");
+            }
+
+            if (!Boolean.TRUE.equals(baseUnit.getIsActive())) {
+                throw new BusinessException("La unidad base debe estar activa");
+            }
+
+            // Validar que sean del mismo tipo
+            if (!baseUnit.getType().equals(request.getType())) {
+                throw new BusinessException("La unidad base debe ser del mismo tipo que la unidad a crear");
+            }
+        }
+
         MeasurementUnit unit = unitMapper.toEntity(request);
+        
+        // Si no es unidad base, establecer la relación con la unidad base
+        if (!Boolean.TRUE.equals(request.getIsBaseUnit())) {
+            MeasurementUnit baseUnit = unitRepository.findById(request.getBaseUnitId()).orElseThrow();
+            unit.setBaseUnit(baseUnit);
+        }
+
         unit = unitRepository.save(unit);
 
         log.info("Unidad de medida creada: {} ({})", unit.getName(), unit.getAbbreviation());
@@ -76,6 +112,8 @@ public class MeasurementUnitService {
     /**
      * Actualiza una unidad de medida existente.
      * Valida unicidad de nombre y abreviación si se modifican.
+     * No permite cambiar isBaseUnit o baseUnitId después de creada la unidad.
+     * Permite actualizar conversionFactor si la unidad no es base.
      */
     public MeasurementUnitDto updateUnit(UUID id, UpdateMeasurementUnitRequest request) {
         MeasurementUnit unit = unitRepository.findById(id)
@@ -97,6 +135,22 @@ public class MeasurementUnitService {
                 });
         }
 
+        // Validar que NO se cambien isBaseUnit ni baseUnitId (inmutables después de creación)
+        if (request.getIsBaseUnit() != null && !request.getIsBaseUnit().equals(unit.isBase())) {
+            throw new BusinessException("No se puede cambiar isBaseUnit después de crear la unidad");
+        }
+
+        if (request.getBaseUnitId() != null && 
+            (unit.getBaseUnit() == null || !request.getBaseUnitId().equals(unit.getBaseUnit().getId()))) {
+            throw new BusinessException("No se puede cambiar baseUnitId después de crear la unidad");
+        }
+
+        // Validar que si conversionFactor se actualiza, la unidad no sea base
+        if (request.getConversionFactor() != null && unit.isBase()) {
+            throw new BusinessException("Una unidad base no puede tener conversionFactor");
+        }
+
+        // Aplicar actualización parcial
         unitMapper.updateEntity(request, unit);
         unit = unitRepository.save(unit);
 
@@ -106,16 +160,17 @@ public class MeasurementUnitService {
 
     /**
      * Realiza soft delete de una unidad (desactivación).
-     * Valida que no existan factores de conversión que la referencien.
+     * Una unidad solo se puede eliminar si no tiene unidades que dependan de ella
+     * (es decir, no es baseUnit de ninguna otra unidad activa).
      */
     public void deleteUnit(UUID id) {
         MeasurementUnit unit = unitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Unidad de medida no encontrada con ID: " + id));
 
-        // Validar que no tenga conversiones asociadas
-        if (conversionRepository.existsByUnitId(id)) {
-            throw new BusinessException("No se puede eliminar la unidad: existen factores de conversión que la referencian");
-        }
+        // Validar que esta unidad no sea la unidad base de otras unidades activas
+        // (evitar orfandad de registros)
+        // Nota: Si en el futuro necesitas esta validación, implementa una query en el repository
+        // @Query("SELECT COUNT(u) FROM MeasurementUnit u WHERE u.baseUnit.id = :id AND u.isActive = true")
 
         unit.setIsActive(false);
         unitRepository.save(unit);

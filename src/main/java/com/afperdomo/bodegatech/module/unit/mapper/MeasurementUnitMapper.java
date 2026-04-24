@@ -6,6 +6,7 @@ import com.afperdomo.bodegatech.module.unit.dto.UpdateMeasurementUnitRequest;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
@@ -13,6 +14,8 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MeasurementUnitMapper {
 
+    @Mapping(source = "baseUnit.id", target = "baseUnitId")
+    @Mapping(source = "baseUnit.name", target = "baseUnitName")
     MeasurementUnitDto toDto(MeasurementUnit unit);
 
     MeasurementUnit toEntity(CreateMeasurementUnitRequest request);
