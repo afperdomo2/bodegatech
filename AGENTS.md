@@ -1,42 +1,63 @@
 # AGENTS.md — BodegaTech
 
-## Instrucciones para agentes
+## 🚀 Acciones críticas antes de empezar
 
-⚠️ **IMPORTANTE:** Después de completar cualquier requerimiento:
-- **NO hagas commits automáticamente**
-- Prepara los cambios (stage, verificación) pero deja que el usuario haga el commit
-- Solo haz commits si el usuario lo solicita explícitamente
+⚠️ **Commits:** NO hagas commits automáticamente. Prepara cambios y deja que el usuario decida.
+
+⚠️ **DB requerida:** Antes de `./gradlew bootRun` o tests, ejecutar `docker-compose up -d` en la raíz.
+
+⚠️ **Frontend:** `cd frontend` siempre. Comandos npm/pnpm se ejecutan **dentro de la carpeta frontend**.
 
 ## Stack
 - Java 25 + Spring Boot 4.0.5 + Gradle
 - PostgreSQL 16 via Docker
 - SpringDoc OpenAPI **3.0.3** (versión 3.x requerida para Spring Boot 4.x — 2.x es incompatible)
 - MapStruct 1.6.0 + Lombok
+- Frontend: Angular 20+ (standalone) + Tailwind CSS v4 + pnpm
 
 ## Comandos esenciales
 
 ```bash
+# === BACKEND ===
+
 # Prerequisito: BD corriendo
 docker-compose up -d
 
 # Build sin tests
 ./gradlew clean build -x test
 
-# Ejecutar
+# Ejecutar desarrollo
 ./gradlew bootRun
 
-# Tests
-./gradlew test
-
-# Reporte de cobertura → build/reports/jacoco/test/html/index.html
+# Tests con cobertura JaCoCo
 ./gradlew test jacocoTestReport
+# Reporte → build/reports/jacoco/test/html/index.html
+
+# === FRONTEND ===
+cd frontend
+
+# Desarrollo
+pnpm start
+
+# Build producción
+pnpm build
+
+# Linter + TypeScript check
+pnpm lint
+
+# Tests
+pnpm test
+
+# Generar componente standalone
+pnpm ng generate component features/mi-feature/pages/mi-pagina --standalone --skip-tests
 ```
 
-## URLs en desarrollo
+## URLs desarrollo
 
-- Context path base: `http://localhost:8080/api`
+- Backend base: `http://localhost:8080/api`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/docs`
+- Frontend: `http://localhost:4200`
 
 ## GlobalExceptionHandler — quirk de SpringDoc
 
@@ -143,16 +164,26 @@ frontend/src/app/
 │   └── models/            # Interfaces globales
 ├── shared/
 │   ├── components/        # Componentes reutilizables (bt-*)
+│   │   ├── modal/         # ModalService y Modal component
+│   │   ├── data-table/    # DataTable compartida
+│   │   └── ...
+│   ├── services/          # ⭐ ModalService, etc.
 │   ├── directives/
 │   ├── pipes/
 │   └── utils/
 ├── layout/
 │   ├── sidebar/
 │   ├── topbar/
-│   └── main-layout/
+│   └── main-layout/       # ⭐ <bt-modal> aquí (fuera router-outlet)
 ├── features/              # Módulos lazy loading
 │   ├── dashboard/
-│   └── inventory/
+│   ├── inventory/
+│   ├── parametrization/categories/
+│   │   ├── pages/categories/
+│   │   ├── state/         # CategoryStateService
+│   │   └── ...
+│   ├── admin/             # Users management
+│   └── reports/
 ├── app.routes.ts
 ├── app.config.ts
 └── app.ts
@@ -202,3 +233,43 @@ pnpm ng generate service core/services/mi-servicio
 5. **SCSS modular**: Estilos específicos en cada componente, variables globales en `src/styles/`
 6. **Tailwind first**: Preferir clases de Tailwind sobre estilos personalizados
 7. **No cambiar nombres de componentes**: Usar el patrón generado por Angular CLI (ej: `DashboardComponent` → `src/app/.../dashboard.ts`)
+
+### Patrón Modal + DataTable (⭐ Arquitectura actual)
+
+**Ubicación:** `<bt-modal>` debe estar en `main-layout.html` **fuera del `router-outlet`** para escapar del `overflow-hidden` y `transform` de componentes padres.
+
+**Flow:**
+1. Componente (ej: `categories`) inyecta `ModalService`
+2. Define 3 `@ViewChild('templateName')` para las modales
+3. En `constructor()`, crea `effect()` para reaccionar a `modalService.operationSuccess()`
+4. Al confirmar, se llama al state service (HTTP async)
+5. State service incrementa `operationSuccess` al completarse
+6. Effect cierra la modal automáticamente
+7. Segundo effect limpia formularios cuando se cierra
+
+**Tamaños de modal (arbitrarios de Tailwind):**
+- `'sm'` → `max-w-[20rem]` (320px)
+- `'md'` → `max-w-[28rem]` (448px) — para formularios simples (2-3 campos)
+- `'lg'` → `max-w-[32rem]` (512px) — para formularios medianos (4-5 campos)
+- `'xl'` → `max-w-[36rem]` (576px)
+- `'2xl'` → `max-w-[42rem]` (672px)
+
+⚠️ **NO usar clases de Tailwind estándar como `max-w-md`** — Tailwind v4 las interpreta como variables CSS `--spacing-*` del sistema de diseño, no como ancho de contenedor.
+
+**Botón Cancelar:** Usa `border-outline-variant bg-surface-container` con hover `hover:bg-surface-container-high hover:border-outline` para máxima visibilidad.
+
+### State Management Pattern
+
+Los servicios de state (ej: `CategoryStateService`) **exponen signals readonly** y mantienen estado privado writable:
+
+```typescript
+// Privado (escribible)
+private _categories = signal<CategoryDto[]>([]);
+private _operationSuccess = signal(0);
+
+// Público (readonly)
+readonly categories = this._categories.asReadonly();
+readonly operationSuccess = this._operationSuccess.asReadonly();
+```
+
+En métodos async (con `subscribe`), incrementar `_operationSuccess` en el bloque de éxito para que los componentes detecten finalización.
