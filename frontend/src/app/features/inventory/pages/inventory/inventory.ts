@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal, ViewChild } from '@angular/core';
+import type { TemplateRef } from '@angular/core';
 import type { DataTableColumn } from '../../../../shared/components/data-table/data-table';
 import { DataTable } from '../../../../shared/components/data-table/data-table';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
 import { SearchInput } from '../../../../shared/components/search-input/search-input';
+import { ModalService } from '../../../../shared/services/modal.service';
 
 interface Product {
   id: string;
@@ -25,11 +27,16 @@ interface Product {
   styleUrl: './inventory.scss',
 })
 export class InventoryComponent {
+  @ViewChild('productModal') productModal!: TemplateRef<unknown>;
+  @ViewChild('deleteModal') deleteModal!: TemplateRef<unknown>;
+
   searchQuery = signal('');
   selectedCategory = signal('');
   selectedStatus = signal('');
   currentPage = signal(1);
   pageSize = signal(10);
+  loading = signal(false);
+  selectedProduct = signal<Product | null>(null);
 
   categories = ['Energía Solar', 'Almacenamiento', 'Accesorios'];
   statuses = ['Disponible', 'Bajo Stock', 'Agotado'];
@@ -122,5 +129,57 @@ export class InventoryComponent {
 
   onStatusChange(status: string) {
     this.selectedStatus.set(status);
+  }
+
+  private modalService = inject(ModalService);
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+  }
+
+  onEditClick(product: unknown) {
+    this.selectedProduct.set(product as Product);
+    this.modalService.open({
+      template: this.productModal,
+      size: 'lg',
+    });
+  }
+
+  onDeleteClick(product: unknown) {
+    this.selectedProduct.set(product as Product);
+    this.modalService.open({
+      template: this.deleteModal,
+      size: 'md',
+    });
+  }
+
+  onRefresh() {
+    this.loading.set(true);
+    // Simulate API call
+    setTimeout(() => {
+      this.loading.set(false);
+    }, 500);
+  }
+
+  onAddProduct() {
+    this.selectedProduct.set(null);
+    this.modalService.open({
+      template: this.productModal,
+      size: 'lg',
+    });
+  }
+
+  onCloseModal() {
+    this.modalService.close();
+  }
+
+  onSaveProduct() {
+    // Save logic here
+    this.onCloseModal();
+  }
+
+  onConfirmDelete() {
+    // Delete logic here
+    this.onCloseModal();
   }
 }

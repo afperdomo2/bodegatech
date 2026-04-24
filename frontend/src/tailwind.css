@@ -96,6 +96,13 @@
   --spacing-xl: 32px;
   --spacing-gutter: 16px;
 
+  /* Container sizes for max-w-* classes (Tailwind v4) */
+  --container-sm: 24rem;   /* 384px */
+  --container-md: 28rem;   /* 448px */
+  --container-lg: 32rem;   /* 512px */
+  --container-xl: 36rem;   /* 576px */
+  --container-2xl: 42rem;  /* 672px */
+
   /* Border Radius */
   --radius: 2px;
   --radius-sm: 4px;
@@ -111,6 +118,7 @@
   --shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.12);
   --shadow-dialog: 0 20px 56px 0 rgba(0, 0, 0, 0.3);
 }
+
 
 /* Global styles */
 * {

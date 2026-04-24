@@ -1,39 +1,43 @@
-@if (isOpen()) {
-  <!-- Backdrop -->
+@if (modalService.isOpen()) {
+  <!-- Backdrop + Centering Container -->
   <div
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fadeIn"
-    (click)="onBackdropClick()"></div>
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4 animate-fadeIn"
+    (click)="modalService.cancel()">
+    <!-- Modal -->
+    <div
+      [class]="'bg-white rounded-xl shadow-dialog w-full z-50 animate-slideDown ' + sizeClass()"
+      (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-surface-200">
+        <h2 class="text-lg font-semibold text-surface-900">{{ modalService.title() }}</h2>
+        <button
+          (click)="onCancel()"
+          class="p-2 hover:bg-surface-100 rounded-lg transition-colors text-surface-600 hover:text-surface-900">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
 
-  <!-- Modal -->
-  <div
-    class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-dialog max-w-md w-full mx-4 z-50 animate-slideDown">
-    <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-surface-200">
-      <h2 class="text-lg font-semibold text-surface-900">{{ title() }}</h2>
-      <button
-        (click)="onCancel()"
-        class="p-2 hover:bg-surface-100 rounded-lg transition-colors text-surface-600 hover:text-surface-900">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
+      <!-- Content -->
+      <div class="px-6 py-4">
+        @if (modalService.template()) {
+          <ng-container *ngTemplateOutlet="modalService.template()"></ng-container>
+        }
+      </div>
 
-    <!-- Content -->
-    <div class="px-6 py-4">
-      <ng-content></ng-content>
-    </div>
-
-    <!-- Footer -->
-    <div class="flex gap-3 justify-end px-6 py-4 border-t border-surface-200 bg-surface-50">
-      <button
-        (click)="onCancel()"
-        class="px-4 py-2 rounded-lg border border-surface-200 text-sm font-medium text-surface-700 hover:bg-surface-100 transition-colors">
-        Cancelar
-      </button>
-      <button
-        (click)="onConfirm()"
-        class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-600 transition-colors">
-        Confirmar
-      </button>
+      <!-- Footer -->
+      <div class="flex gap-3 justify-end px-6 py-4 border-t border-surface-200 bg-surface-50">
+        <button
+          (click)="onCancel()"
+          class="px-4 py-2 rounded-lg border border-surface-200 text-sm font-medium text-surface-700 hover:bg-surface-100 transition-colors">
+          Cancelar
+        </button>
+        <button
+          (click)="onConfirm()"
+          class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-600 transition-colors">
+          Confirmar
+        </button>
+      </div>
     </div>
   </div>
 }
+

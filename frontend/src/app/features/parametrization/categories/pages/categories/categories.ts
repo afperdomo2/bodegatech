@@ -1,9 +1,9 @@
 import type { OnInit } from '@angular/core';
-import { Component, ChangeDetectionStrategy, inject, signal, computed, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, type TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CategoryStateService } from '../../state/category-state.service';
+import { ModalService } from '../../../../../shared/services/modal.service';
 import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../../core/models/category.models';
-import { Modal } from '../../../../../shared/components/modal/modal';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 
@@ -12,7 +12,6 @@ import { DataTable, type DataTableColumn } from '../../../../../shared/component
   standalone: true,
   imports: [
     CommonModule,
-    Modal,
     PageHeader,
     DataTable,
   ],
@@ -22,11 +21,11 @@ import { DataTable, type DataTableColumn } from '../../../../../shared/component
 })
 export class CategoriesComponent implements OnInit {
   protected state = inject(CategoryStateService);
+  protected modalService = inject(ModalService);
 
-  // ========== ESTADO DE MODALES ==========
-  isCreateModalOpen = signal(false);
-  isEditModalOpen = signal(false);
-  isDeleteModalOpen = signal(false);
+  @ViewChild('createModalTemplate') createModalTemplate!: TemplateRef<Record<string, never>>;
+  @ViewChild('editModalTemplate') editModalTemplate!: TemplateRef<Record<string, never>>;
+  @ViewChild('deleteModalTemplate') deleteModalTemplate!: TemplateRef<Record<string, never>>;
 
   // ========== ESTADO DEL FORMULARIO (SIGNALS) ==========
   formName = signal('');
@@ -37,7 +36,6 @@ export class CategoriesComponent implements OnInit {
 
   // ========== COMPUTED ==========
   isFormValid = computed(() => this.formName().trim().length > 0);
-  isFormEmpty = computed(() => this.formName().trim().length === 0 && this.formDescription().trim().length === 0);
 
   // Columnas de la tabla (convertidas a DataTableColumn del shared component)
   tableColumns: DataTableColumn[] = [
@@ -49,13 +47,13 @@ export class CategoriesComponent implements OnInit {
   ];
 
   constructor() {
-    // Limpiar errores cuando se cierre cualquier modal
+    // Limpiar errores cuando se cierre el modal
     effect(() => {
-      const isAnyModalOpen = this.isCreateModalOpen() || this.isEditModalOpen() || this.isDeleteModalOpen();
-      if (!isAnyModalOpen) {
+      if (!this.modalService.isOpen()) {
         this.state.clearErrors();
         this.formName.set('');
         this.formDescription.set('');
+        this.selectedCategory.set(null);
       }
     });
   }
@@ -70,11 +68,13 @@ export class CategoriesComponent implements OnInit {
   openCreateModal(): void {
     this.formName.set('');
     this.formDescription.set('');
-    this.isCreateModalOpen.set(true);
-  }
-
-  closeCreateModal(): void {
-    this.isCreateModalOpen.set(false);
+    this.modalService.open({
+      title: 'Nueva Categoría',
+      template: this.createModalTemplate,
+      size: 'md',
+      onConfirm: () => this.confirmCreateCategory(),
+      onCancel: () => {},
+    });
   }
 
   confirmCreateCategory(): void {
@@ -89,22 +89,23 @@ export class CategoriesComponent implements OnInit {
 
     // Cerrar modal cuando se complete (sin errores de validación)
     effect(() => {
-      if (!this.state.fieldErrors()['name'] && !this.state.generalError() && this.isCreateModalOpen()) {
-        this.isCreateModalOpen.set(false);
+      if (!this.state.fieldErrors()['name'] && !this.state.generalError()) {
+        this.modalService.close();
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   openEditModal(category: CategoryDto): void {
     this.selectedCategory.set(category);
     this.formName.set(category.name);
     this.formDescription.set(category.description || '');
-    this.isEditModalOpen.set(true);
-  }
-
-  closeEditModal(): void {
-    this.isEditModalOpen.set(false);
-    this.selectedCategory.set(null);
+    this.modalService.open({
+      title: 'Editar Categoría',
+      template: this.editModalTemplate,
+      size: 'md',
+      onConfirm: () => this.confirmEditCategory(),
+      onCancel: () => {},
+    });
   }
 
   confirmEditCategory(): void {
@@ -119,20 +120,21 @@ export class CategoriesComponent implements OnInit {
 
     // Cerrar modal cuando se complete (sin errores de validación)
     effect(() => {
-      if (!this.state.fieldErrors()['name'] && !this.state.generalError() && this.isEditModalOpen()) {
-        this.isEditModalOpen.set(false);
+      if (!this.state.fieldErrors()['name'] && !this.state.generalError()) {
+        this.modalService.close();
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   openDeleteModal(category: CategoryDto): void {
     this.selectedCategory.set(category);
-    this.isDeleteModalOpen.set(true);
-  }
-
-  closeDeleteModal(): void {
-    this.isDeleteModalOpen.set(false);
-    this.selectedCategory.set(null);
+    this.modalService.open({
+      title: 'Eliminar Categoría',
+      template: this.deleteModalTemplate,
+      size: 'md',
+      onConfirm: () => this.confirmDeleteCategory(),
+      onCancel: () => {},
+    });
   }
 
   confirmDeleteCategory(): void {
@@ -141,10 +143,10 @@ export class CategoriesComponent implements OnInit {
 
     // Cerrar modal cuando se complete (sin errores)
     effect(() => {
-      if (!this.state.generalError() && this.isDeleteModalOpen()) {
-        this.isDeleteModalOpen.set(false);
+      if (!this.state.generalError()) {
+        this.modalService.close();
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   // ========== ACCIONES DE TABLA ==========

@@ -1,11 +1,14 @@
-import { Component, signal } from '@angular/core';
+import type { TemplateRef} from '@angular/core';
+import { Component, signal, ViewChild, inject } from '@angular/core';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
 import type { DataTableColumn } from '../../../../shared/components/data-table/data-table';
 import { DataTable } from '../../../../shared/components/data-table/data-table';
 import { Toggle } from '../../../../shared/components/toggle/toggle';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ModalService } from '../../../../shared/services/modal.service';
 
-interface User {
+export interface User {
   id: string;
   avatar: string;
   name: string;
@@ -16,14 +19,26 @@ interface User {
   actions: string;
 }
 
+export interface UserFormModel {
+  name: string;
+  email: string;
+  role: 'Admin' | 'Editor' | 'Viewer';
+}
+
 @Component({
   selector: 'bt-admin',
   standalone: true,
-  imports: [PageHeader, DataTable, Toggle, CommonModule],
+  imports: [PageHeader, DataTable, Toggle, CommonModule, FormsModule],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
 })
 export class AdminComponent {
+  @ViewChild('createUserModal') createUserModal!: TemplateRef<unknown>;
+  @ViewChild('editUserModal') editUserModal!: TemplateRef<unknown>;
+  @ViewChild('deleteUserModal') deleteUserModal!: TemplateRef<unknown>;
+
+  private modalService = inject(ModalService);
+
   users = signal<User[]>([
     {
       id: '1',
@@ -67,6 +82,11 @@ export class AdminComponent {
     },
   ]);
 
+  // Form state for user modals
+  userFormModel = signal<UserFormModel>({ name: '', email: '', role: 'Editor' });
+  selectedUserId = signal<string | null>(null);
+  formError = signal<string>('');
+
   usersColumns: DataTableColumn[] = [
     { key: 'name', label: 'Usuario', width: 'auto', align: 'left', type: 'text' },
     { key: 'role', label: 'Rol', width: '120px', align: 'left', type: 'status' },
@@ -80,6 +100,120 @@ export class AdminComponent {
   currency = signal('USD');
   emailNotifications = signal(true);
   smsNotifications = signal(false);
+
+  // Data table event handlers
+  onPageChange(page: number) {
+    console.log('Page changed to:', page);
+    // Server-side pagination would be implemented here
+  }
+
+  onUserEditClick(user: unknown) {
+    const u = user as User;
+    if (u && u.id) {
+      this.selectedUserId.set(u.id);
+      this.userFormModel.set({
+        name: u.name,
+        email: u.email,
+        role: u.role,
+      });
+      this.formError.set('');
+      this.modalService.open({
+        title: 'Editar Usuario',
+        template: this.editUserModal,
+        size: 'md',
+        onConfirm: () => this.onSaveUser('edit'),
+        onCancel: () => this.resetUserForm(),
+      });
+    }
+  }
+
+  onUserDeleteClick(user: unknown) {
+    const u = user as User;
+    if (u && u.id) {
+      this.selectedUserId.set(u.id);
+      this.modalService.open({
+        title: 'Confirmar eliminación',
+        template: this.deleteUserModal,
+        size: 'md',
+        onConfirm: () => this.onConfirmDeleteUser(),
+        onCancel: () => this.resetUserForm(),
+      });
+    }
+  }
+
+  onInviteUserClick() {
+    this.resetUserForm();
+    this.modalService.open({
+      title: 'Invitar Usuario',
+      template: this.createUserModal,
+      size: 'md',
+      onConfirm: () => this.onSaveUser('create'),
+      onCancel: () => this.resetUserForm(),
+    });
+  }
+
+  private onSaveUser(mode: 'create' | 'edit') {
+    const form = this.userFormModel();
+    
+    // Basic validation
+    if (!form.name.trim()) {
+      this.formError.set('El nombre es requerido');
+      return;
+    }
+    if (!form.email.trim() || !this.isValidEmail(form.email)) {
+      this.formError.set('Email inválido');
+      return;
+    }
+
+    if (mode === 'create') {
+      const newUser: User = {
+        id: Date.now().toString(),
+        avatar: form.name.charAt(0).toUpperCase(),
+        name: form.name,
+        email: form.email,
+        role: form.role,
+        status: 'Active',
+        lastActive: new Date().toLocaleString('es-ES'),
+        actions: 'more_vert',
+      };
+      this.users.update(users => [...users, newUser]);
+      console.log('User created:', newUser);
+    } else if (mode === 'edit' && this.selectedUserId()) {
+      this.users.update(users =>
+        users.map(u =>
+          u.id === this.selectedUserId()
+            ? { ...u, name: form.name, email: form.email, role: form.role }
+            : u
+        )
+      );
+      console.log('User updated');
+    }
+
+    this.modalService.close();
+    this.resetUserForm();
+  }
+
+  private onConfirmDeleteUser() {
+    if (this.selectedUserId()) {
+      this.users.update(users =>
+        users.filter(u => u.id !== this.selectedUserId())
+      );
+      console.log('User deleted');
+      this.modalService.close();
+      this.resetUserForm();
+    }
+  }
+
+  private resetUserForm() {
+    this.userFormModel.set({ name: '', email: '', role: 'Editor' });
+    this.selectedUserId.set(null);
+    this.formError.set('');
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
 
   onCompanyNameChange(name: string) {
     this.companyName.set(name);

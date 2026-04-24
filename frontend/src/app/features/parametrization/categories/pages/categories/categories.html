@@ -66,110 +66,100 @@
       </bt-data-table>
     }
   }
-
-  <!-- Modal: Crear Categoría -->
-  <bt-modal
-    [isOpen]="isCreateModalOpen()"
-    [title]="'Nueva Categoría'"
-    (closeModal)="closeCreateModal()"
-    (confirmModal)="confirmCreateCategory()">
-    <form class="space-y-4">
-      <!-- Nombre -->
-      <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium text-on-surface">Nombre *</label>
-        <input
-          type="text"
-          [value]="formName()"
-          (input)="formName.set($any($event.target).value)"
-          placeholder="Ej: Electrónica"
-          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors">
-        @if (state.fieldErrors()['name']) {
-          <p class="text-xs text-error">{{ state.fieldErrors()['name'] }}</p>
-        }
-      </div>
-
-      <!-- Descripción -->
-      <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium text-on-surface">Descripción</label>
-        <textarea
-          [value]="formDescription()"
-          (input)="formDescription.set($any($event.target).value)"
-          placeholder="Ej: Productos electrónicos y computadoras"
-          rows="3"
-          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors resize-none">
-        </textarea>
-        @if (state.fieldErrors()['description']) {
-          <p class="text-xs text-error">{{ state.fieldErrors()['description'] }}</p>
-        }
-      </div>
-    </form>
-  </bt-modal>
-
-  <!-- Modal: Editar Categoría -->
-  <bt-modal
-    [isOpen]="isEditModalOpen()"
-    [title]="'Editar Categoría'"
-    (closeModal)="closeEditModal()"
-    (confirmModal)="confirmEditCategory()">
-    <form class="space-y-4">
-      <!-- Nombre -->
-      <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium text-on-surface">Nombre *</label>
-        <input
-          type="text"
-          [value]="formName()"
-          (input)="formName.set($any($event.target).value)"
-          placeholder="Ej: Electrónica"
-          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors">
-        @if (state.fieldErrors()['name']) {
-          <p class="text-xs text-error">{{ state.fieldErrors()['name'] }}</p>
-        }
-      </div>
-
-      <!-- Descripción -->
-      <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium text-on-surface">Descripción</label>
-        <textarea
-          [value]="formDescription()"
-          (input)="formDescription.set($any($event.target).value)"
-          placeholder="Ej: Productos electrónicos y computadoras"
-          rows="3"
-          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors resize-none">
-        </textarea>
-        @if (state.fieldErrors()['description']) {
-          <p class="text-xs text-error">{{ state.fieldErrors()['description'] }}</p>
-        }
-      </div>
-
-      @if (state.generalError()) {
-        <div class="p-3 bg-error/10 border border-error rounded-lg">
-          <p class="text-xs text-error">{{ state.generalError() }}</p>
-        </div>
-      }
-    </form>
-  </bt-modal>
-
-  <!-- Modal: Confirmar Eliminación -->
-  <bt-modal
-    [isOpen]="isDeleteModalOpen()"
-    [title]="'Eliminar Categoría'"
-    (closeModal)="closeDeleteModal()"
-    (confirmModal)="confirmDeleteCategory()">
-    <div class="space-y-4">
-      <p class="text-sm text-on-surface">
-        ¿Está seguro de que desea eliminar la categoría
-        <strong>{{ selectedCategory()?.name }}</strong>?
-      </p>
-
-      @if (state.generalError()) {
-        <div class="p-3 bg-error/10 border border-error rounded-lg">
-          <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
-        </div>
-      }
-
-      <p class="text-xs text-on-surface-variant italic">
-        Esta acción no se puede deshacer.
-      </p>
-    </div>
-  </bt-modal>
 </div>
+
+<!-- Modal Templates -->
+
+<!-- Create Modal Template -->
+<ng-template #createModalTemplate>
+  <form class="space-y-4">
+    <!-- Nombre -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">Nombre *</label>
+      <input
+        type="text"
+        [value]="formName()"
+        (input)="formName.set($any($event.target).value)"
+        placeholder="Ej: Electrónica"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors">
+      @if (state.fieldErrors()['name']) {
+        <p class="text-xs text-error">{{ state.fieldErrors()['name'] }}</p>
+      }
+    </div>
+
+    <!-- Descripción -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">Descripción</label>
+      <textarea
+        [value]="formDescription()"
+        (input)="formDescription.set($any($event.target).value)"
+        placeholder="Ej: Productos electrónicos y computadoras"
+        rows="3"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors resize-none">
+      </textarea>
+      @if (state.fieldErrors()['description']) {
+        <p class="text-xs text-error">{{ state.fieldErrors()['description'] }}</p>
+      }
+    </div>
+  </form>
+</ng-template>
+
+<!-- Edit Modal Template -->
+<ng-template #editModalTemplate>
+  <form class="space-y-4">
+    <!-- Nombre -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">Nombre *</label>
+      <input
+        type="text"
+        [value]="formName()"
+        (input)="formName.set($any($event.target).value)"
+        placeholder="Ej: Electrónica"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors">
+      @if (state.fieldErrors()['name']) {
+        <p class="text-xs text-error">{{ state.fieldErrors()['name'] }}</p>
+      }
+    </div>
+
+    <!-- Descripción -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">Descripción</label>
+      <textarea
+        [value]="formDescription()"
+        (input)="formDescription.set($any($event.target).value)"
+        placeholder="Ej: Productos electrónicos y computadoras"
+        rows="3"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary transition-colors resize-none">
+      </textarea>
+      @if (state.fieldErrors()['description']) {
+        <p class="text-xs text-error">{{ state.fieldErrors()['description'] }}</p>
+      }
+    </div>
+
+    @if (state.generalError()) {
+      <div class="p-3 bg-error/10 border border-error rounded-lg">
+        <p class="text-xs text-error">{{ state.generalError() }}</p>
+      </div>
+    }
+  </form>
+</ng-template>
+
+<!-- Delete Modal Template -->
+<ng-template #deleteModalTemplate>
+  <div class="space-y-4">
+    <p class="text-sm text-on-surface">
+      ¿Está seguro de que desea eliminar la categoría
+      <strong>{{ selectedCategory()?.name }}</strong>?
+    </p>
+
+    @if (state.generalError()) {
+      <div class="p-3 bg-error/10 border border-error rounded-lg">
+        <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
+      </div>
+    }
+
+    <p class="text-xs text-on-surface-variant italic">
+      Esta acción no se puede deshacer.
+    </p>
+  </div>
+</ng-template>
