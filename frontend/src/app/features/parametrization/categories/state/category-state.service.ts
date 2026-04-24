@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { CategoryService } from '../services/category.service';
+import { CategoryService } from '../../../../core/services/category.service';
 import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../core/models/category.models';
 import type { AppError } from '../../../../core/models/api.models';
 import { catchError, of } from 'rxjs';
