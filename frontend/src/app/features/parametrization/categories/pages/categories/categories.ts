@@ -5,6 +5,7 @@ import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
 import { ModalService } from '../../../../../shared/services/modal.service';
+import { ToastService } from '../../../../../shared/services/toast.service';
 import { CategoryStateService } from '../../state/category-state.service';
 
 @Component({
@@ -22,6 +23,7 @@ import { CategoryStateService } from '../../state/category-state.service';
 export class CategoriesComponent implements OnInit {
   protected state = inject(CategoryStateService);
   protected modalService = inject(ModalService);
+  protected toastService = inject(ToastService);
 
   @ViewChild('createModalTemplate') createModalTemplate!: TemplateRef<Record<string, never>>;
   @ViewChild('editModalTemplate') editModalTemplate!: TemplateRef<Record<string, never>>;
@@ -32,6 +34,7 @@ export class CategoriesComponent implements OnInit {
   nameTouched = signal(false);
   descriptionTouched = signal(false);
   selectedCategory = signal<CategoryDto | null>(null);
+  pendingAction = signal<'create' | 'edit' | 'delete' | null>(null);
 
   nameError = computed((): string | null => {
     if (!this.nameTouched()) return null;
@@ -70,6 +73,18 @@ export class CategoriesComponent implements OnInit {
     effect(() => {
       if (this.state.operationSuccess() > 0) {
         this.modalService.close();
+
+        const messages = {
+          create: 'Categoría creada correctamente',
+          edit: 'Categoría actualizada correctamente',
+          delete: 'Categoría eliminada correctamente',
+        };
+
+        const action = this.pendingAction();
+        if (action) {
+          this.toastService.success(messages[action]);
+          this.pendingAction.set(null);
+        }
       }
     });
 
@@ -81,6 +96,12 @@ export class CategoriesComponent implements OnInit {
         this.selectedCategory.set(null);
         this.nameTouched.set(false);
         this.descriptionTouched.set(false);
+      }
+    });
+
+    effect(() => {
+      if (this.state.generalError()) {
+        this.toastService.error(this.state.generalError() || 'Error desconocido');
       }
     });
   }
@@ -106,13 +127,14 @@ export class CategoriesComponent implements OnInit {
     });
   }
 
-  confirmCreateCategory(): false | void {
+   confirmCreateCategory(): false | void {
     this.markAllTouched();
 
     if (this.hasClientErrors()) {
       return false;
     }
 
+    this.pendingAction.set('create');
     const request: CreateCategoryRequest = {
       name: this.formName(),
       description: this.formDescription() || undefined,
@@ -134,13 +156,14 @@ export class CategoriesComponent implements OnInit {
     });
   }
 
-  confirmEditCategory(): false | void {
+   confirmEditCategory(): false | void {
     this.markAllTouched();
 
     if (this.hasClientErrors() || !this.selectedCategory()) {
       return false;
     }
 
+    this.pendingAction.set('edit');
     const request: UpdateCategoryRequest = {
       name: this.formName(),
       description: this.formDescription() || undefined,
@@ -160,8 +183,9 @@ export class CategoriesComponent implements OnInit {
     });
   }
 
-  confirmDeleteCategory(): void {
+   confirmDeleteCategory(): void {
     if (!this.selectedCategory()) return;
+    this.pendingAction.set('delete');
     this.state.deleteCategory(this.selectedCategory()!.id);
   }
 

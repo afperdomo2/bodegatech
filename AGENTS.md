@@ -255,7 +255,11 @@ pnpm ng generate service core/services/mi-servicio
 - `'xl'` → `max-w-[36rem]` (576px)
 - `'2xl'` → `max-w-[42rem]` (672px)
 
-⚠️ **NO usar clases de Tailwind estándar como `max-w-md`** — Tailwind v4 las interpreta como variables CSS `--spacing-*` del sistema de diseño, no como ancho de contenedor.
+⚠️ **NO usar clases de Tailwind estándar como `max-w-md`, `w-sm`, etc.** — Tailwind v4 las interpreta como variables CSS `--spacing-*` del sistema de diseño (ej: `--spacing-sm = 8px`), no como tamaños de contenedor.
+
+**Siempre usar valores arbitrarios explícitos:** `max-w-[24rem]`, `w-[22rem]`, `max-h-[30rem]`, etc.
+
+Aplicable a: `w-*`, `h-*`, `max-w-*`, `max-h-*`, `min-w-*`, `min-h-*`.
 
 **Botón Cancelar:** Usa `border-outline-variant bg-surface-container` con hover `hover:bg-surface-container-high hover:border-outline` para máxima visibilidad.
 
@@ -292,3 +296,50 @@ Los formularios en modales usan validación **client-side con signals** (sin Rea
 | description | Máximo 500 caracteres |
 
 **Referencia:** `frontend/src/app/features/parametrization/categories/`
+
+### Toast Notifications
+
+Sistema global de notificaciones tipo toast. Componente `<bt-toast>` montado en `main-layout.html` (z-50, bottom-right).
+
+**API:**
+```typescript
+toastService.success(message, duration?);  // 4s default
+toastService.error(message, duration?);    // 5s default
+toastService.warning(message);             // 4s default
+toastService.info(message);                // 4s default
+```
+
+**Integración en CRUD:**
+1. Signal `pendingAction = signal<'create'|'edit'|'delete'|null>(null)` en componente
+2. Setear antes de llamar state service: `this.pendingAction.set('create')`
+3. En effect que reacciona a `operationSuccess`: lanzar toast con mensaje contextual
+4. Effect adicional reacciona a `state.generalError()` para mostrar errores
+
+**Ejemplo (categorías):**
+```typescript
+pendingAction = signal<'create' | 'edit' | 'delete' | null>(null);
+
+effect(() => {
+  if (this.state.operationSuccess() > 0 && this.pendingAction()) {
+    const messages = {
+      create: 'Categoría creada correctamente',
+      edit: 'Categoría actualizada correctamente',
+      delete: 'Categoría eliminada correctamente',
+    };
+    this.toastService.success(messages[this.pendingAction()!]);
+  }
+});
+
+effect(() => {
+  if (this.state.generalError()) {
+    this.toastService.error(this.state.generalError()!);
+  }
+});
+
+confirmCreateCategory(): false | void {
+  this.pendingAction.set('create');
+  this.state.createCategory(request);
+}
+```
+
+**Referencia:** `frontend/src/app/shared/services/toast.service.ts`, `frontend/src/app/shared/components/toast/`
