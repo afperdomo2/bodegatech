@@ -1,11 +1,11 @@
-import type { OnInit } from '@angular/core';
-import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, type TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CategoryStateService } from '../../state/category-state.service';
-import { ModalService } from '../../../../../shared/services/modal.service';
+import type { OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, type TemplateRef, ViewChild } from '@angular/core';
 import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../../core/models/category.models';
-import { PageHeader } from '../../../../../shared/components/page-header/page-header';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
+import { PageHeader } from '../../../../../shared/components/page-header/page-header';
+import { ModalService } from '../../../../../shared/services/modal.service';
+import { CategoryStateService } from '../../state/category-state.service';
 
 @Component({
   selector: 'bt-categories',
@@ -27,17 +27,37 @@ export class CategoriesComponent implements OnInit {
   @ViewChild('editModalTemplate') editModalTemplate!: TemplateRef<Record<string, never>>;
   @ViewChild('deleteModalTemplate') deleteModalTemplate!: TemplateRef<Record<string, never>>;
 
-  // ========== ESTADO DEL FORMULARIO (SIGNALS) ==========
   formName = signal('');
   formDescription = signal('');
-
-  // ========== CATEGORÍA SELECCIONADA PARA EDICIÓN/ELIMINACIÓN ==========
+  nameTouched = signal(false);
+  descriptionTouched = signal(false);
   selectedCategory = signal<CategoryDto | null>(null);
 
-  // ========== COMPUTED ==========
+  nameError = computed((): string | null => {
+    if (!this.nameTouched()) return null;
+    const val = this.formName().trim();
+    if (!val) return 'El nombre es obligatorio';
+    if (val.length < 2) return 'Mínimo 2 caracteres';
+    if (val.length > 100) return 'Máximo 100 caracteres';
+    return null;
+  });
+
+  descriptionError = computed((): string | null => {
+    if (!this.descriptionTouched()) return null;
+    const val = this.formDescription().trim();
+    if (val.length > 500) return 'Máximo 500 caracteres';
+    return null;
+  });
+
+  hasClientErrors = computed(() => {
+    const name = this.formName().trim();
+    if (!name || name.length < 2 || name.length > 100) return true;
+    if (this.formDescription().trim().length > 500) return true;
+    return false;
+  });
+
   isFormValid = computed(() => this.formName().trim().length > 0);
 
-  // Columnas de la tabla (convertidas a DataTableColumn del shared component)
   tableColumns: DataTableColumn[] = [
     { key: 'name', label: 'Nombre', type: 'text', align: 'left' },
     { key: 'description', label: 'Descripción', type: 'text', align: 'left' },
@@ -47,32 +67,32 @@ export class CategoriesComponent implements OnInit {
   ];
 
   constructor() {
-    // ========== EFFECTS DEL COMPONENTE ==========
-
-    // Cerrar modal al completarse una operación con éxito
     effect(() => {
       if (this.state.operationSuccess() > 0) {
         this.modalService.close();
       }
     });
 
-    // Limpiar formulario y errores cuando se cierre el modal
     effect(() => {
       if (!this.modalService.isOpen()) {
         this.state.clearErrors();
         this.formName.set('');
         this.formDescription.set('');
         this.selectedCategory.set(null);
+        this.nameTouched.set(false);
+        this.descriptionTouched.set(false);
       }
     });
   }
 
   ngOnInit(): void {
-    // Cargar categorías al inicializar
     this.state.loadCategories(0, this.state.pageSize());
   }
 
-  // ========== ACCIONES DE MODALES ==========
+  private markAllTouched(): void {
+    this.nameTouched.set(true);
+    this.descriptionTouched.set(true);
+  }
 
   openCreateModal(): void {
     this.formName.set('');
@@ -86,8 +106,12 @@ export class CategoriesComponent implements OnInit {
     });
   }
 
-  confirmCreateCategory(): void {
-    if (!this.isFormValid()) return;
+  confirmCreateCategory(): false | void {
+    this.markAllTouched();
+
+    if (this.hasClientErrors()) {
+      return false;
+    }
 
     const request: CreateCategoryRequest = {
       name: this.formName(),
@@ -110,8 +134,12 @@ export class CategoriesComponent implements OnInit {
     });
   }
 
-  confirmEditCategory(): void {
-    if (!this.isFormValid() || !this.selectedCategory()) return;
+  confirmEditCategory(): false | void {
+    this.markAllTouched();
+
+    if (this.hasClientErrors() || !this.selectedCategory()) {
+      return false;
+    }
 
     const request: UpdateCategoryRequest = {
       name: this.formName(),
@@ -137,10 +165,7 @@ export class CategoriesComponent implements OnInit {
     this.state.deleteCategory(this.selectedCategory()!.id);
   }
 
-  // ========== ACCIONES DE TABLA ==========
-
   onPageChange(newPage: number): void {
-    // Convertir de 1-based (data-table) a 0-based (CategoryStateService)
     this.state.loadCategories(newPage - 1, this.state.pageSize());
   }
 
@@ -156,10 +181,7 @@ export class CategoriesComponent implements OnInit {
     this.state.loadCategories(this.state.currentPage(), this.state.pageSize());
   }
 
-  // ========== HELPERS ==========
-
   getCurrentPageForDataTable(): number {
-    // Convertir de 0-based (CategoryStateService) a 1-based (data-table)
     return this.state.currentPage() + 1;
   }
 }

@@ -6,7 +6,7 @@ export interface ModalConfig {
   title?: string;
   template: TemplateRef<unknown>;
   size?: ModalSize;
-  onConfirm?: () => void;
+  onConfirm?: () => void | false;
   onCancel?: () => void;
 }
 
@@ -18,7 +18,7 @@ export class ModalService {
   title = signal('');
   template = signal<TemplateRef<unknown> | null>(null);
   size = signal<ModalSize>('lg');
-  private onConfirmCallback?: () => void;
+  private onConfirmCallback?: () => void | false;
   private onCancelCallback?: () => void;
 
   open(config: ModalConfig | TemplateRef<unknown>): void {
@@ -46,8 +46,10 @@ export class ModalService {
   }
 
   confirm(): void {
-    this.onConfirmCallback?.();
-    this.close();
+    const result = this.onConfirmCallback?.();
+    if (result !== false) {
+      this.close();
+    }
   }
 
   cancel(): void {

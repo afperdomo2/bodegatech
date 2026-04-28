@@ -233,6 +233,7 @@ pnpm ng generate service core/services/mi-servicio
 5. **SCSS modular**: Estilos específicos en cada componente, variables globales en `src/styles/`
 6. **Tailwind first**: Preferir clases de Tailwind sobre estilos personalizados
 7. **No cambiar nombres de componentes**: Usar el patrón generado por Angular CLI (ej: `DashboardComponent` → `src/app/.../dashboard.ts`)
+8. **Minimizar comentarios**: Solo agregar comentarios en funciones complejas que ameriten explicación. El código debe ser auto-documentado (nombres claros, lógica legible)
 
 ### Patrón Modal + DataTable (⭐ Arquitectura actual)
 
@@ -273,3 +274,21 @@ readonly operationSuccess = this._operationSuccess.asReadonly();
 ```
 
 En métodos async (con `subscribe`), incrementar `_operationSuccess` en el bloque de éxito para que los componentes detecten finalización.
+
+### Validación de Formularios en Modales
+
+Los formularios en modales usan validación **client-side con signals** (sin Reactive Forms).
+
+**Pattern:**
+- Signals de touch: `nameTouched = signal(false)` — activan errores post-blur/submit
+- Computed errors: `nameError = computed(() => { ... })` — retornan `string | null`
+- Prevent submit: callback retorna `false` si hay errores → `ModalService.confirm()` no cierra
+- Prioridad: Errores del servidor (`state.fieldErrors()`) > errores cliente
+
+**Validaciones de Categoría:**
+| Campo | Reglas |
+|---|---|
+| name | Obligatorio, 2-100 caracteres |
+| description | Máximo 500 caracteres |
+
+**Referencia:** `frontend/src/app/features/parametrization/categories/`
