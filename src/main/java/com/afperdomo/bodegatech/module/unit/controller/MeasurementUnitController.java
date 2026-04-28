@@ -39,7 +39,7 @@ public class MeasurementUnitController {
     private final MeasurementUnitService unitService;
 
     @GetMapping
-    @Operation(summary = "Listar todas las unidades de medida", description = "Obtiene una lista de todas las unidades de medida activas")
+    @Operation(summary = "Listar todas las unidades de medida", description = "Obtiene una lista de todas las unidades de medida activas, opcionalmente filtradas por tipo de unidad")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de unidades obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -52,10 +52,12 @@ public class MeasurementUnitController {
             @Parameter(description = "Campo para ordenar (createdAt por defecto)")
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Dirección del ordenamiento (ASC o DESC)")
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @Parameter(description = "Filtro opcional: si es true, solo retorna unidades base; si es false o null, retorna todas las activas")
+            @RequestParam(required = false) Boolean isBase) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<MeasurementUnitDto> units = unitService.findAllUnits(pageable);
+        Page<MeasurementUnitDto> units = unitService.findAllUnits(pageable, isBase);
         PagedResponse<MeasurementUnitDto> pagedResponse = new PagedResponse<>(units);
 
         return ResponseEntity.ok(ApiResponse.success("Unidades de medida obtenidas exitosamente", pagedResponse));

@@ -31,9 +31,18 @@ public class MeasurementUnitService {
 
     /**
      * Obtiene todas las unidades activas con paginación.
+     * Opcionalmente filtra solo las unidades base si isBase es true.
+     *
+     * @param pageable configuración de paginación
+     * @param isBase   si es null/false lista todas las activas;
+     *                 si es true, solo las unidades base
+     * @return página de unidades
      */
     @Transactional(readOnly = true)
-    public Page<MeasurementUnitDto> findAllUnits(Pageable pageable) {
+    public Page<MeasurementUnitDto> findAllUnits(Pageable pageable, Boolean isBase) {
+        if (Boolean.TRUE.equals(isBase)) {
+            return unitRepository.findAllBaseUnits(pageable).map(unitMapper::toDto);
+        }
         return unitRepository.findAllActive(pageable).map(unitMapper::toDto);
     }
 

@@ -45,4 +45,12 @@ public interface MeasurementUnitRepository extends JpaRepository<MeasurementUnit
      */
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM MeasurementUnit u WHERE u.type = :type AND u.isBase = true AND u.isActive = true")
     boolean existsBaseUnitByType(UnitType type);
+
+    /**
+     * Encuentra todas las unidades base activas con paginación.
+     * @param pageable configuración de paginación
+     * @return página de unidades base activas
+     */
+    @Query("SELECT u FROM MeasurementUnit u WHERE u.isBase = true AND u.isActive = true ORDER BY u.createdAt DESC")
+    Page<MeasurementUnit> findAllBaseUnits(Pageable pageable);
 }
