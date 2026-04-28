@@ -6,12 +6,15 @@ import com.afperdomo.bodegatech.module.unit.dto.CreateMeasurementUnitRequest;
 import com.afperdomo.bodegatech.module.unit.dto.MeasurementUnitDto;
 import com.afperdomo.bodegatech.module.unit.dto.UpdateMeasurementUnitRequest;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
+import com.afperdomo.bodegatech.module.unit.enums.UnitType;
 import com.afperdomo.bodegatech.module.unit.mapper.MeasurementUnitMapper;
 import com.afperdomo.bodegatech.module.unit.repository.MeasurementUnitRepository;
+import com.afperdomo.bodegatech.module.unit.repository.MeasurementUnitSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,19 +34,23 @@ public class MeasurementUnitService {
 
     /**
      * Obtiene todas las unidades activas con paginación.
-     * Opcionalmente filtra solo las unidades base si isBase es true.
+     * Permite filtrar opcionalmente por isBase y/o type.
      *
      * @param pageable configuración de paginación
-     * @param isBase   si es null/false lista todas las activas;
-     *                 si es true, solo las unidades base
-     * @return página de unidades
+     * @param isBase   si es true, solo retorna unidades base; null/false para todas las activas
+     * @param type     tipo de unidad a filtrar; null para no filtrar por tipo
+     * @return página de unidades filtradas
      */
     @Transactional(readOnly = true)
-    public Page<MeasurementUnitDto> findAllUnits(Pageable pageable, Boolean isBase) {
+    public Page<MeasurementUnitDto> findAllUnits(Pageable pageable, Boolean isBase, UnitType type) {
+        Specification<MeasurementUnit> spec = MeasurementUnitSpecifications.isActive();
         if (Boolean.TRUE.equals(isBase)) {
-            return unitRepository.findAllBaseUnits(pageable).map(unitMapper::toDto);
+            spec = spec.and(MeasurementUnitSpecifications.isBase());
         }
-        return unitRepository.findAllActive(pageable).map(unitMapper::toDto);
+        if (type != null) {
+            spec = spec.and(MeasurementUnitSpecifications.hasType(type));
+        }
+        return unitRepository.findAll(spec, pageable).map(unitMapper::toDto);
     }
 
     /**

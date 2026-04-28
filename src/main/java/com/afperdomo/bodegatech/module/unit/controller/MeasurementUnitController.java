@@ -5,6 +5,7 @@ import com.afperdomo.bodegatech.common.response.PagedResponse;
 import com.afperdomo.bodegatech.module.unit.dto.CreateMeasurementUnitRequest;
 import com.afperdomo.bodegatech.module.unit.dto.MeasurementUnitDto;
 import com.afperdomo.bodegatech.module.unit.dto.UpdateMeasurementUnitRequest;
+import com.afperdomo.bodegatech.module.unit.enums.UnitType;
 import com.afperdomo.bodegatech.module.unit.service.MeasurementUnitService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,7 +40,7 @@ public class MeasurementUnitController {
     private final MeasurementUnitService unitService;
 
     @GetMapping
-    @Operation(summary = "Listar todas las unidades de medida", description = "Obtiene una lista de todas las unidades de medida activas, opcionalmente filtradas por tipo de unidad")
+    @Operation(summary = "Listar todas las unidades de medida", description = "Obtiene una lista de todas las unidades de medida activas, opcionalmente filtradas por isBase y/o type")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de unidades obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -53,11 +54,13 @@ public class MeasurementUnitController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Dirección del ordenamiento (ASC o DESC)")
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
-            @Parameter(description = "Filtro opcional: si es true, solo retorna unidades base; si es false o null, retorna todas las activas")
-            @RequestParam(required = false) Boolean isBase) {
+            @Parameter(description = "Filtro opcional: si es true, solo retorna unidades base")
+            @RequestParam(required = false) Boolean isBase,
+            @Parameter(description = "Filtro opcional por tipo de unidad (MASS, VOLUME, LENGTH, etc.)")
+            @RequestParam(required = false) UnitType type) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<MeasurementUnitDto> units = unitService.findAllUnits(pageable, isBase);
+        Page<MeasurementUnitDto> units = unitService.findAllUnits(pageable, isBase, type);
         PagedResponse<MeasurementUnitDto> pagedResponse = new PagedResponse<>(units);
 
         return ResponseEntity.ok(ApiResponse.success("Unidades de medida obtenidas exitosamente", pagedResponse));

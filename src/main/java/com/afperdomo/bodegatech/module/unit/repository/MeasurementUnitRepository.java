@@ -2,9 +2,8 @@ package com.afperdomo.bodegatech.module.unit.repository;
 
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import com.afperdomo.bodegatech.module.unit.enums.UnitType;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -12,10 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface MeasurementUnitRepository extends JpaRepository<MeasurementUnit, UUID> {
-
-    @Query("SELECT u FROM MeasurementUnit u WHERE u.isActive = true ORDER BY u.createdAt DESC")
-    Page<MeasurementUnit> findAllActive(Pageable pageable);
+public interface MeasurementUnitRepository extends JpaRepository<MeasurementUnit, UUID>, JpaSpecificationExecutor<MeasurementUnit> {
 
     @Query("SELECT u FROM MeasurementUnit u WHERE u.id = :id AND u.isActive = true")
     Optional<MeasurementUnit> findByIdActive(UUID id);
@@ -26,9 +22,6 @@ public interface MeasurementUnitRepository extends JpaRepository<MeasurementUnit
 
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM MeasurementUnit u WHERE u.id IN :ids AND u.isActive = true")
     boolean allExistAndActive(Iterable<UUID> ids);
-
-    @Query("SELECT u FROM MeasurementUnit u WHERE u.type = :type AND u.isActive = true ORDER BY u.name")
-    Page<MeasurementUnit> findByTypeAndActive(UnitType type, Pageable pageable);
 
     /**
      * Encuentra la unidad base de un tipo específico.
@@ -45,12 +38,4 @@ public interface MeasurementUnitRepository extends JpaRepository<MeasurementUnit
      */
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM MeasurementUnit u WHERE u.type = :type AND u.isBase = true AND u.isActive = true")
     boolean existsBaseUnitByType(UnitType type);
-
-    /**
-     * Encuentra todas las unidades base activas con paginación.
-     * @param pageable configuración de paginación
-     * @return página de unidades base activas
-     */
-    @Query("SELECT u FROM MeasurementUnit u WHERE u.isBase = true AND u.isActive = true ORDER BY u.createdAt DESC")
-    Page<MeasurementUnit> findAllBaseUnits(Pageable pageable);
 }
