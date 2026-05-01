@@ -230,7 +230,15 @@
 
 <!-- Edit Modal Template -->
 <ng-template #editModalTemplate>
-  <form class="space-y-4">
+  @if (state.isLoadingDetail()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-on-surface-variant">Cargando datos...</p>
+      </div>
+    </div>
+  } @else {
+    <form class="space-y-4">
     <!-- Nombre -->
     <div class="flex flex-col gap-2">
       <label class="text-sm font-medium text-on-surface">
@@ -337,15 +345,16 @@
             {{ conversionFactorError() || state.fieldErrors()['conversionFactor'] }}
           </p>
         }
-      </div>
-    }
+       </div>
+     }
 
-    @if (state.generalError()) {
-      <div class="p-3 bg-error/10 border border-error rounded-lg">
-        <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
-      </div>
-    }
-  </form>
+     @if (state.generalError()) {
+       <div class="p-3 bg-error/10 border border-error rounded-lg">
+         <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
+       </div>
+     }
+    </form>
+  }
 </ng-template>
 
 <!-- Delete Modal Template -->

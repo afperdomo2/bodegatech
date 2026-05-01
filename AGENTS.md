@@ -539,6 +539,120 @@ readonly operationSuccess = this._operationSuccess.asReadonly();
 
 En métodos async (con `subscribe`), incrementar `_operationSuccess` en el bloque de éxito para que los componentes detecten finalización.
 
+### Datos Frescos en Modales de Edición (⭐ Patrón crítico)
+
+**Objetivo:** Cuando se abre una modal de edición, los datos deben venir de `GET /api/{recurso}/{id}` (Detail completo con version, timestamps) en lugar de usar los datos stale del listado.
+
+**Implementación en State Service:**
+
+1. Agregar signals privados/públicos para detail loading:
+```typescript
+private _selectedDetail = signal<{Resource}Detail | null>(null);
+private _isLoadingDetail = signal(false);
+
+readonly selectedDetail = this._selectedDetail.asReadonly();
+readonly isLoadingDetail = this._isLoadingDetail.asReadonly();
+```
+
+2. Agregar método para cargar el detail:
+```typescript
+load{Resource}ById(id: string): void {
+  this._isLoadingDetail.set(true);
+  this.{http}Service.getById(id).pipe(
+    catchError((error: AppError) => {
+      this._generalError.set(error.message);
+      return of(null);
+    })
+  ).subscribe(response => {
+    if (response) {
+      this._selectedDetail.set(response.data);
+      this._generalError.set(null);
+    }
+    this._isLoadingDetail.set(false);
+  });
+}
+```
+
+3. Actualizar `clearErrors()` para limpiar selectedDetail:
+```typescript
+clearErrors(): void {
+  this._fieldErrors.set({});
+  this._generalError.set(null);
+  this._selectedDetail.set(null);
+}
+```
+
+**Implementación en Componente:**
+
+1. En `openEditModal()`, llamar a `state.load{Resource}ById(id)` y pasar `isLoading` callback:
+```typescript
+openEditModal(resource: {Resource}Dto): void {
+  this.selectedResource.set(resource);
+  this.state.load{Resource}ById(resource.id);
+  this.modalService.open({
+    title: 'Editar {Resource}',
+    template: this.editModalTemplate,
+    size: 'md',
+    onConfirm: () => this.confirmEdit{Resource}(),
+    onCancel: () => {},
+    isLoading: () => this.state.isLoadingDetail(),
+  });
+}
+```
+
+2. Agregar `effect()` en constructor para popular formulario cuando detail carga:
+```typescript
+effect(() => {
+  if (this.state.selectedDetail()) {
+    const detail = this.state.selectedDetail();
+    if (detail) {
+      this.formName.set(detail.name);
+      this.formDescription.set(detail.description || '');
+      // Población de otros campos...
+    }
+  }
+});
+```
+
+**Implementación en Template (Edit Modal):**
+
+Mostrar spinner mientras `isLoadingDetail()` es true:
+```html
+<ng-template #editModalTemplate>
+  @if (state.isLoadingDetail()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-on-surface-variant">Cargando datos...</p>
+      </div>
+    </div>
+  } @else {
+    <!-- Formulario aquí -->
+  }
+</ng-template>
+```
+
+**ModalService — Desabilitar botones durante loading:**
+
+El `ModalService` expone método `isLoading(): boolean` que verifica el callback `isLoading()` pasado en config:
+```typescript
+export interface ModalConfig {
+  // ... otros campos
+  isLoading?: () => boolean; // Callback de estado loading
+}
+```
+
+El template de la modal usa esto para deshabilitar botones:
+```html
+<button [disabled]="modalService.isLoading()" ...>Confirmar</button>
+```
+
+**Referencia completa:**
+- `frontend/src/app/features/parametrization/categories/state/category-state.service.ts`
+- `frontend/src/app/features/parametrization/categories/pages/categories/categories.ts`
+- `frontend/src/app/shared/services/modal.service.ts`
+- `frontend/src/app/shared/components/modal/modal.ts`
+
 ### Validación de Formularios en Modales
 
 Los formularios en modales usan validación **client-side con signals** (sin Reactive Forms).

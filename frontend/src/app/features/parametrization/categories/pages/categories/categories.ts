@@ -100,6 +100,16 @@ export class CategoriesComponent implements OnInit {
     });
 
     effect(() => {
+      if (this.state.selectedDetail()) {
+        const detail = this.state.selectedDetail();
+        if (detail) {
+          this.formName.set(detail.name);
+          this.formDescription.set(detail.description || '');
+        }
+      }
+    });
+
+    effect(() => {
       if (this.state.generalError()) {
         this.toastService.error(this.state.generalError() || 'Error desconocido');
       }
@@ -145,14 +155,14 @@ export class CategoriesComponent implements OnInit {
 
   openEditModal(category: CategoryDto): void {
     this.selectedCategory.set(category);
-    this.formName.set(category.name);
-    this.formDescription.set(category.description || '');
+    this.state.loadCategoryById(category.id);
     this.modalService.open({
       title: 'Editar Categoría',
       template: this.editModalTemplate,
       size: 'md',
       onConfirm: () => this.confirmEditCategory(),
       onCancel: () => {},
+      isLoading: () => this.state.isLoadingDetail(),
     });
   }
 

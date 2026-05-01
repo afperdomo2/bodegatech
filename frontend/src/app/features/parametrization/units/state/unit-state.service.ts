@@ -6,6 +6,7 @@ import type {
 } from '../../../../core/models/requests/unit.requests';
 import type {
   MeasurementUnitSummaryDto,
+  MeasurementUnitDetail,
 } from '../../../../core/models/responses/unit.responses';
 import type { AppError } from '../../../../core/models/api.models';
 import type { UnitType } from '../../../../core/constants/unit-type.constants';
@@ -43,6 +44,9 @@ export class UnitStateService {
   private _generalError = signal<string | null>(null);
   private _operationSuccess = signal(0); // Contador que incrementa en cada operación exitosa
 
+  private _selectedDetail = signal<MeasurementUnitDetail | null>(null);
+  private _isLoadingDetail = signal(false);
+
   readonly units = this._units.asReadonly();
   readonly baseUnitsForType = this._baseUnitsForType.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
@@ -56,6 +60,9 @@ export class UnitStateService {
   readonly fieldErrors = this._fieldErrors.asReadonly();
   readonly generalError = this._generalError.asReadonly();
   readonly operationSuccess = this._operationSuccess.asReadonly();
+
+  readonly selectedDetail = this._selectedDetail.asReadonly();
+  readonly isLoadingDetail = this._isLoadingDetail.asReadonly();
 
   readonly hasError = computed(
     () => this._generalError() !== null || Object.keys(this._fieldErrors()).length > 0
@@ -180,8 +187,27 @@ export class UnitStateService {
     });
   }
 
+  loadUnitById(id: string): void {
+    this._isLoadingDetail.set(true);
+    this._generalError.set(null);
+
+    this.unitService.getById(id).pipe(
+      catchError((error: AppError) => {
+        this._generalError.set(error.message);
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        this._selectedDetail.set(response.data);
+        this._generalError.set(null);
+      }
+      this._isLoadingDetail.set(false);
+    });
+  }
+
   clearErrors(): void {
     this._fieldErrors.set({});
     this._generalError.set(null);
+    this._selectedDetail.set(null);
   }
 }

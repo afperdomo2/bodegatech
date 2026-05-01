@@ -4,7 +4,7 @@ import type {
   CreateCategoryRequest,
   UpdateCategoryRequest,
 } from '../../../../core/models/requests/category.requests';
-import type { CategorySummaryDto } from '../../../../core/models/responses/category.responses';
+import type { CategorySummaryDto, CategoryDetail } from '../../../../core/models/responses/category.responses';
 import type { AppError } from '../../../../core/models/api.models';
 import { catchError, of } from 'rxjs';
 
@@ -40,6 +40,9 @@ export class CategoryStateService {
   private _generalError = signal<string | null>(null);
   private _operationSuccess = signal(0); // Contador que incrementa en cada operación exitosa
 
+  private _selectedDetail = signal<CategoryDetail | null>(null);
+  private _isLoadingDetail = signal(false);
+
   // ========== ESTADO PÚBLICO (READ-ONLY SIGNALS) ==========
 
   readonly categories = this._categories.asReadonly();
@@ -53,6 +56,9 @@ export class CategoryStateService {
   readonly fieldErrors = this._fieldErrors.asReadonly();
   readonly generalError = this._generalError.asReadonly();
   readonly operationSuccess = this._operationSuccess.asReadonly();
+
+  readonly selectedDetail = this._selectedDetail.asReadonly();
+  readonly isLoadingDetail = this._isLoadingDetail.asReadonly();
 
   // ========== COMPUTED STATE ==========
 
@@ -194,5 +200,29 @@ export class CategoryStateService {
   clearErrors(): void {
     this._fieldErrors.set({});
     this._generalError.set(null);
+    this._selectedDetail.set(null);
+  }
+
+  /**
+   * Cargar detalle de una categoría por ID (datos frescos para edición).
+   * Consulta el endpoint GET /api/categories/{id} para obtener datos actualizados.
+   */
+  loadCategoryById(id: string): void {
+    this._isLoadingDetail.set(true);
+    this._generalError.set(null);
+
+    this.categoryService.getById(id).pipe(
+      catchError((error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoadingDetail.set(false);
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        this._selectedDetail.set(response.data);
+        this._generalError.set(null);
+      }
+      this._isLoadingDetail.set(false);
+    });
   }
 }

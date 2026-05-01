@@ -8,6 +8,7 @@ export interface ModalConfig {
   size?: ModalSize;
   onConfirm?: () => void | false;
   onCancel?: () => void;
+  isLoading?: () => boolean; // Optional callback to check loading state
 }
 
 @Injectable({
@@ -20,6 +21,7 @@ export class ModalService {
   size = signal<ModalSize>('lg');
   private onConfirmCallback?: () => void | false;
   private onCancelCallback?: () => void;
+  private isLoadingCallback?: () => boolean;
 
   open(config: ModalConfig | TemplateRef<unknown>): void {
     // Handle both ModalConfig object and direct TemplateRef
@@ -33,6 +35,7 @@ export class ModalService {
       this.size.set(config.size || 'lg');
       this.onConfirmCallback = config.onConfirm;
       this.onCancelCallback = config.onCancel;
+      this.isLoadingCallback = config.isLoading;
     }
     this.isOpen.set(true);
   }
@@ -43,6 +46,11 @@ export class ModalService {
     this.title.set('');
     this.onConfirmCallback = undefined;
     this.onCancelCallback = undefined;
+    this.isLoadingCallback = undefined;
+  }
+
+  isLoading(): boolean {
+    return this.isLoadingCallback?.() ?? false;
   }
 
   confirm(): void {

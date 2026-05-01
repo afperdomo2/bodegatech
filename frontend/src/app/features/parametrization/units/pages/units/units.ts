@@ -166,6 +166,24 @@ export class UnitsComponent implements OnInit {
     });
 
     effect(() => {
+      if (this.state.selectedDetail()) {
+        const detail = this.state.selectedDetail();
+        if (detail) {
+          this.formName.set(detail.name);
+          this.formAbbreviation.set(detail.abbreviation);
+          this.formType.set(detail.type);
+          this.formIsBaseUnit.set(detail.isBaseUnit);
+          this.formBaseUnitId.set(detail.baseUnitId);
+          this.formConversionFactor.set(detail.conversionFactor ? detail.conversionFactor.toString() : '');
+          // Load base units for the type if not a base unit
+          if (!detail.isBaseUnit && detail.type) {
+            this.state.loadBaseUnitsOfType(detail.type);
+          }
+        }
+      }
+    });
+
+    effect(() => {
       if (this.state.generalError()) {
         this.toastService.error(this.state.generalError() || 'Error desconocido');
       }
@@ -245,12 +263,7 @@ export class UnitsComponent implements OnInit {
 
   openEditModal(unit: MeasurementUnitDto): void {
     this.selectedUnit.set(unit);
-    this.formName.set(unit.name);
-    this.formAbbreviation.set(unit.abbreviation);
-    this.formType.set(unit.type);
-    this.formIsBaseUnit.set(unit.isBaseUnit);
-    this.formBaseUnitId.set(unit.baseUnitId);
-    this.formConversionFactor.set(unit.conversionFactor ? unit.conversionFactor.toString() : '');
+    this.state.loadUnitById(unit.id);
     this.state.clearErrors();
     this.modalService.open({
       title: 'Editar Unidad de Medida',
@@ -258,6 +271,7 @@ export class UnitsComponent implements OnInit {
       size: 'lg',
       onConfirm: () => this.confirmEditUnit(),
       onCancel: () => {},
+      isLoading: () => this.state.isLoadingDetail(),
     });
   }
 
