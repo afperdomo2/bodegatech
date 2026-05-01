@@ -60,6 +60,26 @@
                         {{ getBadgeLabel(getValue(item, column.key)) }}
                       </span>
                     }
+                    @case ('name-with-badge') {
+                      <div class="flex items-center gap-2">
+                        <span>{{ column.formatter ? column.formatter(getValue(item, column.key)) : getValue(item, column.key) }}</span>
+                        @if (column.badgeKey && getValue(item, column.badgeKey)) {
+                          <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-tertiary/10 text-tertiary">
+                            <span class="material-symbols-outlined text-[11px]">verified</span>
+                            {{ column.badgeLabel || 'Base' }}
+                          </span>
+                        }
+                      </div>
+                    }
+                    @case ('checkbox-disabled') {
+                      <div class="flex items-center justify-center">
+                        @if (getValue(item, column.key)) {
+                          <span class="material-symbols-outlined text-success text-xl">check_circle</span>
+                        } @else {
+                          <span class="material-symbols-outlined text-gray-200 text-xl">check_circle</span>
+                        }
+                      </div>
+                    }
                     @case ('actions') {
                       <div class="flex items-center justify-center gap-2">
                         <button

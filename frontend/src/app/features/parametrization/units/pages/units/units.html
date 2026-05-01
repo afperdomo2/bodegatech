@@ -27,7 +27,7 @@
     <div class="flex items-center justify-center py-12">
       <div class="flex flex-col items-center gap-4">
         <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-sm text-on-surface-variant">Cargando unidades...</p>
+        <p class="text-sm text-on-surface-variant">--</p>
       </div>
     </div>
   } @else {
@@ -121,20 +121,20 @@
       <label class="text-sm font-medium text-on-surface">
         Tipo <span class="text-error font-semibold">*</span>
       </label>
-      <select
-        [value]="formType()"
-        (change)="formType.set($any($event.target).value); onTypeChange()"
-        (blur)="typeTouched.set(true)"
-        [class.border-error]="typeError() || state.fieldErrors()['type']"
-        [class.focus:border-error]="typeError() || state.fieldErrors()['type']"
-        [class.focus:ring-error/20]="typeError() || state.fieldErrors()['type']"
-        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
-                 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
-        <option value="" disabled>Selecciona un tipo</option>
-        @for (option of unitTypeOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </select>
+       <select
+         [value]="formType() ?? ''"
+         (change)="formType.set($any($event.target).value || null); onTypeChange()"
+         (blur)="typeTouched.set(true)"
+         [class.border-error]="typeError() || state.fieldErrors()['type']"
+         [class.focus:border-error]="typeError() || state.fieldErrors()['type']"
+         [class.focus:ring-error/20]="typeError() || state.fieldErrors()['type']"
+         class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                  focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+         <option value="" disabled selected>--</option>
+         @for (option of unitTypeOptions; track option.value) {
+           <option [value]="option.value">{{ option.label }}</option>
+         }
+       </select>
 
       @if (typeError() || state.fieldErrors()['type']) {
         <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium">
@@ -153,7 +153,7 @@
         (change)="formIsBaseUnit.set($any($event.target).checked); onIsBaseUnitChange()"
         class="w-4 h-4 rounded border-outline-variant cursor-pointer">
       <label for="isBaseUnit" class="text-sm font-medium text-on-surface cursor-pointer">
-        Es unidad base del tipo
+        Es unidad base
       </label>
     </div>
 
@@ -169,20 +169,20 @@
             <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
         } @else {
-          <select
-            [value]="formBaseUnitId()"
-            (change)="formBaseUnitId.set($any($event.target).value)"
-            (blur)="baseUnitIdTouched.set(true)"
-            [class.border-error]="baseUnitIdError() || state.fieldErrors()['baseUnitId']"
-            [class.focus:border-error]="baseUnitIdError() || state.fieldErrors()['baseUnitId']"
-            [class.focus:ring-error/20]="baseUnitIdError() || state.fieldErrors()['baseUnitId']"
-            class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
-                     focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
-            <option value="" disabled>Selecciona una unidad base</option>
-            @for (unit of state.baseUnitsForType(); track unit.id) {
-              <option [value]="unit.id">{{ unit.name }} ({{ unit.abbreviation }})</option>
-            }
-          </select>
+           <select
+             [value]="formBaseUnitId() ?? ''"
+             (change)="formBaseUnitId.set($any($event.target).value || null)"
+             (blur)="baseUnitIdTouched.set(true)"
+             [class.border-error]="baseUnitIdError() || state.fieldErrors()['baseUnitId']"
+             [class.focus:border-error]="baseUnitIdError() || state.fieldErrors()['baseUnitId']"
+             [class.focus:ring-error/20]="baseUnitIdError() || state.fieldErrors()['baseUnitId']"
+             class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                      focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+             <option value="" disabled selected>--</option>
+             @for (unit of state.baseUnitsForType(); track unit.id) {
+               <option [value]="unit.id">{{ unit.name }} ({{ unit.abbreviation }})</option>
+             }
+           </select>
         }
 
         @if (baseUnitIdError() || state.fieldErrors()['baseUnitId']) {
@@ -281,23 +281,36 @@
       }
     </div>
 
-    <!-- Tipo de Unidad (READ-ONLY en edición) -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-medium text-on-surface">Tipo</label>
-      <div class="px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface">
-        {{ formType() }}
-      </div>
-      <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
-    </div>
+     <!-- Tipo de Unidad (READ-ONLY en edición) -->
+     <div class="flex flex-col gap-2">
+       <label class="text-sm font-medium text-on-surface">Tipo</label>
+       <div class="px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface">
+         {{ getUnitTypeLabel(formType()!) }}
+       </div>
+       <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
+     </div>
 
-    <!-- Unidad Base (READ-ONLY en edición) -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-medium text-on-surface">Unidad Base</label>
-      <div class="px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface">
-        {{ formIsBaseUnit() ? 'Sí' : 'No' }}
-      </div>
-      <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
-    </div>
+     <!-- Checkbox Es Unidad Base (READ-ONLY en edición) -->
+     <div class="flex items-center gap-2">
+       <input
+         type="checkbox"
+         [checked]="formIsBaseUnit()"
+         disabled
+         class="w-4 h-4 rounded border-outline-variant cursor-not-allowed opacity-70">
+       <label class="text-sm font-medium text-on-surface-variant">Es unidad base</label>
+     </div>
+     <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
+
+     <!-- Unidad Base (READ-ONLY en edición, solo si NO es unidad base) -->
+     @if (!formIsBaseUnit()) {
+       <div class="flex flex-col gap-2">
+         <label class="text-sm font-medium text-on-surface">Unidad Base</label>
+         <div class="px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface">
+           {{ selectedBaseUnitDisplay() }}
+         </div>
+         <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
+       </div>
+     }
 
     <!-- Conversion Factor (Editable solo si NOT isBaseUnit) -->
     @if (!formIsBaseUnit()) {

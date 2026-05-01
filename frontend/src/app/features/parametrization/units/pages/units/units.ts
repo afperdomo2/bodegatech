@@ -13,11 +13,7 @@ import { UnitStateService } from '../../state/unit-state.service';
 @Component({
   selector: 'bt-units',
   standalone: true,
-  imports: [
-    CommonModule,
-    PageHeader,
-    DataTable,
-  ],
+  imports: [CommonModule, PageHeader, DataTable],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './units.html',
   styleUrl: './units.scss',
@@ -32,6 +28,7 @@ export class UnitsComponent implements OnInit {
   @ViewChild('deleteModalTemplate') deleteModalTemplate!: TemplateRef<Record<string, never>>;
 
   protected unitTypeOptions = UNIT_TYPE_OPTIONS;
+  protected getUnitTypeLabel = getUnitTypeLabel;
 
   formName = signal('');
   formAbbreviation = signal('');
@@ -104,7 +101,19 @@ export class UnitsComponent implements OnInit {
 
   isFormValid = computed(() => this.formName().trim().length > 0);
 
+  selectedBaseUnitDisplay = computed(() => {
+    if (this.formIsBaseUnit()) {
+      return 'N/A - Es unidad base';
+    }
+    if (!this.formBaseUnitId()) {
+      return 'No seleccionada';
+    }
+    const baseUnit = this.state.baseUnitsForType().find((u) => u.id === this.formBaseUnitId());
+    return baseUnit ? `${baseUnit.name} (${baseUnit.abbreviation})` : 'No encontrada';
+  });
+
   tableColumns: DataTableColumn[] = [
+    { key: 'isBaseUnit', label: 'Base', type: 'checkbox-disabled', align: 'center' },
     { key: 'name', label: 'Nombre', type: 'text', align: 'left' },
     { key: 'abbreviation', label: 'Abreviación', type: 'text', align: 'center' },
     {
@@ -114,7 +123,6 @@ export class UnitsComponent implements OnInit {
       align: 'center',
       formatter: (value: unknown) => getUnitTypeLabel(value as UnitType),
     },
-    { key: 'isBaseUnit', label: 'Unidad Base', type: 'badge', align: 'center' },
     { key: 'isActive', label: 'Estado', type: 'badge', align: 'center' },
     { key: 'createdAt', label: 'Creado', type: 'date', align: 'center' },
     { key: 'actions', label: 'Acciones', type: 'actions', align: 'center' },
@@ -227,7 +235,9 @@ export class UnitsComponent implements OnInit {
       baseUnitId: this.formIsBaseUnit() ? undefined : this.formBaseUnitId() || undefined,
       conversionFactor: this.formIsBaseUnit()
         ? undefined
-        : (this.formConversionFactor() ? parseFloat(this.formConversionFactor()) : undefined),
+        : this.formConversionFactor()
+          ? parseFloat(this.formConversionFactor())
+          : undefined,
     };
 
     this.state.createUnit(request);
@@ -264,7 +274,9 @@ export class UnitsComponent implements OnInit {
       abbreviation: this.formAbbreviation(),
       conversionFactor: this.formIsBaseUnit()
         ? undefined
-        : (this.formConversionFactor() ? parseFloat(this.formConversionFactor()) : undefined),
+        : this.formConversionFactor()
+          ? parseFloat(this.formConversionFactor())
+          : undefined,
     };
 
     this.state.updateUnit(this.selectedUnit()!.id, request);
