@@ -7,6 +7,7 @@ export interface DataTableColumn {
   width?: string;
   align?: 'left' | 'center' | 'right';
   type?: 'text' | 'number' | 'status' | 'badge' | 'date' | 'actions';
+  formatter?: (value: unknown) => string;
 }
 
 @Component({

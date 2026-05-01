@@ -33,6 +33,7 @@ export class SidebarComponent {
 
   parametrizationMenuItems: MenuItem[] = [
     { label: 'Categorías', path: '/parametrization/categories', icon: 'category' },
+    { label: 'Unidades de Medida', path: '/parametrization/units', icon: 'scale' },
   ];
 
   footerMenuItems: MenuItem[] = [

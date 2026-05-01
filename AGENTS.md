@@ -160,34 +160,89 @@ Códigos HTTP: 200 OK, 201 Created, 204 No Content (DELETE), 400, 404, 422 (erro
 ```
 frontend/src/app/
 ├── core/
-│   ├── services/          # ApiService, etc.
-│   └── models/            # Interfaces globales
+│   ├── constants/          # 📌 Constantes y enums (UNIT_TYPE_OPTIONS, etc.)
+│   ├── services/           # ApiService, etc.
+│   └── models/             # Interfaces globales
 ├── shared/
-│   ├── components/        # Componentes reutilizables (bt-*)
-│   │   ├── modal/         # ModalService y Modal component
-│   │   ├── data-table/    # DataTable compartida
+│   ├── components/         # Componentes reutilizables (bt-*)
+│   │   ├── modal/          # ModalService y Modal component
+│   │   ├── data-table/     # DataTable compartida
 │   │   └── ...
-│   ├── services/          # ⭐ ModalService, etc.
+│   ├── services/           # ⭐ ModalService, etc.
 │   ├── directives/
 │   ├── pipes/
 │   └── utils/
 ├── layout/
 │   ├── sidebar/
 │   ├── topbar/
-│   └── main-layout/       # ⭐ <bt-modal> aquí (fuera router-outlet)
-├── features/              # Módulos lazy loading
+│   └── main-layout/        # ⭐ <bt-modal> aquí (fuera router-outlet)
+├── features/               # Módulos lazy loading
 │   ├── dashboard/
 │   ├── inventory/
-│   ├── parametrization/categories/
-│   │   ├── pages/categories/
-│   │   ├── state/         # CategoryStateService
-│   │   └── ...
-│   ├── admin/             # Users management
+│   ├── parametrization/
+│   │   ├── categories/
+│   │   │   ├── pages/categories/
+│   │   │   ├── state/      # CategoryStateService
+│   │   │   └── ...
+│   │   └── units/
+│   │       ├── pages/units/
+│   │       ├── state/      # UnitStateService
+│   │       └── ...
+│   ├── admin/              # Users management
 │   └── reports/
 ├── app.routes.ts
 ├── app.config.ts
 └── app.ts
 ```
+
+### Carpeta `core/constants/` — Constantes y traducciones
+
+**Propósito:** Centralizar constantes reutilizables, enums, y traducciones de valores de enums del backend.
+
+**Patrón:**
+- Archivo por tipo de constante: `unit-type.constants.ts`, `category-status.constants.ts`, etc.
+- Exportar: enum TypeScript, interfaz `*Option` (value + label), array `*_OPTIONS`, función `get*Label()` para traducciones
+- Las opciones se iteran en selects/radio con `@for (option of optionsArray; track option.value)`
+
+**Ejemplo — `unit-type.constants.ts`:**
+```typescript
+export enum UnitType {
+  MASS = 'MASS',
+  VOLUME = 'VOLUME',
+  LENGTH = 'LENGTH',
+  AREA = 'AREA',
+  QUANTITY = 'QUANTITY',
+  TIME = 'TIME',
+  TEMPERATURE = 'TEMPERATURE',
+}
+
+export interface UnitTypeOption {
+  value: UnitType;
+  label: string;
+}
+
+export const UNIT_TYPE_OPTIONS: UnitTypeOption[] = [
+  { value: UnitType.MASS, label: 'Masa' },
+  { value: UnitType.VOLUME, label: 'Volumen' },
+  // ...
+];
+
+export const getUnitTypeLabel = (unitType: UnitType): string => {
+  return UNIT_TYPE_OPTIONS.find((opt) => opt.value === unitType)?.label || unitType;
+};
+```
+
+**Uso en componentes:**
+```typescript
+protected unitTypeOptions = UNIT_TYPE_OPTIONS;
+
+// En template:
+// @for (option of unitTypeOptions; track option.value) {
+//   <option [value]="option.value">{{ option.label }}</option>
+// }
+```
+
+**Referencia:** `frontend/src/app/core/constants/unit-type.constants.ts`
 
 ### Convenciones de nombres
 | Tipo | Patrón |

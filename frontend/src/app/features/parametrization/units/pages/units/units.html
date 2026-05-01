@@ -1,0 +1,356 @@
+<div class="flex flex-col gap-6 p-6 md:p-8">
+  <!-- Page Header -->
+  <bt-page-header
+    [title]="'Unidades de Medida'"
+    [subtitle]="'Parametrización de unidades de medida del sistema'">
+    <div class="flex items-center gap-2">
+      <!-- Refrescar (Secondary) -->
+      <button
+        (click)="refreshUnits()"
+        class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-on-surface text-sm font-medium rounded-lg hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-lg">refresh</span>
+        Refrescar
+      </button>
+
+      <!-- Nueva Unidad (Primary) -->
+      <button
+        (click)="openCreateModal()"
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors">
+        <span class="material-symbols-outlined text-lg">add</span>
+        Nueva Unidad
+      </button>
+    </div>
+  </bt-page-header>
+
+  <!-- Loading State -->
+  @if (state.isLoading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-on-surface-variant">Cargando unidades...</p>
+      </div>
+    </div>
+  } @else {
+    <!-- Empty State -->
+    @if (state.isEmpty()) {
+      <div class="flex items-center justify-center py-12 bg-surface-container rounded-lg">
+        <div class="text-center">
+          <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4">scale</span>
+          <p class="text-on-surface-variant">No hay unidades de medida registradas</p>
+          <button
+            (click)="openCreateModal()"
+            class="mt-4 px-4 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors">
+            Crear la primera unidad
+          </button>
+        </div>
+      </div>
+    } @else {
+      <!-- Data Table using shared component -->
+      <bt-data-table
+        [columns]="tableColumns"
+        [data]="state.units()"
+        [currentPage]="getCurrentPageForDataTable()"
+        [pageSize]="state.pageSize()"
+        [totalItems]="state.totalElements()"
+        [loading]="state.isLoading()"
+        (pageChange)="onPageChange($event)"
+        (editClick)="onEditClick($event)"
+        (deleteClick)="onDeleteClick($event)">
+      </bt-data-table>
+    }
+  }
+</div>
+
+<!-- Modal Templates -->
+
+<!-- Create Modal Template -->
+<ng-template #createModalTemplate>
+  <form class="space-y-4">
+    <!-- Nombre -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">
+        Nombre <span class="text-error font-semibold">*</span>
+      </label>
+      <input
+        type="text"
+        [value]="formName()"
+        (input)="formName.set($any($event.target).value)"
+        (blur)="nameTouched.set(true)"
+        placeholder="Ej: Kilogramo"
+        [class.border-error]="nameError() || state.fieldErrors()['name']"
+        [class.focus:border-error]="nameError() || state.fieldErrors()['name']"
+        [class.focus:ring-error/20]="nameError() || state.fieldErrors()['name']"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant
+                 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+
+      @if (nameError() || state.fieldErrors()['name']) {
+        <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium">
+          <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+          {{ nameError() || state.fieldErrors()['name'] }}
+        </p>
+      }
+    </div>
+
+    <!-- Abreviación -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">
+        Abreviación <span class="text-error font-semibold">*</span>
+      </label>
+      <input
+        type="text"
+        [value]="formAbbreviation()"
+        (input)="formAbbreviation.set($any($event.target).value)"
+        (blur)="abbreviationTouched.set(true)"
+        placeholder="Ej: kg"
+        [class.border-error]="abbreviationError() || state.fieldErrors()['abbreviation']"
+        [class.focus:border-error]="abbreviationError() || state.fieldErrors()['abbreviation']"
+        [class.focus:ring-error/20]="abbreviationError() || state.fieldErrors()['abbreviation']"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant
+                 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+
+      @if (abbreviationError() || state.fieldErrors()['abbreviation']) {
+        <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium">
+          <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+          {{ abbreviationError() || state.fieldErrors()['abbreviation'] }}
+        </p>
+      }
+    </div>
+
+    <!-- Tipo de Unidad -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">
+        Tipo <span class="text-error font-semibold">*</span>
+      </label>
+      <select
+        [value]="formType()"
+        (change)="formType.set($any($event.target).value); onTypeChange()"
+        (blur)="typeTouched.set(true)"
+        [class.border-error]="typeError() || state.fieldErrors()['type']"
+        [class.focus:border-error]="typeError() || state.fieldErrors()['type']"
+        [class.focus:ring-error/20]="typeError() || state.fieldErrors()['type']"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+        <option value="" disabled>Selecciona un tipo</option>
+        @for (option of unitTypeOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+
+      @if (typeError() || state.fieldErrors()['type']) {
+        <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium">
+          <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+          {{ typeError() || state.fieldErrors()['type'] }}
+        </p>
+      }
+    </div>
+
+    <!-- Unidad Base (Checkbox) -->
+    <div class="flex items-center gap-2">
+      <input
+        type="checkbox"
+        id="isBaseUnit"
+        [checked]="formIsBaseUnit()"
+        (change)="formIsBaseUnit.set($any($event.target).checked); onIsBaseUnitChange()"
+        class="w-4 h-4 rounded border-outline-variant cursor-pointer">
+      <label for="isBaseUnit" class="text-sm font-medium text-on-surface cursor-pointer">
+        Es unidad base del tipo
+      </label>
+    </div>
+
+    <!-- Base Unit ID (Condicional - solo si NOT isBaseUnit) -->
+    @if (!formIsBaseUnit()) {
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-on-surface">
+          Unidad Base <span class="text-error font-semibold">*</span>
+        </label>
+
+        @if (state.isLoadingBaseUnits()) {
+          <div class="flex items-center justify-center py-2">
+            <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        } @else {
+          <select
+            [value]="formBaseUnitId()"
+            (change)="formBaseUnitId.set($any($event.target).value)"
+            (blur)="baseUnitIdTouched.set(true)"
+            [class.border-error]="baseUnitIdError() || state.fieldErrors()['baseUnitId']"
+            [class.focus:border-error]="baseUnitIdError() || state.fieldErrors()['baseUnitId']"
+            [class.focus:ring-error/20]="baseUnitIdError() || state.fieldErrors()['baseUnitId']"
+            class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                     focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+            <option value="" disabled>Selecciona una unidad base</option>
+            @for (unit of state.baseUnitsForType(); track unit.id) {
+              <option [value]="unit.id">{{ unit.name }} ({{ unit.abbreviation }})</option>
+            }
+          </select>
+        }
+
+        @if (baseUnitIdError() || state.fieldErrors()['baseUnitId']) {
+          <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium">
+            <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+            {{ baseUnitIdError() || state.fieldErrors()['baseUnitId'] }}
+          </p>
+        }
+      </div>
+
+      <!-- Conversion Factor (Condicional - solo si NOT isBaseUnit) -->
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-on-surface">
+          Factor de Conversión <span class="text-error font-semibold">*</span>
+        </label>
+        <input
+          type="number"
+          step="0.0000000001"
+          [value]="formConversionFactor()"
+          (input)="formConversionFactor.set($any($event.target).value)"
+          (blur)="conversionFactorTouched.set(true)"
+          placeholder="Ej: 1000"
+          [class.border-error]="conversionFactorError() || state.fieldErrors()['conversionFactor']"
+          [class.focus:border-error]="conversionFactorError() || state.fieldErrors()['conversionFactor']"
+          [class.focus:ring-error/20]="conversionFactorError() || state.fieldErrors()['conversionFactor']"
+          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant
+                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+
+        @if (conversionFactorError() || state.fieldErrors()['conversionFactor']) {
+          <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium">
+            <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+            {{ conversionFactorError() || state.fieldErrors()['conversionFactor'] }}
+          </p>
+        }
+      </div>
+    }
+
+    @if (state.generalError()) {
+      <div class="p-3 bg-error/10 border border-error rounded-lg">
+        <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
+      </div>
+    }
+  </form>
+</ng-template>
+
+<!-- Edit Modal Template -->
+<ng-template #editModalTemplate>
+  <form class="space-y-4">
+    <!-- Nombre -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">
+        Nombre <span class="text-error font-semibold">*</span>
+      </label>
+      <input
+        type="text"
+        [value]="formName()"
+        (input)="formName.set($any($event.target).value)"
+        (blur)="nameTouched.set(true)"
+        placeholder="Ej: Kilogramo"
+        [class.border-error]="nameError() || state.fieldErrors()['name']"
+        [class.focus:border-error]="nameError() || state.fieldErrors()['name']"
+        [class.focus:ring-error/20]="nameError() || state.fieldErrors()['name']"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant
+                 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+
+      @if (nameError() || state.fieldErrors()['name']) {
+        <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium">
+          <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+          {{ nameError() || state.fieldErrors()['name'] }}
+        </p>
+      }
+    </div>
+
+    <!-- Abreviación -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">
+        Abreviación <span class="text-error font-semibold">*</span>
+      </label>
+      <input
+        type="text"
+        [value]="formAbbreviation()"
+        (input)="formAbbreviation.set($any($event.target).value)"
+        (blur)="abbreviationTouched.set(true)"
+        placeholder="Ej: kg"
+        [class.border-error]="abbreviationError() || state.fieldErrors()['abbreviation']"
+        [class.focus:border-error]="abbreviationError() || state.fieldErrors()['abbreviation']"
+        [class.focus:ring-error/20]="abbreviationError() || state.fieldErrors()['abbreviation']"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant
+                 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+
+      @if (abbreviationError() || state.fieldErrors()['abbreviation']) {
+        <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium">
+          <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+          {{ abbreviationError() || state.fieldErrors()['abbreviation'] }}
+        </p>
+      }
+    </div>
+
+    <!-- Tipo de Unidad (READ-ONLY en edición) -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">Tipo</label>
+      <div class="px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface">
+        {{ formType() }}
+      </div>
+      <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
+    </div>
+
+    <!-- Unidad Base (READ-ONLY en edición) -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-on-surface">Unidad Base</label>
+      <div class="px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface">
+        {{ formIsBaseUnit() ? 'Sí' : 'No' }}
+      </div>
+      <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
+    </div>
+
+    <!-- Conversion Factor (Editable solo si NOT isBaseUnit) -->
+    @if (!formIsBaseUnit()) {
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-on-surface">
+          Factor de Conversión <span class="text-error font-semibold">*</span>
+        </label>
+        <input
+          type="number"
+          step="0.0000000001"
+          [value]="formConversionFactor()"
+          (input)="formConversionFactor.set($any($event.target).value)"
+          (blur)="conversionFactorTouched.set(true)"
+          placeholder="Ej: 1000"
+          [class.border-error]="conversionFactorError() || state.fieldErrors()['conversionFactor']"
+          [class.focus:border-error]="conversionFactorError() || state.fieldErrors()['conversionFactor']"
+          [class.focus:ring-error/20]="conversionFactorError() || state.fieldErrors()['conversionFactor']"
+          class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder-on-surface-variant
+                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+
+        @if (conversionFactorError() || state.fieldErrors()['conversionFactor']) {
+          <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium">
+            <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+            {{ conversionFactorError() || state.fieldErrors()['conversionFactor'] }}
+          </p>
+        }
+      </div>
+    }
+
+    @if (state.generalError()) {
+      <div class="p-3 bg-error/10 border border-error rounded-lg">
+        <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
+      </div>
+    }
+  </form>
+</ng-template>
+
+<!-- Delete Modal Template -->
+<ng-template #deleteModalTemplate>
+  <div class="space-y-4">
+    <p class="text-sm text-on-surface">
+      ¿Está seguro de que desea eliminar la unidad
+      <strong>{{ selectedUnit()?.name }}</strong>?
+    </p>
+
+    @if (state.generalError()) {
+      <div class="p-3 bg-error/10 border border-error rounded-lg">
+        <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
+      </div>
+    }
+
+    <p class="text-xs text-on-surface-variant italic">
+      Esta acción no se puede deshacer.
+    </p>
+  </div>
+</ng-template>

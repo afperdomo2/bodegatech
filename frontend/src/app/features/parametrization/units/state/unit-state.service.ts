@@ -1,0 +1,179 @@
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { UnitService } from '../../../../core/services/unit.service';
+import type { MeasurementUnitDto, CreateUnitRequest, UpdateUnitRequest } from '../../../../core/models/unit.models';
+import type { AppError } from '../../../../core/models/api.models';
+import type { UnitType } from '../../../../core/constants/unit-type.constants';
+import { catchError, of } from 'rxjs';
+
+/**
+ * Servicio de estado reactivo para unidades de medida.
+ *
+ * Mantiene el estado global (signals) del módulo de unidades y orquesta
+ * las llamadas al UnitService (HTTP). Los componentes inyectan este servicio
+ * para leer y manipular el estado de forma reactiva.
+ *
+ * Patrón:
+ * - Estado privado (_units, _isLoading, etc.) escrito vía signals
+ * - Lectura pública vía .asReadonly() para que los componentes no puedan mutarlo
+ * - Métodos públicos (loadUnits, createUnit, etc.) que manejan lógica de negocio
+ */
+@Injectable({
+  providedIn: 'root',
+})
+export class UnitStateService {
+  private unitService = inject(UnitService);
+
+  private _units = signal<MeasurementUnitDto[]>([]);
+  private _baseUnitsForType = signal<MeasurementUnitDto[]>([]);
+  private _isLoading = signal(false);
+  private _isLoadingBaseUnits = signal(false);
+  private _isDeleting = signal(false);
+  private _currentPage = signal(0);
+  private _pageSize = signal(10);
+  private _totalElements = signal(0);
+  private _totalPages = signal(0);
+
+  private _fieldErrors = signal<Record<string, string>>({});
+  private _generalError = signal<string | null>(null);
+  private _operationSuccess = signal(0); // Contador que incrementa en cada operación exitosa
+
+  readonly units = this._units.asReadonly();
+  readonly baseUnitsForType = this._baseUnitsForType.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isLoadingBaseUnits = this._isLoadingBaseUnits.asReadonly();
+  readonly isDeleting = this._isDeleting.asReadonly();
+  readonly currentPage = this._currentPage.asReadonly();
+  readonly pageSize = this._pageSize.asReadonly();
+  readonly totalElements = this._totalElements.asReadonly();
+  readonly totalPages = this._totalPages.asReadonly();
+
+  readonly fieldErrors = this._fieldErrors.asReadonly();
+  readonly generalError = this._generalError.asReadonly();
+  readonly operationSuccess = this._operationSuccess.asReadonly();
+
+  readonly hasError = computed(
+    () => this._generalError() !== null || Object.keys(this._fieldErrors()).length > 0
+  );
+  readonly isEmpty = computed(() => this._units().length === 0 && !this._isLoading());
+  readonly isLast = computed(() => this._currentPage() >= this._totalPages() - 1);
+
+  loadUnits(page: number = 0, pageSize: number = 10): void {
+    this._isLoading.set(true);
+    this._generalError.set(null);
+
+    this.unitService.getAll(page, pageSize).pipe(
+      catchError((error: AppError) => {
+        this._generalError.set(error.message);
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        this._units.set(response.data.items);
+        this._currentPage.set(response.data.currentPage);
+        this._pageSize.set(response.data.pageSize);
+        this._totalElements.set(response.data.totalElements);
+        this._totalPages.set(response.data.totalPages);
+        this._generalError.set(null);
+      }
+      this._isLoading.set(false);
+    });
+  }
+
+  loadBaseUnitsOfType(type: UnitType): void {
+    this._isLoadingBaseUnits.set(true);
+    this._generalError.set(null);
+
+    this.unitService.getBaseUnitsOfType(type).pipe(
+      catchError((error: AppError) => {
+        this._generalError.set(error.message);
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        this._baseUnitsForType.set(response.data.items);
+      }
+      this._isLoadingBaseUnits.set(false);
+    });
+  }
+
+  createUnit(request: CreateUnitRequest): void {
+    this._fieldErrors.set({});
+    this._generalError.set(null);
+
+    this.unitService.create(request).pipe(
+      catchError((error: AppError) => {
+        if (error.status === 400 && error.fieldErrors) {
+          // Errores de validación por campo
+          this._fieldErrors.set(error.fieldErrors);
+        } else {
+          // Otros errores (409, 500, etc.)
+          this._generalError.set(error.message);
+        }
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        // Éxito: agregar nueva unidad al inicio de la lista
+        this._units.update(units => [response.data, ...units]);
+        this._generalError.set(null);
+        this._fieldErrors.set({});
+        // Recalcular total elementos
+        this._totalElements.update(t => t + 1);
+        // Incrementar contador de éxito
+        this._operationSuccess.update(val => val + 1);
+      }
+    });
+  }
+
+  updateUnit(id: string, request: UpdateUnitRequest): void {
+    this._fieldErrors.set({});
+    this._generalError.set(null);
+
+    this.unitService.update(id, request).pipe(
+      catchError((error: AppError) => {
+        if (error.status === 400 && error.fieldErrors) {
+          this._fieldErrors.set(error.fieldErrors);
+        } else {
+          this._generalError.set(error.message);
+        }
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        // Éxito: actualizar la unidad en la lista
+        this._units.update(units =>
+          units.map(unit => unit.id === id ? response.data : unit)
+        );
+        this._generalError.set(null);
+        this._fieldErrors.set({});
+        // Incrementar contador de éxito
+        this._operationSuccess.update(val => val + 1);
+      }
+    });
+  }
+
+  deleteUnit(id: string): void {
+    this._isDeleting.set(true);
+    this._generalError.set(null);
+
+    this.unitService.delete(id).pipe(
+      catchError((error: AppError) => {
+        this._generalError.set(error.message);
+        return of(null);
+      })
+    ).subscribe(() => {
+      // Éxito (204): remover unidad de la lista
+      this._units.update(units => units.filter(unit => unit.id !== id));
+      this._totalElements.update(t => Math.max(0, t - 1));
+      this._generalError.set(null);
+      this._isDeleting.set(false);
+      // Incrementar contador de éxito
+      this._operationSuccess.update(val => val + 1);
+    });
+  }
+
+  clearErrors(): void {
+    this._fieldErrors.set({});
+    this._generalError.set(null);
+  }
+}

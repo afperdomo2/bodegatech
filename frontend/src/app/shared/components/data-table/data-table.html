@@ -36,7 +36,7 @@
                            (column.type === 'number' ? 'font-mono text-right' : getAlignClass(column.align))">
                   @switch (column.type) {
                     @case ('text') {
-                      {{ getValue(item, column.key) }}
+                      {{ column.formatter ? column.formatter(getValue(item, column.key)) : getValue(item, column.key) }}
                     }
                     @case ('number') {
                       {{ getValue(item, column.key) | number }}

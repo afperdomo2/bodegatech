@@ -1,0 +1,39 @@
+:host {
+  display: block;
+}
+
+/* Animaciones para elementos de carga */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Animación de entrada para mensajes de error (fade-in con slide-up) */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+/* Asegurar que los inputs y selects respeten los estilos globales */
+textarea,
+select {
+  font-family: inherit;
+}
