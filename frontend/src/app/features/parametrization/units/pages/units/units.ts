@@ -106,11 +106,11 @@ export class UnitsComponent implements OnInit {
     if (this.formIsBaseUnit()) {
       return 'N/A - Es unidad base';
     }
-    if (!this.formBaseUnitId()) {
+    const detail = this.state.selectedDetail();
+    if (!detail || !detail.baseUnit) {
       return 'No seleccionada';
     }
-    const baseUnit = this.state.baseUnitsForType().find((u) => u.id === this.formBaseUnitId());
-    return baseUnit ? `${baseUnit.name} (${baseUnit.abbreviation})` : 'No encontrada';
+    return `${detail.baseUnit.name} (${detail.baseUnit.abbreviation})`;
   });
 
   tableColumns: DataTableColumn[] = [
@@ -176,10 +176,7 @@ export class UnitsComponent implements OnInit {
           this.formIsBaseUnit.set(detail.isBaseUnit);
           this.formBaseUnitId.set(detail.baseUnitId);
           this.formConversionFactor.set(detail.conversionFactor ? detail.conversionFactor.toString() : '');
-          // Load base units for the type if not a base unit
-          if (!detail.isBaseUnit && detail.type) {
-            this.state.loadBaseUnitsOfType(detail.type);
-          }
+          // baseUnit ya viene completo en el detail, no necesita carga adicional
         }
       }
     });
@@ -207,6 +204,8 @@ export class UnitsComponent implements OnInit {
   }
 
   onTypeChange(): void {
+    // Solo aplica en modo creación (create modal)
+    // En edición, el tipo es readonly
     if (this.formType() && !this.formIsBaseUnit()) {
       this.state.loadBaseUnitsOfType(this.formType()!);
       this.formBaseUnitId.set(null);
@@ -214,6 +213,8 @@ export class UnitsComponent implements OnInit {
   }
 
   onIsBaseUnitChange(): void {
+    // Solo aplica en modo creación (create modal)
+    // En edición, isBaseUnit es readonly
     if (this.formIsBaseUnit()) {
       this.formBaseUnitId.set(null);
       this.formConversionFactor.set('');

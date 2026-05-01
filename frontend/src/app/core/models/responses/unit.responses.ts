@@ -17,4 +17,5 @@ export type MeasurementUnitSummaryDto = MeasurementUnitDto;
 export interface MeasurementUnitDetail extends MeasurementUnitSummaryDto {
   updatedAt: string;
   version: number;
+  baseUnit: MeasurementUnitSummaryDto | null;
 }
