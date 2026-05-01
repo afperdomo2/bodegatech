@@ -10,12 +10,12 @@ export interface MeasurementUnitDto {
   baseUnitId: string | null;
   baseUnitName: string | null;
   conversionFactor: number | null;
+  createdAt: string;
 }
 
 export type MeasurementUnitSummaryDto = MeasurementUnitDto;
 
 export interface MeasurementUnitDetail extends MeasurementUnitSummaryDto {
-  createdAt: string;
   updatedAt: string;
   version: number;
 }

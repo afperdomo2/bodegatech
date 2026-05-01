@@ -144,15 +144,15 @@ module/{modulo}/
 | DTO | Propósito | Campos | Usado en |
 |-----|-----------|--------|----------|
 | `{Resource}Request` | Entrada de usuario | Solo campos editables (name, description, etc.) | POST, PATCH request body |
-| `{Resource}Dto` | Respuesta básica | Campos clave sin auditoría | POST response, PATCH response |
-| `{Resource}SummaryDto` | Listado paginado (ligero) | Campos clave sin version/createdAt/updatedAt | GET / (PagedResponse) |
-| `{Resource}Detail` | Detalle completo | Todos los campos + version + timestamps + relaciones | GET /{id} |
+| `{Resource}Dto` | Respuesta básica | Campos clave + `createdAt` (sin version/updatedAt) | POST response, PATCH response |
+| `{Resource}SummaryDto` | Listado paginado (ligero) | Campos clave + `createdAt` (sin version/updatedAt) | GET / (PagedResponse) |
+| `{Resource}Detail` | Detalle completo | Todos los campos + `version` + `updatedAt` + relaciones | GET /{id} |
 
 ### Relación de herencia recomendada
 
-- `{Resource}Dto` → campos clave: `id`, `name`, etc. (SIN auditoría)
-- `{Resource}SummaryDto` → extiende `{Resource}Dto`, puede agregar campos ligeros
-- `{Resource}Detail` → extiende `{Resource}SummaryDto`, agrega: `version`, `createdAt`, `updatedAt`, relaciones completas
+- `{Resource}Dto` → campos clave + `createdAt`: `id`, `name`, `createdAt`, etc.
+- `{Resource}SummaryDto` → type alias o extiende `{Resource}Dto` (mismos campos)
+- `{Resource}Detail` → extiende `{Resource}SummaryDto`, agrega: `version`, `updatedAt`, relaciones completas
 
 ### Mapeos de endpoints REST
 

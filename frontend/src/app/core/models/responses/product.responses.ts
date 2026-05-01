@@ -20,6 +20,7 @@ export interface ProductDto {
   isActive: boolean;
   category: CategoryDto | null;
   images: ProductImageDto[];
+  createdAt: string; // ISO-8601 datetime
 }
 
 /**
@@ -32,7 +33,6 @@ export type ProductSummaryDto = ProductDto;
  * Incluye timestamps y version para control concurrente.
  */
 export interface ProductDetail extends ProductSummaryDto {
-  createdAt: string; // ISO-8601 datetime
   updatedAt: string; // ISO-8601 datetime
   version: number;   // para optimistic locking
 }

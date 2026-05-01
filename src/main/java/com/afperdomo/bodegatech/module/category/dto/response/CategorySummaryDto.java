@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -30,4 +31,7 @@ public class CategorySummaryDto {
 
     @Schema(description = "Indica si la categoría está activa", example = "true")
     private Boolean isActive;
+
+    @Schema(description = "Fecha de creación (ISO-8601)", example = "2025-01-15T10:30:00")
+    private LocalDateTime createdAt;
 }

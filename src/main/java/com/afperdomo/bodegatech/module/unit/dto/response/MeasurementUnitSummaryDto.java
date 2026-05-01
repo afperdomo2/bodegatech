@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -47,4 +48,7 @@ public class MeasurementUnitSummaryDto {
 
     @Schema(description = "Factor de conversión respecto a la unidad base (null si es unidad base)", example = "1000.0000000000")
     private BigDecimal conversionFactor;
+
+    @Schema(description = "Fecha de creación (ISO-8601)", example = "2025-01-15T10:30:00")
+    private LocalDateTime createdAt;
 }
