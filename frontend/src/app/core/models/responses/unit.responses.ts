@@ -19,3 +19,10 @@ export interface MeasurementUnitDetail extends MeasurementUnitSummaryDto {
   version: number;
   baseUnit: MeasurementUnitSummaryDto | null;
 }
+
+export interface MeasurementUnitRelatedDto {
+  id: string;
+  name: string;
+  abbreviation: string;
+  conversionFactor: number;
+}

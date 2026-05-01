@@ -7,6 +7,7 @@ import type {
 import type {
   MeasurementUnitSummaryDto,
   MeasurementUnitDetail,
+  MeasurementUnitRelatedDto,
 } from '../../../../core/models/responses/unit.responses';
 import type { AppError } from '../../../../core/models/api.models';
 import type { UnitType } from '../../../../core/constants/unit-type.constants';
@@ -49,6 +50,9 @@ export class UnitStateService {
   
   private _isActiveFilter = signal<boolean | null>(null); // null = Todos, true = Activos, false = Inactivos
 
+  private _relatedUnits = signal<MeasurementUnitRelatedDto[]>([]);
+  private _isLoadingRelated = signal(false);
+
   readonly units = this._units.asReadonly();
   readonly baseUnitsForType = this._baseUnitsForType.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
@@ -67,6 +71,9 @@ export class UnitStateService {
   readonly isLoadingDetail = this._isLoadingDetail.asReadonly();
   
   readonly isActiveFilter = this._isActiveFilter.asReadonly();
+
+  readonly relatedUnits = this._relatedUnits.asReadonly();
+  readonly isLoadingRelated = this._isLoadingRelated.asReadonly();
 
   readonly hasError = computed(
     () => this._generalError() !== null || Object.keys(this._fieldErrors()).length > 0
@@ -222,5 +229,24 @@ export class UnitStateService {
     this._fieldErrors.set({});
     this._generalError.set(null);
     this._selectedDetail.set(null);
+    this._relatedUnits.set([]);
+  }
+
+  loadRelatedUnits(baseUnitId: string): void {
+    this._isLoadingRelated.set(true);
+    this._generalError.set(null);
+
+    this.unitService.getRelated(baseUnitId).pipe(
+      catchError((error: AppError) => {
+        this._generalError.set(error.message);
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        this._relatedUnits.set(response.data);
+        this._generalError.set(null);
+      }
+      this._isLoadingRelated.set(false);
+    });
   }
 }

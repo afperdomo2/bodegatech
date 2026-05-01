@@ -6,6 +6,7 @@ import com.afperdomo.bodegatech.module.unit.dto.request.CreateMeasurementUnitReq
 import com.afperdomo.bodegatech.module.unit.dto.request.UpdateMeasurementUnitRequest;
 import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDto;
 import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDetail;
+import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitRelatedDto;
 import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitSummaryDto;
 import com.afperdomo.bodegatech.module.unit.enums.UnitType;
 import com.afperdomo.bodegatech.module.unit.service.MeasurementUnitService;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -83,6 +85,22 @@ public class MeasurementUnitController {
 
         MeasurementUnitDetail unit = unitService.findUnitById(id);
         return ResponseEntity.ok(ApiResponse.success("Unidad de medida obtenida exitosamente", unit));
+    }
+
+    @GetMapping("/{id}/related")
+    @Operation(summary = "Obtener unidades derivadas de una unidad base", description = "Obtiene la lista de unidades derivadas (activas) relacionadas a una unidad base, ordenadas por factor de conversión ascendente")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de unidades derivadas (puede estar vacía)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Unidad no encontrada"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "422", description = "La unidad no es una unidad base"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    public ResponseEntity<ApiResponse<List<MeasurementUnitRelatedDto>>> getRelatedUnits(
+            @Parameter(description = "ID único de la unidad base")
+            @PathVariable UUID id) {
+
+        List<MeasurementUnitRelatedDto> relatedUnits = unitService.findRelatedUnits(id);
+        return ResponseEntity.ok(ApiResponse.success("Unidades derivadas obtenidas exitosamente", relatedUnits));
     }
 
     @PostMapping

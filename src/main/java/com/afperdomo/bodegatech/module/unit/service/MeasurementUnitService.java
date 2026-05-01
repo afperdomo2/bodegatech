@@ -6,6 +6,7 @@ import com.afperdomo.bodegatech.module.unit.dto.request.CreateMeasurementUnitReq
 import com.afperdomo.bodegatech.module.unit.dto.request.UpdateMeasurementUnitRequest;
 import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDto;
 import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDetail;
+import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitRelatedDto;
 import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitSummaryDto;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import com.afperdomo.bodegatech.module.unit.enums.UnitType;
@@ -20,6 +21,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -195,5 +197,34 @@ public class MeasurementUnitService {
         unitRepository.save(unit);
 
         log.info("Unidad de medida desactivada: {} ({})", unit.getName(), unit.getAbbreviation());
+    }
+
+    /**
+     * Obtiene todas las unidades derivadas activas relacionadas a una unidad base.
+     * Ordenadas ascendentemente por factor de conversión.
+     *
+     * @param baseUnitId ID de la unidad base
+     * @return lista de MeasurementUnitRelatedDto (vacía si no hay derivadas)
+     * @throws ResourceNotFoundException si la unidad no existe o no está activa
+     * @throws BusinessException si la unidad existe pero no es unidad base
+     */
+    @Transactional(readOnly = true)
+    public List<MeasurementUnitRelatedDto> findRelatedUnits(UUID baseUnitId) {
+        // Validar que la unidad existe y está activa
+        MeasurementUnit baseUnit = unitRepository.findByIdActive(baseUnitId)
+            .orElseThrow(() -> new ResourceNotFoundException("Unidad de medida no encontrada con ID: " + baseUnitId));
+
+        // Validar que es unidad base
+        if (!Boolean.TRUE.equals(baseUnit.getIsBaseUnit())) {
+            throw new BusinessException("La unidad especificada no es una unidad base");
+        }
+
+        // Buscar todas las unidades derivadas activas ordenadas por conversionFactor
+        List<MeasurementUnit> relatedUnits = unitRepository.findActiveByBaseUnitIdOrderByConversionFactor(baseUnitId);
+
+        // Mapear a DTOs livianos
+        return relatedUnits.stream()
+            .map(unitMapper::toRelatedDto)
+            .toList();
     }
 }

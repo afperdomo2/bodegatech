@@ -113,6 +113,12 @@ export class UnitsComponent implements OnInit {
     return `${detail.baseUnit.name} (${detail.baseUnit.abbreviation})`;
   });
 
+  formatConversionFactor(factor: number | null): string {
+    if (factor === null || factor === undefined) return '—';
+    // Convertir a string y remover ceros finales después del punto
+    return parseFloat(factor.toString()).toString();
+  }
+
   tableColumns: DataTableColumn[] = [
     { key: 'isBaseUnit', label: 'Base', type: 'checkbox-disabled', align: 'center' },
     { key: 'name', label: 'Nombre', type: 'text', align: 'left' },
@@ -268,6 +274,12 @@ export class UnitsComponent implements OnInit {
     this.selectedUnit.set(unit);
     this.state.loadUnitById(unit.id);
     this.state.clearErrors();
+    
+    // Si es unidad base, cargar sus unidades derivadas
+    if (unit.isBaseUnit) {
+      this.state.loadRelatedUnits(unit.id);
+    }
+    
     this.modalService.open({
       title: 'Editar Unidad de Medida',
       template: this.editModalTemplate,

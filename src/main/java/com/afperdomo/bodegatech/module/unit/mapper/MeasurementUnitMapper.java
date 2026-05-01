@@ -4,6 +4,7 @@ import com.afperdomo.bodegatech.module.unit.dto.request.CreateMeasurementUnitReq
 import com.afperdomo.bodegatech.module.unit.dto.request.UpdateMeasurementUnitRequest;
 import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDto;
 import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDetail;
+import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitRelatedDto;
 import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitSummaryDto;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import org.mapstruct.BeanMapping;
@@ -34,4 +35,7 @@ public interface MeasurementUnitMapper {
 
     // Response: entity → Detail (GET /{id})
     MeasurementUnitDetail toDetail(MeasurementUnit unit);
+
+    // Response: entity → RelatedDto (GET /{id}/related - tabla de conversiones)
+    MeasurementUnitRelatedDto toRelatedDto(MeasurementUnit unit);
 }

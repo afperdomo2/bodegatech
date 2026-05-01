@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,4 +39,13 @@ public interface MeasurementUnitRepository extends JpaRepository<MeasurementUnit
      */
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM MeasurementUnit u WHERE u.type = :type AND u.isBaseUnit = true AND u.isActive = true")
     boolean existsBaseUnitByType(UnitType type);
+
+    /**
+     * Encuentra todas las unidades derivadas activas de una unidad base.
+     * Ordenadas ascendentemente por factor de conversión.
+     * @param baseUnitId ID de la unidad base
+     * @return lista de unidades derivadas (vacía si no hay)
+     */
+    @Query("SELECT u FROM MeasurementUnit u WHERE u.baseUnit.id = :baseUnitId AND u.isActive = true ORDER BY u.conversionFactor ASC")
+    List<MeasurementUnit> findActiveByBaseUnitIdOrderByConversionFactor(UUID baseUnitId);
 }

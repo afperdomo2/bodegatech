@@ -309,18 +309,72 @@
        <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
      </div>
 
-     <!-- Checkbox Es Unidad Base (READ-ONLY en edición) -->
-     <div class="flex items-center gap-2">
-       <input
-         type="checkbox"
-         [checked]="formIsBaseUnit()"
-         disabled
-         class="w-4 h-4 rounded border-outline-variant cursor-not-allowed opacity-70">
-       <label class="text-sm font-medium text-on-surface-variant">Es unidad base</label>
-     </div>
-     <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
+      <!-- Checkbox Es Unidad Base (READ-ONLY en edición) -->
+      <div class="flex items-center gap-2">
+        <input
+          type="checkbox"
+          [checked]="formIsBaseUnit()"
+          disabled
+          class="w-4 h-4 rounded border-outline-variant cursor-not-allowed opacity-70">
+        <label class="text-sm font-medium text-on-surface-variant">Es unidad base</label>
+      </div>
+      <p class="text-xs text-on-surface-variant italic">Este campo no se puede modificar</p>
 
-     <!-- Unidad Base (READ-ONLY en edición, solo si NO es unidad base) -->
+      <!-- Tabla de Unidades Derivadas (solo si es unidad base) -->
+      @if (formIsBaseUnit()) {
+        <div class="bg-surface-container border border-outline-variant rounded-lg p-4 space-y-3">
+          <!-- Header -->
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg text-primary">conversion_path</span>
+            <h3 class="text-sm font-medium text-on-surface">Unidades derivadas</h3>
+          </div>
+
+          <!-- Loading state -->
+          @if (state.isLoadingRelated()) {
+            <div class="flex items-center justify-center py-6">
+              <div class="flex flex-col items-center gap-2">
+                <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-xs text-on-surface-variant">Cargando unidades derivadas...</p>
+              </div>
+            </div>
+          } @else {
+            <!-- Table -->
+            @if (state.relatedUnits().length > 0) {
+              <div class="space-y-2">
+                @for (related of state.relatedUnits(); track related.id; let even = $even) {
+                  <div [class.bg-surface-container-high]="even" class="flex items-center gap-3 px-3 py-2 rounded transition-colors">
+                    <!-- Unidad base (nombre) -->
+                    <div class="flex-1">
+                      <p class="text-sm text-on-surface-variant">{{ formName() }} ({{ formAbbreviation() }})</p>
+                    </div>
+
+                    <!-- Arrow -->
+                    <span class="material-symbols-outlined text-sm text-primary">arrow_forward</span>
+
+                    <!-- Unidad derivada -->
+                    <div class="flex-1">
+                      <p class="text-sm text-on-surface">{{ related.name }} ({{ related.abbreviation }})</p>
+                    </div>
+
+                    <!-- Factor de conversión -->
+                    <div class="w-24 text-right">
+                      <p class="text-sm font-mono text-on-surface">{{ formatConversionFactor(related.conversionFactor) }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <!-- Empty state -->
+              <div class="flex flex-col items-center gap-2 py-6">
+                <span class="material-symbols-outlined text-3xl text-on-surface-variant/30">device_hub</span>
+                <p class="text-xs text-on-surface-variant text-center">Aún no hay unidades derivadas registradas</p>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- Unidad Base (READ-ONLY en edición, solo si NO es unidad base) -->
      @if (!formIsBaseUnit()) {
        <div class="flex flex-col gap-2">
          <label class="text-sm font-medium text-on-surface">Unidad Base</label>
