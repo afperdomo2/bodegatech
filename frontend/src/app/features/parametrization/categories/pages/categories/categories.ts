@@ -35,6 +35,7 @@ export class CategoriesComponent implements OnInit {
   descriptionTouched = signal(false);
   selectedCategory = signal<CategoryDto | null>(null);
   pendingAction = signal<'create' | 'edit' | 'delete' | null>(null);
+  isActiveFilter = signal<'all' | 'active' | 'inactive'>('all'); // 'all' (null), 'active' (true), 'inactive' (false)
 
   nameError = computed((): string | null => {
     if (!this.nameTouched()) return null;
@@ -194,14 +195,26 @@ export class CategoriesComponent implements OnInit {
   }
 
    confirmDeleteCategory(): void {
-    if (!this.selectedCategory()) return;
-    this.pendingAction.set('delete');
-    this.state.deleteCategory(this.selectedCategory()!.id);
-  }
+     if (!this.selectedCategory()) return;
+     this.pendingAction.set('delete');
+     this.state.deleteCategory(this.selectedCategory()!.id);
+   }
 
-  onPageChange(newPage: number): void {
-    this.state.loadCategories(newPage - 1, this.state.pageSize());
-  }
+   onIsActiveFilterChange(value: string): void {
+     let isActive: boolean | null = null;
+     if (value === 'active') {
+       isActive = true;
+     } else if (value === 'inactive') {
+       isActive = false;
+     }
+     // Volver a la primera página con el nuevo filtro
+     this.state.loadCategories(0, this.state.pageSize(), isActive);
+   }
+
+   onPageChange(newPage: number): void {
+     const filterValue = this.state.isActiveFilter();
+     this.state.loadCategories(newPage - 1, this.state.pageSize(), filterValue);
+   }
 
   onEditClick(category: unknown): void {
     this.openEditModal(category as CategoryDto);

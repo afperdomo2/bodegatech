@@ -46,6 +46,8 @@ export class UnitStateService {
 
   private _selectedDetail = signal<MeasurementUnitDetail | null>(null);
   private _isLoadingDetail = signal(false);
+  
+  private _isActiveFilter = signal<boolean | null>(null); // null = Todos, true = Activos, false = Inactivos
 
   readonly units = this._units.asReadonly();
   readonly baseUnitsForType = this._baseUnitsForType.asReadonly();
@@ -63,6 +65,8 @@ export class UnitStateService {
 
   readonly selectedDetail = this._selectedDetail.asReadonly();
   readonly isLoadingDetail = this._isLoadingDetail.asReadonly();
+  
+  readonly isActiveFilter = this._isActiveFilter.asReadonly();
 
   readonly hasError = computed(
     () => this._generalError() !== null || Object.keys(this._fieldErrors()).length > 0
@@ -70,11 +74,20 @@ export class UnitStateService {
   readonly isEmpty = computed(() => this._units().length === 0 && !this._isLoading());
   readonly isLast = computed(() => this._currentPage() >= this._totalPages() - 1);
 
-  loadUnits(page: number = 0, pageSize: number = 10): void {
+  /**
+   * Cargar unidades con paginación y filtro opcional de estado.
+   * Se puede llamar al cambiar de página o al cambiar el filtro de isActive.
+   * 
+   * @param page número de página (default 0)
+   * @param pageSize tamaño de página (default 10)
+   * @param isActive filtro opcional: true=activos, false=inactivos, null=todos (default null)
+   */
+  loadUnits(page: number = 0, pageSize: number = 10, isActive: boolean | null = null): void {
     this._isLoading.set(true);
     this._generalError.set(null);
+    this._isActiveFilter.set(isActive);
 
-    this.unitService.getAll(page, pageSize).pipe(
+    this.unitService.getAll(page, pageSize, isActive).pipe(
       catchError((error: AppError) => {
         this._generalError.set(error.message);
         return of(null);

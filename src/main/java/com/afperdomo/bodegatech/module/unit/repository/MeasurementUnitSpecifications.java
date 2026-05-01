@@ -9,9 +9,19 @@ import org.springframework.data.jpa.domain.Specification;
  * sobre la entidad MeasurementUnit.
  */
 public class MeasurementUnitSpecifications {
-    public static Specification<MeasurementUnit> isActive() {
-        return (root, query, criteriaBuilder) ->
-            criteriaBuilder.equal(root.get("isActive"), true);
+    
+    /**
+     * Filtra unidades por estado (activas/inactivas).
+     * Si isActive es null, no aplica filtro (devuelve todas).
+     */
+    public static Specification<MeasurementUnit> hasActiveStatus(Boolean isActive) {
+        return (root, query, criteriaBuilder) -> {
+            if (isActive == null) {
+                // Sin filtro — devolver todas
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("isActive"), isActive);
+        };
     }
 
     public static Specification<MeasurementUnit> isBase() {

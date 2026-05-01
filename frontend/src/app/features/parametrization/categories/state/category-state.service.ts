@@ -42,6 +42,8 @@ export class CategoryStateService {
 
   private _selectedDetail = signal<CategoryDetail | null>(null);
   private _isLoadingDetail = signal(false);
+  
+  private _isActiveFilter = signal<boolean | null>(null); // null = Todos, true = Activos, false = Inactivos
 
   // ========== ESTADO PÚBLICO (READ-ONLY SIGNALS) ==========
 
@@ -59,6 +61,8 @@ export class CategoryStateService {
 
   readonly selectedDetail = this._selectedDetail.asReadonly();
   readonly isLoadingDetail = this._isLoadingDetail.asReadonly();
+  
+  readonly isActiveFilter = this._isActiveFilter.asReadonly();
 
   // ========== COMPUTED STATE ==========
 
@@ -80,14 +84,19 @@ export class CategoryStateService {
   // ========== MÉTODOS PÚBLICOS ==========
 
   /**
-   * Cargar categorías con paginación.
-   * Se puede llamar al cambiar de página.
+   * Cargar categorías con paginación y filtro opcional de estado.
+   * Se puede llamar al cambiar de página o al cambiar el filtro de isActive.
+   * 
+   * @param page número de página (default 0)
+   * @param pageSize tamaño de página (default 10)
+   * @param isActive filtro opcional: true=activos, false=inactivos, null=todos (default null)
    */
-  loadCategories(page: number = 0, pageSize: number = 10): void {
+  loadCategories(page: number = 0, pageSize: number = 10, isActive: boolean | null = null): void {
     this._isLoading.set(true);
     this._generalError.set(null);
+    this._isActiveFilter.set(isActive);
 
-    this.categoryService.getAll(page, pageSize).pipe(
+    this.categoryService.getAll(page, pageSize, isActive).pipe(
       catchError((error: AppError) => {
         this._generalError.set(error.message);
         return of(null);

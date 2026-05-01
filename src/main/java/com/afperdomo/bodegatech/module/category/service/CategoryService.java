@@ -8,6 +8,7 @@ import com.afperdomo.bodegatech.module.category.dto.request.UpdateCategoryReques
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import com.afperdomo.bodegatech.module.category.mapper.CategoryMapper;
 import com.afperdomo.bodegatech.module.category.repository.CategoryRepository;
+import com.afperdomo.bodegatech.module.category.repository.CategorySpecifications;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
 import com.afperdomo.bodegatech.common.exception.BusinessException;
 import com.afperdomo.bodegatech.common.exception.CategoryInUseException;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,9 +38,11 @@ public class CategoryService {
     private final ProductRepository productRepository;
 
     @Transactional(readOnly = true)
-    public Page<CategorySummaryDto> findAllCategories(Pageable pageable) {
-        log.info("Obteniendo categorías activas. Página: {}, Tamaño: {}", pageable.getPageNumber(), pageable.getPageSize());
-        return categoryRepository.findAllActive(pageable).map(categoryMapper::toSummaryDto);
+    public Page<CategorySummaryDto> findAllCategories(Pageable pageable, Boolean isActive) {
+        log.info("Obteniendo categorías. Página: {}, Tamaño: {}, isActive: {}", pageable.getPageNumber(), pageable.getPageSize(), isActive);
+        
+        Specification<Category> spec = CategorySpecifications.hasActiveStatus(isActive);
+        return categoryRepository.findAll(spec, pageable).map(categoryMapper::toSummaryDto);
     }
 
     @Transactional(readOnly = true)

@@ -3,7 +3,18 @@
   <bt-page-header
     [title]="'Categorías'"
     [subtitle]="'Parametrización de categorías del sistema'">
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-4">
+      <!-- Filter by isActive Status -->
+      <select
+        [value]="isActiveFilter()"
+        (change)="onIsActiveFilterChange($any($event.target).value)"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
+               focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+        <option value="all">Todos</option>
+        <option value="active">Activos</option>
+        <option value="inactive">Inactivos</option>
+      </select>
+
       <!-- Refrescar (Secondary) -->
       <button
         (click)="refreshCategories()"

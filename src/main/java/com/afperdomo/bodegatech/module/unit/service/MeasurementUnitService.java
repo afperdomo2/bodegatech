@@ -35,17 +35,18 @@ public class MeasurementUnitService {
     private final MeasurementUnitMapper unitMapper;
 
     /**
-     * Obtiene todas las unidades activas con paginación.
-     * Permite filtrar opcionalmente por isBase y/o type.
+     * Obtiene todas las unidades con paginación y filtros opcionales.
+     * Permite filtrar opcionalmente por isActive, isBase y/o type.
      *
      * @param pageable configuración de paginación
-     * @param isBase   si es true, solo retorna unidades base; null/false para todas las activas
+     * @param isActive si es true, solo unidades activas; si es false, solo inactivas; null para todas
+     * @param isBase   si es true, solo retorna unidades base; null/false para todas
      * @param type     tipo de unidad a filtrar; null para no filtrar por tipo
      * @return página de unidades filtradas
      */
     @Transactional(readOnly = true)
-    public Page<MeasurementUnitSummaryDto> findAllUnits(Pageable pageable, Boolean isBase, UnitType type) {
-        Specification<MeasurementUnit> spec = MeasurementUnitSpecifications.isActive();
+    public Page<MeasurementUnitSummaryDto> findAllUnits(Pageable pageable, Boolean isActive, Boolean isBase, UnitType type) {
+        Specification<MeasurementUnit> spec = MeasurementUnitSpecifications.hasActiveStatus(isActive);
         if (Boolean.TRUE.equals(isBase)) {
             spec = spec.and(MeasurementUnitSpecifications.isBase());
         }

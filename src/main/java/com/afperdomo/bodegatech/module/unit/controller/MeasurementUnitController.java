@@ -42,7 +42,7 @@ public class MeasurementUnitController {
     private final MeasurementUnitService unitService;
 
     @GetMapping
-    @Operation(summary = "Listar todas las unidades de medida", description = "Obtiene una lista de todas las unidades de medida activas, opcionalmente filtradas por isBase y/o type")
+    @Operation(summary = "Listar todas las unidades de medida", description = "Obtiene una lista de unidades de medida con filtros opcionales por estado (activas/inactivas), isBase y/o type")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de unidades obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -56,13 +56,15 @@ public class MeasurementUnitController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Dirección del ordenamiento (ASC o DESC)")
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @Parameter(description = "Filtro por estado (true=activos, false=inactivos, null=todos)")
+            @RequestParam(required = false) Boolean isActive,
             @Parameter(description = "Filtro opcional: si es true, solo retorna unidades base")
             @RequestParam(required = false) Boolean isBase,
             @Parameter(description = "Filtro opcional por tipo de unidad (MASS, VOLUME, LENGTH, etc.)")
             @RequestParam(required = false) UnitType type) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<MeasurementUnitSummaryDto> units = unitService.findAllUnits(pageable, isBase, type);
+        Page<MeasurementUnitSummaryDto> units = unitService.findAllUnits(pageable, isActive, isBase, type);
         PagedResponse<MeasurementUnitSummaryDto> pagedResponse = new PagedResponse<>(units);
 
         return ResponseEntity.ok(ApiResponse.success("Unidades de medida obtenidas exitosamente", pagedResponse));

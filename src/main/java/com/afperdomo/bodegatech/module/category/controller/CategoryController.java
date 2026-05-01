@@ -41,7 +41,7 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    @Operation( summary = "Listar todas las categorías", description = "Obtiene una lista de todas las categorías activas." )
+    @Operation( summary = "Listar todas las categorías", description = "Obtiene una lista de categorías con filtro opcional por estado (activas/inactivas)." )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de categorías obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -54,10 +54,12 @@ public class CategoryController {
             @Parameter(description = "Campo para ordenar (createdAt por defecto)")
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Dirección del ordenamiento (ASC o DESC)")
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @Parameter(description = "Filtro por estado (true=activos, false=inactivos, null=todos)")
+            @RequestParam(required = false) Boolean isActive) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<CategorySummaryDto> result = categoryService.findAllCategories(pageable);
+        Page<CategorySummaryDto> result = categoryService.findAllCategories(pageable, isActive);
         PagedResponse<CategorySummaryDto> pagedResponse = new PagedResponse<>(result);
         return ResponseEntity.ok(ApiResponse.success("Categorías obtenidas exitosamente", pagedResponse));
     }

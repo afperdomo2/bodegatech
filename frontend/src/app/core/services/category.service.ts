@@ -26,13 +26,19 @@ export class CategoryService {
 
   /**
    * Obtener lista paginada de categorías (listado ligero).
-   * GET /api/categories?page={page}&size={size}&sortBy=createdAt&direction=DESC
+   * GET /api/categories?page={page}&size={size}&sortBy=createdAt&direction=DESC[&isActive=true/false]
    * Retorna: PagedResponse<CategorySummaryDto>
+   * 
+   * @param page página (default 0)
+   * @param size tamaño de página (default 10)
+   * @param isActive filtro opcional: true=activos, false=inactivos, null/undefined=todos
    */
-  getAll(page = 0, size = 10) {
-    return this.api.get<ApiResponse<PagedResponse<CategorySummaryDto>>>(
-      `/categories?page=${page}&size=${size}&sortBy=createdAt&direction=DESC`
-    );
+  getAll(page = 0, size = 10, isActive?: boolean | null) {
+    let url = `/categories?page=${page}&size=${size}&sortBy=createdAt&direction=DESC`;
+    if (isActive !== null && isActive !== undefined) {
+      url += `&isActive=${isActive}`;
+    }
+    return this.api.get<ApiResponse<PagedResponse<CategorySummaryDto>>>(url);
   }
 
   /**

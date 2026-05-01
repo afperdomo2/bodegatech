@@ -45,6 +45,7 @@ export class UnitsComponent implements OnInit {
 
   selectedUnit = signal<MeasurementUnitDto | null>(null);
   pendingAction = signal<'create' | 'edit' | 'delete' | null>(null);
+  isActiveFilter = signal<'all' | 'active' | 'inactive'>('all'); // 'all' (null), 'active' (true), 'inactive' (false)
 
   nameError = computed((): string | null => {
     if (!this.nameTouched()) return null;
@@ -191,7 +192,8 @@ export class UnitsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.state.loadUnits(0, this.state.pageSize());
+    const filterValue = this.state.isActiveFilter();
+    this.state.loadUnits(0, this.state.pageSize(), filterValue);
   }
 
   private markAllTouched(): void {
@@ -313,8 +315,20 @@ export class UnitsComponent implements OnInit {
     this.state.deleteUnit(this.selectedUnit()!.id);
   }
 
+  onIsActiveFilterChange(value: string): void {
+    let isActive: boolean | null = null;
+    if (value === 'active') {
+      isActive = true;
+    } else if (value === 'inactive') {
+      isActive = false;
+    }
+    // Volver a la primera página con el nuevo filtro
+    this.state.loadUnits(0, this.state.pageSize(), isActive);
+  }
+
   onPageChange(newPage: number): void {
-    this.state.loadUnits(newPage - 1, this.state.pageSize());
+    const filterValue = this.state.isActiveFilter();
+    this.state.loadUnits(newPage - 1, this.state.pageSize(), filterValue);
   }
 
   onEditClick(unit: unknown): void {
@@ -326,7 +340,8 @@ export class UnitsComponent implements OnInit {
   }
 
   refreshUnits(): void {
-    this.state.loadUnits(this.state.currentPage(), this.state.pageSize());
+    const filterValue = this.state.isActiveFilter();
+    this.state.loadUnits(this.state.currentPage(), this.state.pageSize(), filterValue);
   }
 
   getCurrentPageForDataTable(): number {
