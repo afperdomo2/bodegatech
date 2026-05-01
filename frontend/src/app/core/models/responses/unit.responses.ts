@@ -8,7 +8,6 @@ export interface MeasurementUnitDto {
   isActive: boolean;
   isBaseUnit: boolean;
   baseUnitId: string | null;
-  baseUnitName: string | null;
   conversionFactor: number | null;
   createdAt: string;
 }

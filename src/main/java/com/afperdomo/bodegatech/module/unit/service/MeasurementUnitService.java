@@ -99,8 +99,8 @@ public class MeasurementUnitService {
             MeasurementUnit baseUnit = unitRepository.findById(request.getBaseUnitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Unidad base no encontrada: " + request.getBaseUnitId()));
 
-            if (!Boolean.TRUE.equals(baseUnit.getIsBase())) {
-                throw new BusinessException("La unidad base debe tener isBase = true");
+            if (!Boolean.TRUE.equals(baseUnit.getIsBaseUnit())) {
+                throw new BusinessException("La unidad base debe tener isBaseUnit = true");
             }
 
             if (!Boolean.TRUE.equals(baseUnit.getIsActive())) {
@@ -153,20 +153,20 @@ public class MeasurementUnitService {
                 });
         }
 
-        // Validar que NO se cambien isBaseUnit ni baseUnitId (inmutables después de creación)
-        if (request.getIsBaseUnit() != null && !request.getIsBaseUnit().equals(unit.getIsBase())) {
-            throw new BusinessException("No se puede cambiar isBaseUnit después de crear la unidad");
-        }
+         // Validar que NO se cambien isBaseUnit ni baseUnitId (inmutables después de creación)
+         if (request.getIsBaseUnit() != null && !request.getIsBaseUnit().equals(unit.getIsBaseUnit())) {
+             throw new BusinessException("No se puede cambiar isBaseUnit después de crear la unidad");
+         }
 
         if (request.getBaseUnitId() != null && 
             (unit.getBaseUnit() == null || !request.getBaseUnitId().equals(unit.getBaseUnit().getId()))) {
             throw new BusinessException("No se puede cambiar baseUnitId después de crear la unidad");
         }
 
-        // Validar que si conversionFactor se actualiza, la unidad no sea base
-        if (request.getConversionFactor() != null && Boolean.TRUE.equals(unit.getIsBase())) {
-            throw new BusinessException("Una unidad base no puede tener conversionFactor");
-        }
+         // Validar que si conversionFactor se actualiza, la unidad no sea base
+         if (request.getConversionFactor() != null && Boolean.TRUE.equals(unit.getIsBaseUnit())) {
+             throw new BusinessException("Una unidad base no puede tener conversionFactor");
+         }
 
         // Aplicar actualización parcial
         unitMapper.updateEntity(request, unit);

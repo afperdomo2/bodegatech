@@ -16,7 +16,7 @@ public class MeasurementUnitSpecifications {
 
     public static Specification<MeasurementUnit> isBase() {
         return (root, query, criteriaBuilder) ->
-            criteriaBuilder.equal(root.get("isBase"), true);
+            criteriaBuilder.equal(root.get("isBaseUnit"), true);
     }
 
     public static Specification<MeasurementUnit> hasType(UnitType type) {

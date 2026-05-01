@@ -38,13 +38,10 @@ public class MeasurementUnitDetail {
     private Boolean isActive;
 
     @Schema(description = "Indica si esta es la unidad base (más pequeña) del tipo")
-    private boolean isBaseUnit;
+    private Boolean isBaseUnit;
 
     @Schema(description = "ID de la unidad base a la que convierte (null si es unidad base)", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID baseUnitId;
-
-    @Schema(description = "Nombre de la unidad base", example = "Gramo")
-    private String baseUnitName;
 
     @Schema(description = "Factor de conversión respecto a la unidad base (null si es unidad base)", example = "1000.0000000000")
     private BigDecimal conversionFactor;

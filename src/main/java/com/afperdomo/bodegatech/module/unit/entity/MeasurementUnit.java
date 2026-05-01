@@ -53,29 +53,14 @@ public class MeasurementUnit extends BaseEntity {
     @Builder.Default
     private Boolean isActive = true;
 
-    /**
-     * Indica si esta es la unidad base (más pequeña) para su tipo.
-     * Una unidad base no tiene referencia a otra unidad ni factor de conversión.
-     */
     @Column(name = "is_base_unit", nullable = false)
     @Builder.Default
-    private Boolean isBase = false;
+    private Boolean isBaseUnit = false;
 
-    /**
-     * Referencia a la unidad base de este tipo (self-referencing FK).
-     * Solo se completa si isBase = false.
-     * Siempre apunta a una unidad con isBase = true del mismo tipo.
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "base_unit_id")
     private MeasurementUnit baseUnit;
 
-    /**
-     * Factor de conversión respecto a la unidad base.
-     * Ejemplo: 1 kg = 1000 g, entonces conversionFactor = 1000 si baseUnit es gramo.
-     * Solo se completa si isBaseUnit = false.
-     * Precisión: 19 dígitos totales, 10 decimales.
-     */
     @Column(name = "conversion_factor", precision = 19, scale = 10)
     private BigDecimal conversionFactor;
 }

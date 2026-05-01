@@ -17,29 +17,18 @@ import org.mapstruct.ReportingPolicy;
 public interface MeasurementUnitMapper {
 
     // Create: request → entity
-    @Mapping(source = "isBaseUnit", target = "isBase")
     MeasurementUnit toEntity(CreateMeasurementUnitRequest request);
 
     // Update: request → entity (partial update)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(source = "isBaseUnit", target = "isBase")
     void updateEntity(UpdateMeasurementUnitRequest request, @MappingTarget MeasurementUnit unit);
 
     // Response: entity → Dto (POST/PATCH response)
-    @Mapping(source = "isBase", target = "isBaseUnit")
-    @Mapping(source = "baseUnit.id", target = "baseUnitId")
-    @Mapping(source = "baseUnit.name", target = "baseUnitName")
     MeasurementUnitDto toDto(MeasurementUnit unit);
 
     // Response: entity → SummaryDto (GET / listado)
-    @Mapping(source = "isBase", target = "isBaseUnit")
-    @Mapping(source = "baseUnit.id", target = "baseUnitId")
-    @Mapping(source = "baseUnit.name", target = "baseUnitName")
     MeasurementUnitSummaryDto toSummaryDto(MeasurementUnit unit);
 
     // Response: entity → Detail (GET /{id})
-    @Mapping(source = "isBase", target = "isBaseUnit")
-    @Mapping(source = "baseUnit.id", target = "baseUnitId")
-    @Mapping(source = "baseUnit.name", target = "baseUnitName")
     MeasurementUnitDetail toDetail(MeasurementUnit unit);
 }

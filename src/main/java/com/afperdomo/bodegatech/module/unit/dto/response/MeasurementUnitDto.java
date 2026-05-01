@@ -3,6 +3,7 @@ package com.afperdomo.bodegatech.module.unit.dto.response;
 import com.afperdomo.bodegatech.module.unit.enums.UnitType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,14 +37,14 @@ public class MeasurementUnitDto {
     private Boolean isActive;
 
     @Schema(description = "Indica si esta es la unidad base (más pequeña) del tipo")
-    private boolean isBaseUnit;
+    private Boolean isBaseUnit;
 
     @Schema(description = "ID de la unidad base a la que convierte (null si es unidad base)", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID baseUnitId;
 
-    @Schema(description = "Nombre de la unidad base", example = "Gramo")
-    private String baseUnitName;
-
     @Schema(description = "Factor de conversión respecto a la unidad base (null si es unidad base)", example = "1000.0000000000")
     private BigDecimal conversionFactor;
+
+    @Schema(description = "Fecha de creación (ISO-8601)", example = "2025-01-15T10:30:00")
+    private LocalDateTime createdAt;
 }
