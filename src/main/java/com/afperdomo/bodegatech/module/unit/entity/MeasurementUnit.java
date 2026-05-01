@@ -57,6 +57,9 @@ public class MeasurementUnit extends BaseEntity {
     @Builder.Default
     private Boolean isBaseUnit = false;
 
+    @Column(name = "base_unit_id", insertable = false, updatable = false)
+    private java.util.UUID baseUnitId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "base_unit_id")
     private MeasurementUnit baseUnit;

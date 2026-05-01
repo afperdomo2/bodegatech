@@ -17,10 +17,13 @@ import org.mapstruct.ReportingPolicy;
 public interface MeasurementUnitMapper {
 
     // Create: request → entity
+    // Ignorar baseUnitId porque es read-only; se setea manualmente en el servicio a través de baseUnit
+    @Mapping(target = "baseUnitId", ignore = true)
     MeasurementUnit toEntity(CreateMeasurementUnitRequest request);
 
     // Update: request → entity (partial update)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "baseUnitId", ignore = true)
     void updateEntity(UpdateMeasurementUnitRequest request, @MappingTarget MeasurementUnit unit);
 
     // Response: entity → Dto (POST/PATCH response)
