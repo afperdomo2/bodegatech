@@ -1,6 +1,5 @@
 package com.afperdomo.bodegatech.module.product.dto.response;
 
-import com.afperdomo.bodegatech.module.category.dto.response.CategorySummaryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -37,15 +37,21 @@ public class ProductDto {
     private Integer stock;
 
     @Schema(
-            description = "Código único del producto (SKU) — generado automáticamente por el sistema basado en nombre y categoría",
+            description = "Código único del producto (SKU) — generado automáticamente por el sistema",
             example = "LAP-ELE-4F2A",
             accessMode = Schema.AccessMode.READ_ONLY
     )
     private String sku;
 
-    @Schema(description = "Categoría del producto (resumen)")
-    private CategorySummaryDto category;
+    @Schema(description = "ID de la categoría del producto", example = "123e4567-e89b-12d3-a456-426614174000")
+    private UUID categoryId;
+
+    @Schema(description = "Nombre de la categoría del producto", example = "Electrónica")
+    private String categoryName;
 
     @Schema(description = "Indica si el producto está activo", example = "true")
     private Boolean isActive;
+
+    @Schema(description = "Fecha de creación (ISO-8601)", example = "2025-01-15T10:30:00")
+    private LocalDateTime createdAt;
 }

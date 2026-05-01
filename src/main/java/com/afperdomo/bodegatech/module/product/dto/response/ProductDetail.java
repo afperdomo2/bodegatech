@@ -1,6 +1,5 @@
 package com.afperdomo.bodegatech.module.product.dto.response;
 
-import com.afperdomo.bodegatech.module.category.dto.response.CategorySummaryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +14,7 @@ import java.util.UUID;
 /**
  * DTO de respuesta completa para un producto.
  * Utilizado al obtener el detalle de un producto (GET /api/products/{id}).
- * Incluye la lista de imágenes del producto.
+ * Incluye la lista de imágenes del producto, timestamps y versión para optimistic locking.
  */
 @Data
 @Builder
@@ -46,8 +45,11 @@ public class ProductDetail {
     )
     private String sku;
 
-    @Schema(description = "Categoría del producto (resumen)")
-    private CategorySummaryDto category;
+    @Schema(description = "ID de la categoría del producto", example = "123e4567-e89b-12d3-a456-426614174000")
+    private UUID categoryId;
+
+    @Schema(description = "Nombre de la categoría del producto", example = "Electrónica")
+    private String categoryName;
 
     @Schema(description = "Indica si el producto está activo", example = "true")
     private Boolean isActive;
