@@ -1,4 +1,4 @@
-package com.afperdomo.bodegatech.module.product.dto;
+package com.afperdomo.bodegatech.module.product.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;

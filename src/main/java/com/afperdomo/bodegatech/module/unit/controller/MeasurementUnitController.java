@@ -2,9 +2,11 @@ package com.afperdomo.bodegatech.module.unit.controller;
 
 import com.afperdomo.bodegatech.common.response.ApiResponse;
 import com.afperdomo.bodegatech.common.response.PagedResponse;
-import com.afperdomo.bodegatech.module.unit.dto.CreateMeasurementUnitRequest;
-import com.afperdomo.bodegatech.module.unit.dto.MeasurementUnitDto;
-import com.afperdomo.bodegatech.module.unit.dto.UpdateMeasurementUnitRequest;
+import com.afperdomo.bodegatech.module.unit.dto.request.CreateMeasurementUnitRequest;
+import com.afperdomo.bodegatech.module.unit.dto.request.UpdateMeasurementUnitRequest;
+import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDto;
+import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDetail;
+import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitSummaryDto;
 import com.afperdomo.bodegatech.module.unit.enums.UnitType;
 import com.afperdomo.bodegatech.module.unit.service.MeasurementUnitService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,7 +47,7 @@ public class MeasurementUnitController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de unidades obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<PagedResponse<MeasurementUnitDto>>> getAllUnits(
+    public ResponseEntity<ApiResponse<PagedResponse<MeasurementUnitSummaryDto>>> getAllUnits(
             @Parameter(description = "Número de página (comenzando en 0)")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Cantidad de elementos por página")
@@ -60,8 +62,8 @@ public class MeasurementUnitController {
             @RequestParam(required = false) UnitType type) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<MeasurementUnitDto> units = unitService.findAllUnits(pageable, isBase, type);
-        PagedResponse<MeasurementUnitDto> pagedResponse = new PagedResponse<>(units);
+        Page<MeasurementUnitSummaryDto> units = unitService.findAllUnits(pageable, isBase, type);
+        PagedResponse<MeasurementUnitSummaryDto> pagedResponse = new PagedResponse<>(units);
 
         return ResponseEntity.ok(ApiResponse.success("Unidades de medida obtenidas exitosamente", pagedResponse));
     }
@@ -73,11 +75,11 @@ public class MeasurementUnitController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Unidad no encontrada"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<MeasurementUnitDto>> getUnitById(
+    public ResponseEntity<ApiResponse<MeasurementUnitDetail>> getUnitById(
             @Parameter(description = "ID único de la unidad")
             @PathVariable UUID id) {
 
-        MeasurementUnitDto unit = unitService.findUnitById(id);
+        MeasurementUnitDetail unit = unitService.findUnitById(id);
         return ResponseEntity.ok(ApiResponse.success("Unidad de medida obtenida exitosamente", unit));
     }
 

@@ -2,9 +2,11 @@ package com.afperdomo.bodegatech.module.unit.service;
 
 import com.afperdomo.bodegatech.common.exception.BusinessException;
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
-import com.afperdomo.bodegatech.module.unit.dto.CreateMeasurementUnitRequest;
-import com.afperdomo.bodegatech.module.unit.dto.MeasurementUnitDto;
-import com.afperdomo.bodegatech.module.unit.dto.UpdateMeasurementUnitRequest;
+import com.afperdomo.bodegatech.module.unit.dto.request.CreateMeasurementUnitRequest;
+import com.afperdomo.bodegatech.module.unit.dto.request.UpdateMeasurementUnitRequest;
+import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDto;
+import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitDetail;
+import com.afperdomo.bodegatech.module.unit.dto.response.MeasurementUnitSummaryDto;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import com.afperdomo.bodegatech.module.unit.enums.UnitType;
 import com.afperdomo.bodegatech.module.unit.mapper.MeasurementUnitMapper;
@@ -42,7 +44,7 @@ public class MeasurementUnitService {
      * @return página de unidades filtradas
      */
     @Transactional(readOnly = true)
-    public Page<MeasurementUnitDto> findAllUnits(Pageable pageable, Boolean isBase, UnitType type) {
+    public Page<MeasurementUnitSummaryDto> findAllUnits(Pageable pageable, Boolean isBase, UnitType type) {
         Specification<MeasurementUnit> spec = MeasurementUnitSpecifications.isActive();
         if (Boolean.TRUE.equals(isBase)) {
             spec = spec.and(MeasurementUnitSpecifications.isBase());
@@ -50,17 +52,17 @@ public class MeasurementUnitService {
         if (type != null) {
             spec = spec.and(MeasurementUnitSpecifications.hasType(type));
         }
-        return unitRepository.findAll(spec, pageable).map(unitMapper::toDto);
+        return unitRepository.findAll(spec, pageable).map(unitMapper::toSummaryDto);
     }
 
     /**
      * Obtiene una unidad por ID.
      */
     @Transactional(readOnly = true)
-    public MeasurementUnitDto findUnitById(UUID id) {
+    public MeasurementUnitDetail findUnitById(UUID id) {
         MeasurementUnit unit = unitRepository.findByIdActive(id)
             .orElseThrow(() -> new ResourceNotFoundException("Unidad de medida no encontrada con ID: " + id));
-        return unitMapper.toDto(unit);
+        return unitMapper.toDetail(unit);
     }
 
     /**
@@ -97,7 +99,7 @@ public class MeasurementUnitService {
             MeasurementUnit baseUnit = unitRepository.findById(request.getBaseUnitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Unidad base no encontrada: " + request.getBaseUnitId()));
 
-            if (!baseUnit.isBase()) {
+            if (!Boolean.TRUE.equals(baseUnit.getIsBase())) {
                 throw new BusinessException("La unidad base debe tener isBase = true");
             }
 
@@ -152,7 +154,7 @@ public class MeasurementUnitService {
         }
 
         // Validar que NO se cambien isBaseUnit ni baseUnitId (inmutables después de creación)
-        if (request.getIsBaseUnit() != null && !request.getIsBaseUnit().equals(unit.isBase())) {
+        if (request.getIsBaseUnit() != null && !request.getIsBaseUnit().equals(unit.getIsBase())) {
             throw new BusinessException("No se puede cambiar isBaseUnit después de crear la unidad");
         }
 
@@ -162,7 +164,7 @@ public class MeasurementUnitService {
         }
 
         // Validar que si conversionFactor se actualiza, la unidad no sea base
-        if (request.getConversionFactor() != null && unit.isBase()) {
+        if (request.getConversionFactor() != null && Boolean.TRUE.equals(unit.getIsBase())) {
             throw new BusinessException("Una unidad base no puede tener conversionFactor");
         }
 

@@ -1,4 +1,4 @@
-package com.afperdomo.bodegatech.module.category.dto;
+package com.afperdomo.bodegatech.module.category.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -10,15 +10,15 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * DTO de salida completo para una categoría.
- * Utilizado en respuestas de GET, POST y PATCH.
+ * DTO de respuesta completa para una categoría.
+ * Utilizado al obtener el detalle de una categoría (GET /api/categories/{id}).
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Datos completos de una categoría")
-public class CategoryDto {
+@Schema(description = "Datos completos de una categoría con auditoría")
+public class CategoryDetail {
 
     @Schema(description = "ID único de la categoría", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID id;

@@ -1,8 +1,10 @@
 package com.afperdomo.bodegatech.module.product.service;
 
-import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductDto;
-import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.request.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.request.UpdateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductDto;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductSummaryDto;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductDetail;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
@@ -31,19 +33,19 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)
-    public Page<ProductDto> findAllProducts(Pageable pageable) {
+    public Page<ProductSummaryDto> findAllProducts(Pageable pageable) {
         log.info("Obteniendo productos activos. Página: {}, Tamaño: {}", pageable.getPageNumber(), pageable.getPageSize());
-        return productRepository.findAllActive(pageable).map(productMapper::toDto);
+        return productRepository.findAllActive(pageable).map(productMapper::toSummaryDto);
     }
 
     @Transactional(readOnly = true)
-    public ProductDto findProductById(UUID id) {
+    public ProductDetail findProductById(UUID id) {
         log.info("Obteniendo producto con ID: {}", id);
 
         Product product = productRepository.findByIdActive(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
 
-        return productMapper.toDto(product);
+        return productMapper.toDetail(product);
     }
 
     public ProductDto createProduct(CreateProductRequest request) {

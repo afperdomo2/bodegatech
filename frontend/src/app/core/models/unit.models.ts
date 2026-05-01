@@ -1,34 +1,12 @@
-import type { UnitType } from '../constants/unit-type.constants';
+// Re-export from new structure for backwards compatibility
+export type {
+  CreateMeasurementUnitRequest,
+  UpdateMeasurementUnitRequest,
+} from './requests/unit.requests';
 
-export interface MeasurementUnitDto {
-  id: string;
-  name: string;
-  abbreviation: string;
-  type: UnitType;
-  isActive: boolean;
-  isBaseUnit: boolean;
-  baseUnitId: string | null;
-  baseUnitName: string | null;
-  conversionFactor: number | null;
-  createdAt: string;
-  updatedAt: string;
-  version: number;
-}
+export type {
+  MeasurementUnitDto,
+  MeasurementUnitSummaryDto,
+  MeasurementUnitDetail,
+} from './responses/unit.responses';
 
-export interface CreateUnitRequest {
-  name: string;
-  abbreviation: string;
-  type: UnitType;
-  isBaseUnit: boolean;
-  baseUnitId?: string | null;
-  conversionFactor?: number | null;
-}
-
-export interface UpdateUnitRequest {
-  name?: string;
-  abbreviation?: string;
-  type?: UnitType;
-  isBaseUnit?: boolean;
-  baseUnitId?: string | null;
-  conversionFactor?: number | null;
-}

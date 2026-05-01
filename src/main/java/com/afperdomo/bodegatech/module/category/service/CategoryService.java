@@ -1,8 +1,10 @@
 package com.afperdomo.bodegatech.module.category.service;
 
-import com.afperdomo.bodegatech.module.category.dto.CategoryDto;
-import com.afperdomo.bodegatech.module.category.dto.CreateCategoryRequest;
-import com.afperdomo.bodegatech.module.category.dto.UpdateCategoryRequest;
+import com.afperdomo.bodegatech.module.category.dto.response.CategoryDto;
+import com.afperdomo.bodegatech.module.category.dto.response.CategorySummaryDto;
+import com.afperdomo.bodegatech.module.category.dto.response.CategoryDetail;
+import com.afperdomo.bodegatech.module.category.dto.request.CreateCategoryRequest;
+import com.afperdomo.bodegatech.module.category.dto.request.UpdateCategoryRequest;
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import com.afperdomo.bodegatech.module.category.mapper.CategoryMapper;
 import com.afperdomo.bodegatech.module.category.repository.CategoryRepository;
@@ -34,19 +36,19 @@ public class CategoryService {
     private final ProductRepository productRepository;
 
     @Transactional(readOnly = true)
-    public Page<CategoryDto> findAllCategories(Pageable pageable) {
+    public Page<CategorySummaryDto> findAllCategories(Pageable pageable) {
         log.info("Obteniendo categorías activas. Página: {}, Tamaño: {}", pageable.getPageNumber(), pageable.getPageSize());
-        return categoryRepository.findAllActive(pageable).map(categoryMapper::toDto);
+        return categoryRepository.findAllActive(pageable).map(categoryMapper::toSummaryDto);
     }
 
     @Transactional(readOnly = true)
-    public CategoryDto findCategoryById(UUID id) {
+    public CategoryDetail findCategoryById(UUID id) {
         log.info("Obteniendo categoría con ID: {}", id);
 
         Category category = categoryRepository.findByIdActive(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría", id));
 
-        return categoryMapper.toDto(category);
+        return categoryMapper.toDetail(category);
     }
 
     public CategoryDto createCategory(CreateCategoryRequest request) {

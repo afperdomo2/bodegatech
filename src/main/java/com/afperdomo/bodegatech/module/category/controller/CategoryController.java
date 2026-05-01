@@ -1,8 +1,10 @@
 package com.afperdomo.bodegatech.module.category.controller;
 
-import com.afperdomo.bodegatech.module.category.dto.CategoryDto;
-import com.afperdomo.bodegatech.module.category.dto.CreateCategoryRequest;
-import com.afperdomo.bodegatech.module.category.dto.UpdateCategoryRequest;
+import com.afperdomo.bodegatech.module.category.dto.response.CategoryDto;
+import com.afperdomo.bodegatech.module.category.dto.response.CategorySummaryDto;
+import com.afperdomo.bodegatech.module.category.dto.response.CategoryDetail;
+import com.afperdomo.bodegatech.module.category.dto.request.CreateCategoryRequest;
+import com.afperdomo.bodegatech.module.category.dto.request.UpdateCategoryRequest;
 import com.afperdomo.bodegatech.module.category.service.CategoryService;
 import com.afperdomo.bodegatech.common.response.ApiResponse;
 import com.afperdomo.bodegatech.common.response.PagedResponse;
@@ -44,7 +46,7 @@ public class CategoryController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de categorías obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<PagedResponse<CategoryDto>>> listCategories(
+    public ResponseEntity<ApiResponse<PagedResponse<CategorySummaryDto>>> listCategories(
             @Parameter(description = "Número de página (comenzando en 0)")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Cantidad de elementos por página")
@@ -55,8 +57,8 @@ public class CategoryController {
             @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<CategoryDto> result = categoryService.findAllCategories(pageable);
-        PagedResponse<CategoryDto> pagedResponse = new PagedResponse<>(result);
+        Page<CategorySummaryDto> result = categoryService.findAllCategories(pageable);
+        PagedResponse<CategorySummaryDto> pagedResponse = new PagedResponse<>(result);
         return ResponseEntity.ok(ApiResponse.success("Categorías obtenidas exitosamente", pagedResponse));
     }
 
@@ -67,10 +69,10 @@ public class CategoryController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Categoría no encontrada"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<CategoryDto>> getCategory(
+    public ResponseEntity<ApiResponse<CategoryDetail>> getCategory(
             @Parameter(description = "ID único de la categoría")
             @PathVariable UUID id) {
-        CategoryDto result = categoryService.findCategoryById(id);
+        CategoryDetail result = categoryService.findCategoryById(id);
         return ResponseEntity.ok(ApiResponse.success("Categoría obtenida exitosamente", result));
     }
 

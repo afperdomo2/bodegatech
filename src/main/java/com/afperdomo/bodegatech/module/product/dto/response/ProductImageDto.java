@@ -1,4 +1,4 @@
-package com.afperdomo.bodegatech.module.product.dto;
+package com.afperdomo.bodegatech.module.product.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

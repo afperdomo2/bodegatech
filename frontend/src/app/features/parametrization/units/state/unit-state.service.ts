@@ -1,6 +1,12 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { UnitService } from '../../../../core/services/unit.service';
-import type { MeasurementUnitDto, CreateUnitRequest, UpdateUnitRequest } from '../../../../core/models/unit.models';
+import type {
+  CreateMeasurementUnitRequest,
+  UpdateMeasurementUnitRequest,
+} from '../../../../core/models/requests/unit.requests';
+import type {
+  MeasurementUnitSummaryDto,
+} from '../../../../core/models/responses/unit.responses';
 import type { AppError } from '../../../../core/models/api.models';
 import type { UnitType } from '../../../../core/constants/unit-type.constants';
 import { catchError, of } from 'rxjs';
@@ -23,8 +29,8 @@ import { catchError, of } from 'rxjs';
 export class UnitStateService {
   private unitService = inject(UnitService);
 
-  private _units = signal<MeasurementUnitDto[]>([]);
-  private _baseUnitsForType = signal<MeasurementUnitDto[]>([]);
+  private _units = signal<MeasurementUnitSummaryDto[]>([]);
+  private _baseUnitsForType = signal<MeasurementUnitSummaryDto[]>([]);
   private _isLoading = signal(false);
   private _isLoadingBaseUnits = signal(false);
   private _isDeleting = signal(false);
@@ -96,7 +102,7 @@ export class UnitStateService {
     });
   }
 
-  createUnit(request: CreateUnitRequest): void {
+  createUnit(request: CreateMeasurementUnitRequest): void {
     this._fieldErrors.set({});
     this._generalError.set(null);
 
@@ -114,7 +120,8 @@ export class UnitStateService {
     ).subscribe(response => {
       if (response) {
         // Éxito: agregar nueva unidad al inicio de la lista
-        this._units.update(units => [response.data, ...units]);
+        // Convertir MeasurementUnitDto a MeasurementUnitSummaryDto (compatible porque extiende)
+        this._units.update(units => [response.data as MeasurementUnitSummaryDto, ...units]);
         this._generalError.set(null);
         this._fieldErrors.set({});
         // Recalcular total elementos
@@ -125,7 +132,7 @@ export class UnitStateService {
     });
   }
 
-  updateUnit(id: string, request: UpdateUnitRequest): void {
+  updateUnit(id: string, request: UpdateMeasurementUnitRequest): void {
     this._fieldErrors.set({});
     this._generalError.set(null);
 
@@ -141,8 +148,9 @@ export class UnitStateService {
     ).subscribe(response => {
       if (response) {
         // Éxito: actualizar la unidad en la lista
+        // Convertir MeasurementUnitDto a MeasurementUnitSummaryDto
         this._units.update(units =>
-          units.map(unit => unit.id === id ? response.data : unit)
+          units.map(unit => unit.id === id ? (response.data as MeasurementUnitSummaryDto) : unit)
         );
         this._generalError.set(null);
         this._fieldErrors.set({});

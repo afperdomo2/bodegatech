@@ -1,9 +1,10 @@
 package com.afperdomo.bodegatech.module.category.mapper;
 
-import com.afperdomo.bodegatech.module.category.dto.CategoryDto;
-import com.afperdomo.bodegatech.module.category.dto.CategorySummaryDto;
-import com.afperdomo.bodegatech.module.category.dto.CreateCategoryRequest;
-import com.afperdomo.bodegatech.module.category.dto.UpdateCategoryRequest;
+import com.afperdomo.bodegatech.module.category.dto.response.CategoryDto;
+import com.afperdomo.bodegatech.module.category.dto.response.CategorySummaryDto;
+import com.afperdomo.bodegatech.module.category.dto.response.CategoryDetail;
+import com.afperdomo.bodegatech.module.category.dto.request.CreateCategoryRequest;
+import com.afperdomo.bodegatech.module.category.dto.request.UpdateCategoryRequest;
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -19,14 +20,22 @@ import org.mapstruct.ReportingPolicy;
 public interface CategoryMapper {
 
     /**
-     * Convierte una entidad Category a CategoryDto.
+     * Convierte una entidad Category a CategoryDto (respuesta básica).
+     * Utilizado en POST y PATCH responses.
      */
     CategoryDto toDto(Category category);
 
     /**
-     * Convierte una entidad Category a CategorySummaryDto (embebido).
+     * Convierte una entidad Category a CategorySummaryDto (respuesta resumida).
+     * Utilizado en listados paginados (GET /api/categories).
      */
-    CategorySummaryDto toSummary(Category category);
+    CategorySummaryDto toSummaryDto(Category category);
+
+    /**
+     * Convierte una entidad Category a CategoryDetail (respuesta completa).
+     * Utilizado en GET /api/categories/{id}.
+     */
+    CategoryDetail toDetail(Category category);
 
     /**
      * Convierte un CreateCategoryRequest a entidad Category.

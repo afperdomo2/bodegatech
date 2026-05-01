@@ -59,7 +59,7 @@ public class MeasurementUnit extends BaseEntity {
      */
     @Column(name = "is_base_unit", nullable = false)
     @Builder.Default
-    private boolean isBase = false;
+    private Boolean isBase = false;
 
     /**
      * Referencia a la unidad base de este tipo (self-referencing FK).

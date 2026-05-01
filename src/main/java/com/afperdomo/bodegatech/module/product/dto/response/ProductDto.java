@@ -1,6 +1,6 @@
-package com.afperdomo.bodegatech.module.product.dto;
+package com.afperdomo.bodegatech.module.product.dto.response;
 
-import com.afperdomo.bodegatech.module.category.dto.CategorySummaryDto;
+import com.afperdomo.bodegatech.module.category.dto.response.CategorySummaryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,18 +8,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * DTO de salida para un producto.
- * Utilizado en respuestas de GET, POST y PATCH.
+ * DTO de respuesta básica para un producto.
+ * Utilizado en POST y PATCH responses.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Datos de un producto")
+@Schema(description = "Datos básicos de un producto")
 public class ProductDto {
 
     @Schema(description = "ID único del producto", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -49,13 +48,4 @@ public class ProductDto {
 
     @Schema(description = "Indica si el producto está activo", example = "true")
     private Boolean isActive;
-
-    @Schema(description = "Fecha de creación del producto", example = "2024-01-15T10:30:00")
-    private LocalDateTime createdAt;
-
-    @Schema(description = "Fecha de última actualización del producto", example = "2024-01-15T10:30:00")
-    private LocalDateTime updatedAt;
-
-    @Schema(description = "Versión del registro para optimistic locking. Enviar de vuelta en PATCH para detectar modificaciones concurrentes.", example = "0")
-    private Long version;
 }

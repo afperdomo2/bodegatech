@@ -1,6 +1,6 @@
-package com.afperdomo.bodegatech.module.product.dto;
+package com.afperdomo.bodegatech.module.product.dto.response;
 
-import com.afperdomo.bodegatech.module.category.dto.CategorySummaryDto;
+import com.afperdomo.bodegatech.module.category.dto.response.CategorySummaryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,21 +8,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 /**
- * DTO de detalle de un producto.
- * Utilizado en respuestas de GET /products/{id}.
- * Incluye la lista de imágenes del producto.
+ * DTO de respuesta resumida para un producto.
+ * Utilizado en listados paginados (GET /api/products).
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Datos detallados de un producto con sus imágenes")
-public class ProductDetailDto {
+@Schema(description = "Resumen de datos de un producto (para listados)")
+public class ProductSummaryDto {
 
     @Schema(description = "ID único del producto", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID id;
@@ -51,16 +48,4 @@ public class ProductDetailDto {
 
     @Schema(description = "Indica si el producto está activo", example = "true")
     private Boolean isActive;
-
-    @Schema(description = "Fecha de creación del producto", example = "2024-01-15T10:30:00")
-    private LocalDateTime createdAt;
-
-    @Schema(description = "Fecha de última actualización del producto", example = "2024-01-15T10:30:00")
-    private LocalDateTime updatedAt;
-
-    @Schema(description = "Versión del registro para optimistic locking", example = "0")
-    private Long version;
-
-    @Schema(description = "Lista de imágenes asociadas al producto")
-    private List<ProductImageDto> images;
 }

@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import type { OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, type TemplateRef, ViewChild } from '@angular/core';
-import type { MeasurementUnitDto, CreateUnitRequest, UpdateUnitRequest } from '../../../../../core/models/unit.models';
+import type { MeasurementUnitDto } from '../../../../../core/models/responses/unit.responses';
+import type { CreateMeasurementUnitRequest, UpdateMeasurementUnitRequest } from '../../../../../core/models/requests/unit.requests';
 import { UNIT_TYPE_OPTIONS, getUnitTypeLabel, type UnitType } from '../../../../../core/constants/unit-type.constants';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
@@ -218,7 +219,7 @@ export class UnitsComponent implements OnInit {
     }
 
     this.pendingAction.set('create');
-    const request: CreateUnitRequest = {
+    const request: CreateMeasurementUnitRequest = {
       name: this.formName(),
       abbreviation: this.formAbbreviation(),
       type: this.formType()!,
@@ -258,7 +259,7 @@ export class UnitsComponent implements OnInit {
     }
 
     this.pendingAction.set('edit');
-    const request: UpdateUnitRequest = {
+    const request: UpdateMeasurementUnitRequest = {
       name: this.formName(),
       abbreviation: this.formAbbreviation(),
       conversionFactor: this.formIsBaseUnit()

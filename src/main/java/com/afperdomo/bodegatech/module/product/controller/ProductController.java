@@ -1,12 +1,14 @@
 package com.afperdomo.bodegatech.module.product.controller;
 
-import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.request.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.request.UpdateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductDto;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductSummaryDto;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductDetail;
 import com.afperdomo.bodegatech.module.product.dto.ConfirmImagesRequest;
 import com.afperdomo.bodegatech.module.product.dto.PresignedUrlDto;
 import com.afperdomo.bodegatech.module.product.dto.PresignedUrlRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductDto;
-import com.afperdomo.bodegatech.module.product.dto.ProductImageDto;
-import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductImageDto;
 import com.afperdomo.bodegatech.module.product.service.ProductImageService;
 import com.afperdomo.bodegatech.module.product.service.ProductService;
 import com.afperdomo.bodegatech.common.response.ApiResponse;
@@ -51,7 +53,7 @@ public class ProductController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<PagedResponse<ProductDto>>> getAllProducts(
+    public ResponseEntity<ApiResponse<PagedResponse<ProductSummaryDto>>> getAllProducts(
             @Parameter(description = "Número de página (comenzando en 0)")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Cantidad de elementos por página")
@@ -62,8 +64,8 @@ public class ProductController {
             @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<ProductDto> products = productService.findAllProducts(pageable);
-        PagedResponse<ProductDto> pagedResponse = new PagedResponse<>(products);
+        Page<ProductSummaryDto> products = productService.findAllProducts(pageable);
+        PagedResponse<ProductSummaryDto> pagedResponse = new PagedResponse<>(products);
 
         return ResponseEntity.ok(ApiResponse.success("Productos obtenidos exitosamente", pagedResponse));
     }
@@ -75,11 +77,11 @@ public class ProductController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<ApiResponse<ProductDto>> getProductById(
+    public ResponseEntity<ApiResponse<ProductDetail>> getProductById(
             @Parameter(description = "ID único del producto")
             @PathVariable UUID id) {
 
-        ProductDto product = productService.findProductById(id);
+        ProductDetail product = productService.findProductById(id);
         return ResponseEntity.ok(ApiResponse.success("Producto obtenido exitosamente", product));
     }
 
@@ -101,7 +103,7 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}")
-    @Operation( summary = "Actualizar producto parcialmente", description = "ctualiza los campos indicados de un producto existente." )
+    @Operation( summary = "Actualizar producto parcialmente", description = "Actualiza los campos indicados de un producto existente." )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),

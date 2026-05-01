@@ -3,7 +3,7 @@ package com.afperdomo.bodegatech.module.product.service;
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
 import com.afperdomo.bodegatech.common.util.S3PresignedUrlGenerator;
 import com.afperdomo.bodegatech.module.product.dto.PresignedUrlDto;
-import com.afperdomo.bodegatech.module.product.dto.ProductImageDto;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductImageDto;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.entity.ProductImage;
 import com.afperdomo.bodegatech.module.product.repository.ProductImageRepository;

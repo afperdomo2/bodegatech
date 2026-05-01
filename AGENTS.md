@@ -116,9 +116,214 @@ para validar buenas prácticas SQL antes de finalizar.
 |------|--------|
 | Servicio | `*Service` (interfaz) + `*ServiceImpl` |
 | DTO entrada | `*Request` |
-| DTO salida | `*Response` |
+| DTO salida | `*Dto` / `*SummaryDto` / `*Detail` |
 | Mapper | `*Mapper` (MapStruct, `componentModel = "spring"`) |
 | Entidad | Sin sufijo, extiende `BaseEntity` |
+
+## Patrón de DTOs — Estructura y nomenclatura
+
+**Objetivo:** Estandarizar la estructura de DTOs en todas las capas (backend + frontend) para mejorar consistencia, mantenibilidad y escalabilidad.
+
+### Backend — Estructura de carpetas
+
+```
+module/{modulo}/
+├── dto/
+│   ├── request/
+│   │   ├── Create{Resource}Request.java
+│   │   └── Update{Resource}Request.java
+│   ├── response/
+│   │   ├── {Resource}Dto.java              (básico, estándar — POST/PATCH response)
+│   │   ├── {Resource}SummaryDto.java      (ligero — GET / listado paginado)
+│   │   └── {Resource}Detail.java          (completo — GET /{id} con version/timestamps)
+│   └── [otros DTOs específicos]
+```
+
+### Tipos de DTOs y su propósito
+
+| DTO | Propósito | Campos | Usado en |
+|-----|-----------|--------|----------|
+| `{Resource}Request` | Entrada de usuario | Solo campos editables (name, description, etc.) | POST, PATCH request body |
+| `{Resource}Dto` | Respuesta básica | Campos clave sin auditoría | POST response, PATCH response |
+| `{Resource}SummaryDto` | Listado paginado (ligero) | Campos clave sin version/createdAt/updatedAt | GET / (PagedResponse) |
+| `{Resource}Detail` | Detalle completo | Todos los campos + version + timestamps + relaciones | GET /{id} |
+
+### Relación de herencia recomendada
+
+- `{Resource}Dto` → campos clave: `id`, `name`, etc. (SIN auditoría)
+- `{Resource}SummaryDto` → extiende `{Resource}Dto`, puede agregar campos ligeros
+- `{Resource}Detail` → extiende `{Resource}SummaryDto`, agrega: `version`, `createdAt`, `updatedAt`, relaciones completas
+
+### Mapeos de endpoints REST
+
+```
+POST /api/{resources}
+  ├─ Entrada:  {Resource}Request
+  └─ Salida:   ApiResponse<{Resource}Dto>
+
+GET /api/{resources}?page=0&size=10
+  ├─ Entrada:  query params (page, size, filters)
+  └─ Salida:   ApiResponse<PagedResponse<{Resource}SummaryDto>>
+
+GET /api/{resources}/{id}
+  ├─ Entrada:  path param (id)
+  └─ Salida:   ApiResponse<{Resource}Detail>
+
+PATCH /api/{resources}/{id}
+  ├─ Entrada:  {Resource}Request
+  └─ Salida:   ApiResponse<{Resource}Dto>
+
+DELETE /api/{resources}/{id}
+  ├─ Entrada:  path param (id)
+  └─ Salida:   ApiResponse<Void> (204 No Content)
+```
+
+### Mapper MapStruct — Métodos requeridos
+
+Todo `*Mapper` debe implementar:
+
+```java
+@Mapper(componentModel = "spring")
+public interface {Resource}Mapper {
+  
+  // Create
+  {Resource} toEntity(Create{Resource}Request request);
+  
+  // Update (mapea campos en la entidad existente)
+  void updateEntity(Update{Resource}Request request, @MappingTarget {Resource} entity);
+  
+  // Response (POST/PATCH)
+  {Resource}Dto toDto({Resource} entity);
+  
+  // Listado (GET /)
+  {Resource}SummaryDto toSummaryDto({Resource} entity);
+  
+  // Detalle (GET /{id})
+  {Resource}Detail toDetail({Resource} entity);
+}
+```
+
+**Nota:** Si la entidad tiene campos que mapean con nombre diferente en DTOs (ej: `isBase` → `isBaseUnit`), usar `@Mapping` explícito:
+```java
+@Mapping(source = "isBase", target = "isBaseUnit")
+{Resource}Dto toDto({Resource} entity);
+```
+
+### Frontend — Estructura de modelos TypeScript
+
+```
+core/models/
+├── requests/
+│   ├── unit.requests.ts          # {Resource}CreateRequest, {Resource}UpdateRequest
+│   ├── category.requests.ts
+│   └── product.requests.ts
+├── responses/
+│   ├── unit.responses.ts         # {Resource}Dto, {Resource}SummaryDto, {Resource}Detail
+│   ├── category.responses.ts
+│   └── product.responses.ts
+├── api.models.ts                 # ApiResponse<T>, PagedResponse<T> (global)
+└── [otros modelos globales]
+```
+
+### Ejemplo completo — Módulo UNITS (Backend)
+
+**File: `MeasurementUnitMapper.java`**
+```java
+@Mapper(componentModel = "spring")
+public interface MeasurementUnitMapper {
+  
+  @Mapping(source = "isBase", target = "isBaseUnit")
+  MeasurementUnit toEntity(CreateMeasurementUnitRequest request);
+  
+  @Mapping(source = "isBase", target = "isBaseUnit")
+  void updateEntity(UpdateMeasurementUnitRequest request, @MappingTarget MeasurementUnit entity);
+  
+  @Mapping(source = "isBase", target = "isBaseUnit")
+  MeasurementUnitDto toDto(MeasurementUnit entity);
+  
+  @Mapping(source = "isBase", target = "isBaseUnit")
+  MeasurementUnitSummaryDto toSummaryDto(MeasurementUnit entity);
+  
+  @Mapping(source = "isBase", target = "isBaseUnit")
+  MeasurementUnitDetail toDetail(MeasurementUnit entity);
+}
+```
+
+**File: `MeasurementUnitController.java`**
+```java
+@GetMapping
+public ResponseEntity<ApiResponse<PagedResponse<MeasurementUnitSummaryDto>>> list(
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "10") int size) {
+  // Retorna PagedResponse<MeasurementUnitSummaryDto> (ligero, sin auditoría)
+}
+
+@GetMapping("/{id}")
+public ResponseEntity<ApiResponse<MeasurementUnitDetail>> getById(@PathVariable UUID id) {
+  // Retorna MeasurementUnitDetail (completo con version, timestamps)
+}
+
+@PostMapping
+public ResponseEntity<ApiResponse<MeasurementUnitDto>> create(@RequestBody CreateMeasurementUnitRequest request) {
+  // Retorna MeasurementUnitDto (básico)
+}
+
+@PatchMapping("/{id}")
+public ResponseEntity<ApiResponse<MeasurementUnitDto>> update(
+    @PathVariable UUID id, @RequestBody UpdateMeasurementUnitRequest request) {
+  // Retorna MeasurementUnitDto (básico)
+}
+```
+
+### Ejemplo completo — Módulo UNITS (Frontend)
+
+**File: `unit.responses.ts`**
+```typescript
+export interface MeasurementUnitDto {
+  id: string;
+  name: string;
+  abbreviation: string;
+  type: string;
+  isBaseUnit: boolean;
+}
+
+export interface MeasurementUnitSummaryDto extends MeasurementUnitDto {
+  // Mismos campos que Dto (ambos ligeros, sin auditoría)
+}
+
+export interface MeasurementUnitDetail extends MeasurementUnitSummaryDto {
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+**File: `unit.requests.ts`**
+```typescript
+export interface CreateMeasurementUnitRequest {
+  name: string;
+  abbreviation: string;
+  type: string;
+  isBaseUnit: boolean;
+}
+
+export interface UpdateMeasurementUnitRequest extends CreateMeasurementUnitRequest {}
+```
+
+**Uso en servicios:**
+```typescript
+getUnits(page: number, size: number): Observable<ApiResponse<PagedResponse<MeasurementUnitSummaryDto>>> {
+  // Retorna MeasurementUnitSummaryDto (listado)
+}
+
+getUnitById(id: string): Observable<ApiResponse<MeasurementUnitDetail>> {
+  // Retorna MeasurementUnitDetail (detalle completo)
+}
+
+createUnit(request: CreateMeasurementUnitRequest): Observable<ApiResponse<MeasurementUnitDto>> {
+  // Retorna MeasurementUnitDto (básico)
+}
+```
 
 ## Respuestas de la API
 

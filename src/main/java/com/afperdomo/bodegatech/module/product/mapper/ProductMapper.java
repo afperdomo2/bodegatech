@@ -1,10 +1,12 @@
 package com.afperdomo.bodegatech.module.product.mapper;
 
-import com.afperdomo.bodegatech.module.product.dto.CreateProductRequest;
-import com.afperdomo.bodegatech.module.product.dto.ProductDto;
-import com.afperdomo.bodegatech.module.product.dto.UpdateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.request.CreateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.request.UpdateProductRequest;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductDto;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductSummaryDto;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductDetail;
 import com.afperdomo.bodegatech.module.product.entity.Product;
-import com.afperdomo.bodegatech.module.category.dto.CategorySummaryDto;
+import com.afperdomo.bodegatech.module.category.dto.response.CategorySummaryDto;
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -24,11 +26,28 @@ import org.mapstruct.ReportingPolicy;
 public interface ProductMapper {
 
     /**
-     * Convierte una entidad Product a ProductDto.
+     * Convierte una entidad Product a ProductDto (respuesta básica).
      * Mapea la relación Category → CategorySummaryDto usando el método helper.
+     * Utilizado en POST y PATCH responses.
      */
     @Mapping(source = "category", target = "category", qualifiedByName = "toCategorySummary")
     ProductDto toDto(Product product);
+
+    /**
+     * Convierte una entidad Product a ProductSummaryDto (respuesta resumida).
+     * Mapea la relación Category → CategorySummaryDto usando el método helper.
+     * Utilizado en listados paginados (GET /api/products).
+     */
+    @Mapping(source = "category", target = "category", qualifiedByName = "toCategorySummary")
+    ProductSummaryDto toSummaryDto(Product product);
+
+    /**
+     * Convierte una entidad Product a ProductDetail (respuesta completa).
+     * Mapea la relación Category → CategorySummaryDto usando el método helper.
+     * Utilizado en GET /api/products/{id}.
+     */
+    @Mapping(source = "category", target = "category", qualifiedByName = "toCategorySummary")
+    ProductDetail toDetail(Product product);
 
     /**
      * Convierte un CreateProductRequest a entidad Product.

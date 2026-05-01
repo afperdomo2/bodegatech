@@ -1,9 +1,8 @@
-package com.afperdomo.bodegatech.module.unit.dto;
+package com.afperdomo.bodegatech.module.unit.dto.response;
 
 import com.afperdomo.bodegatech.module.unit.enums.UnitType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,13 +10,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO de respuesta para una unidad de medida.
+ * DTO de respuesta básica para una unidad de medida.
+ * Utilizado en POST y PATCH responses.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Unidad de medida")
+@Schema(description = "Unidad de medida (respuesta básica)")
 public class MeasurementUnitDto {
 
     @Schema(description = "ID único de la unidad", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -46,13 +46,4 @@ public class MeasurementUnitDto {
 
     @Schema(description = "Factor de conversión respecto a la unidad base (null si es unidad base)", example = "1000.0000000000")
     private BigDecimal conversionFactor;
-
-    @Schema(description = "Fecha de creación")
-    private LocalDateTime createdAt;
-
-    @Schema(description = "Fecha de última actualización")
-    private LocalDateTime updatedAt;
-
-    @Schema(description = "Versión para control de concurrencia optimista")
-    private Long version;
 }

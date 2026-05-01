@@ -1,6 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { CategoryService } from '../../../../core/services/category.service';
-import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../core/models/category.models';
+import type {
+  CreateCategoryRequest,
+  UpdateCategoryRequest,
+} from '../../../../core/models/requests/category.requests';
+import type { CategorySummaryDto } from '../../../../core/models/responses/category.responses';
 import type { AppError } from '../../../../core/models/api.models';
 import { catchError, of } from 'rxjs';
 
@@ -24,7 +28,7 @@ export class CategoryStateService {
 
   // ========== ESTADO PRIVADO (WRITABLE SIGNALS) ==========
 
-  private _categories = signal<CategoryDto[]>([]);
+  private _categories = signal<CategorySummaryDto[]>([]);
   private _isLoading = signal(false);
   private _isDeleting = signal(false);
   private _currentPage = signal(0);
@@ -117,7 +121,8 @@ export class CategoryStateService {
     ).subscribe(response => {
       if (response) {
         // Éxito: agregar nueva categoría al inicio de la lista
-        this._categories.update(cats => [response.data, ...cats]);
+        // Convertir CategoryDto a CategorySummaryDto (compatible porque extiende)
+        this._categories.update(cats => [(response.data as CategorySummaryDto), ...cats]);
         this._generalError.set(null);
         this._fieldErrors.set({});
         // Recalcular total elementos
@@ -147,8 +152,9 @@ export class CategoryStateService {
     ).subscribe(response => {
       if (response) {
         // Éxito: actualizar la categoría en la lista
+        // Convertir CategoryDto a CategorySummaryDto
         this._categories.update(cats =>
-          cats.map(cat => cat.id === id ? response.data : cat)
+          cats.map(cat => cat.id === id ? (response.data as CategorySummaryDto) : cat)
         );
         this._generalError.set(null);
         this._fieldErrors.set({});

@@ -183,6 +183,24 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/* Placeholder styling - más translúcido para distinguirse del texto completado */
+::placeholder {
+  color: rgba(64, 73, 68, 0.45) !important; /* on-surface-variant con 45% opacidad */
+  opacity: 1;
+}
+
+/* Firefox */
+::-moz-placeholder {
+  color: rgba(64, 73, 68, 0.45) !important;
+  opacity: 1;
+}
+
+/* Chrome, Safari and Edge */
+::-webkit-input-placeholder {
+  color: rgba(64, 73, 68, 0.45) !important;
+  opacity: 1;
+}
+
 /* Selection color */
 ::selection {
   background-color: #003527;

@@ -1,10 +1,8 @@
-package com.afperdomo.bodegatech.module.unit.dto;
+package com.afperdomo.bodegatech.module.unit.dto.request;
 
 import com.afperdomo.bodegatech.module.unit.enums.UnitType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -15,35 +13,34 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO para crear una nueva unidad de medida.
+ * DTO para actualizar parcialmente una unidad de medida.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Solicitud para crear una unidad de medida")
-public class CreateMeasurementUnitRequest {
+@Schema(description = "Solicitud para actualizar una unidad de medida (todos los campos son opcionales)")
+public class UpdateMeasurementUnitRequest {
 
-    @NotBlank
     @Size(min = 1, max = 100)
-    @Schema(description = "Nombre de la unidad", example = "Kilogramo")
+    @Schema(description = "Nombre de la unidad (opcional)", example = "Kilogramo")
     private String name;
 
-    @NotBlank
     @Size(min = 1, max = 20)
-    @Schema(description = "Abreviación de la unidad", example = "kg")
+    @Schema(description = "Abreviación de la unidad (opcional)", example = "kg")
     private String abbreviation;
 
-    @NotNull
-    @Schema(description = "Tipo de unidad", example = "MASS")
+    @Schema(description = "Tipo de unidad (opcional)", example = "MASS")
     private UnitType type;
 
-    @NotNull
-    @Schema(description = "Indica si esta es la unidad base (más pequeña) del tipo", example = "true")
+    @Schema(
+        description = "Indica si esta es la unidad base (opcional). No se puede cambiar una vez creada la unidad.",
+        example = "true"
+    )
     private Boolean isBaseUnit;
 
     @Schema(
-        description = "ID de la unidad base a la que convierte. Requerido si isBaseUnit = false",
+        description = "ID de la unidad base a la que convierte (opcional). No se puede cambiar una vez creada la unidad.",
         example = "123e4567-e89b-12d3-a456-426614174000"
     )
     private UUID baseUnitId;
@@ -51,7 +48,7 @@ public class CreateMeasurementUnitRequest {
     @Positive
     @DecimalMin("0.0000000001")
     @Schema(
-        description = "Factor de conversión respecto a la unidad base. Requerido si isBaseUnit = false",
+        description = "Factor de conversión respecto a la unidad base (opcional). Estos campos se pueden actualizar.",
         example = "1000.0000000000"
     )
     private BigDecimal conversionFactor;
