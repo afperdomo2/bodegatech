@@ -66,3 +66,25 @@ Los tests de integración del backend usan Testcontainers (PostgreSQL). Requiere
 ./gradlew jacocoTestReport
 # → build/reports/jacoco/test/html/index.html
 ```
+
+## CI — GitHub Actions
+
+### Frontend CI (`frontend-ci.yml`)
+
+Se activa automáticamente en:
+- **Push** a ramas `main`, `develop` (si hay cambios en `frontend/`)
+- **Pull Request** a ramas `main`, `develop` (si hay cambios en `frontend/`)
+
+**Pasos del workflow:**
+1. Checkout del código
+2. Setup pnpm 10.30.3 + Node.js 22
+3. `pnpm install --frozen-lockfile` — descarga dependencias (lockfile es inmutable en CI)
+4. `pnpm lint` — ESLint
+5. `pnpm build` — lint + build producción (mismo orden que local)
+6. `pnpm test` — tests unitarios
+
+**Implicación para agentes:**
+- Si cambias `frontend/package.json`, **debes actualizar `frontend/pnpm-lock.yaml`** o el CI falla en step 3
+- El lint falla el build (`pnpm build = ng lint && ng build`) — no hay segunda oportunidad
+- No hay CI de backend — tests de backend solo corren localmente con `./gradlew test`
+

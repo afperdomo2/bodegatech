@@ -1,5 +1,10 @@
 # Frontend — BodegaTech UI
 
+> **Skills requeridas para trabajo en Frontend:**
+> Antes de generar componentes, páginas o estilos, cargar con la herramienta `skill`:
+> - `angular-developer` — para componentes, signals, routing, DI, forms, HTTP
+> - `frontend-design` — para UI, layouts, páginas visuales, estilos con Tailwind
+
 ## Stack verificado
 
 - Angular **21.2** (standalone components) — el `package.json` dice `^21.2.0`

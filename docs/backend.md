@@ -1,5 +1,10 @@
 # Backend — BodegaTech
 
+> **Skills requeridas para trabajo en Backend:**
+> Antes de generar código Java o Spring Boot, cargar con la herramienta `skill`:
+> - `java-springboot` — para servicios, controladores, entidades, configuración
+> - `postgresql-optimization` — para entidades JPA, índices, tipos de columna, queries
+
 ## Comandos esenciales
 
 ```bash

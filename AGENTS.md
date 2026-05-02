@@ -39,13 +39,15 @@ pnpm ng generate service core/services/{service}
 
 Leer según la tarea a realizar:
 
-| Tema | Archivo |
-|------|---------|
-| Arquitectura general, estructura de carpetas, perfiles | `docs/architecture.md` |
-| Backend: quirks SpringDoc, entidades JPA, mappers, tests | `docs/backend.md` |
-| Frontend: Tailwind v4, signals, smart/dumb, modales, state | `docs/frontend.md` |
-| Convenciones REST, DTOs, envelopes, errores | `docs/api-conventions.md` |
-| Build de producción, variables de entorno, Testcontainers | `docs/deployment.md` |
+| Tema | Archivo | Skills |
+|------|---------|--------|
+| Arquitectura general, estructura de carpetas, perfiles | `docs/architecture.md` | — |
+| Backend: Spring Boot, servicios, controladores, entidades | `docs/backend.md` | `java-springboot` |
+| Backend: JPA, índices, tipos de columna, queries | `docs/backend.md` | `postgresql-optimization` |
+| Frontend: componentes, signals, routing, DI, forms, HTTP | `docs/frontend.md` | `angular-developer` |
+| Frontend: UI, layouts, páginas visuales, estilos Tailwind | `docs/frontend.md` | `frontend-design` |
+| Convenciones REST, DTOs, envelopes, errores | `docs/api-conventions.md` | — |
+| Build de producción, variables de entorno, Testcontainers | `docs/deployment.md` | — |
 
 ## Trampas frecuentes (resumen ejecutivo)
 
@@ -57,3 +59,4 @@ Leer según la tarea a realizar:
 6. **`GlobalExceptionHandler`** requiere checks de SpringDoc en `handleGlobalException` — ver `docs/backend.md`.
 7. **MapStruct** requiere `annotationProcessor` además de `implementation` en `build.gradle`.
 8. **Tests de integración** usan Testcontainers — Docker debe estar corriendo o fallan.
+9. **Frontend lockfile:** si cambias `frontend/package.json`, debes actualizar `frontend/pnpm-lock.yaml` o el CI falla — usar `pnpm install` para actualizar ambos.
