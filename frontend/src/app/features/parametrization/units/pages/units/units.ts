@@ -1,19 +1,29 @@
 import { CommonModule } from '@angular/common';
 import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, type TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, ViewChild } from '@angular/core';
 import type { MeasurementUnitDto } from '../../../../../core/models/responses/unit.responses';
 import type { CreateMeasurementUnitRequest, UpdateMeasurementUnitRequest } from '../../../../../core/models/requests/unit.requests';
-import { UNIT_TYPE_OPTIONS, getUnitTypeLabel, type UnitType } from '../../../../../core/constants/unit-type.constants';
+import { getUnitTypeLabel, type UnitType } from '../../../../../core/constants/unit-type.constants';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
 import { ModalService } from '../../../../../shared/services/modal.service';
 import { ToastService } from '../../../../../shared/services/toast.service';
 import { UnitStateService } from '../../state/unit-state.service';
+import { UnitCreateModalComponent } from '../../components/unit-create-modal.component';
+import { UnitEditModalComponent } from '../../components/unit-edit-modal.component';
+import { UnitDeleteModalComponent } from '../../components/unit-delete-modal.component';
 
 @Component({
   selector: 'bt-units',
   standalone: true,
-  imports: [CommonModule, PageHeader, DataTable],
+  imports: [
+    CommonModule,
+    PageHeader,
+    DataTable,
+    UnitCreateModalComponent,
+    UnitEditModalComponent,
+    UnitDeleteModalComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './units.html',
   styleUrl: './units.scss',
@@ -23,101 +33,22 @@ export class UnitsComponent implements OnInit {
   protected modalService = inject(ModalService);
   protected toastService = inject(ToastService);
 
-  @ViewChild('createModalTemplate') createModalTemplate!: TemplateRef<Record<string, never>>;
-  @ViewChild('editModalTemplate') editModalTemplate!: TemplateRef<Record<string, never>>;
-  @ViewChild('deleteModalTemplate') deleteModalTemplate!: TemplateRef<Record<string, never>>;
+  @ViewChild(UnitCreateModalComponent) createModalComponent!: UnitCreateModalComponent;
+  @ViewChild(UnitEditModalComponent) editModalComponent!: UnitEditModalComponent;
+  @ViewChild(UnitDeleteModalComponent) deleteModalComponent!: UnitDeleteModalComponent;
 
-  protected unitTypeOptions = UNIT_TYPE_OPTIONS;
   protected getUnitTypeLabel = getUnitTypeLabel;
 
   formName = signal('');
   formAbbreviation = signal('');
   formType = signal<UnitType | null>(null);
-  formIsBaseUnit = signal(false);
+  formIsBaseUnit = signal(true);
   formBaseUnitId = signal<string | null>(null);
   formConversionFactor = signal('');
 
-  nameTouched = signal(false);
-  abbreviationTouched = signal(false);
-  typeTouched = signal(false);
-  baseUnitIdTouched = signal(false);
-  conversionFactorTouched = signal(false);
-
   selectedUnit = signal<MeasurementUnitDto | null>(null);
   pendingAction = signal<'create' | 'edit' | 'delete' | null>(null);
-  isActiveFilter = signal<'all' | 'active' | 'inactive'>('all'); // 'all' (null), 'active' (true), 'inactive' (false)
-
-  nameError = computed((): string | null => {
-    if (!this.nameTouched()) return null;
-    const val = this.formName().trim();
-    if (!val) return 'El nombre es obligatorio';
-    if (val.length < 1) return 'Mínimo 1 carácter';
-    if (val.length > 100) return 'Máximo 100 caracteres';
-    return null;
-  });
-
-  abbreviationError = computed((): string | null => {
-    if (!this.abbreviationTouched()) return null;
-    const val = this.formAbbreviation().trim();
-    if (!val) return 'La abreviación es obligatoria';
-    if (val.length < 1) return 'Mínimo 1 carácter';
-    if (val.length > 20) return 'Máximo 20 caracteres';
-    return null;
-  });
-
-  typeError = computed((): string | null => {
-    if (!this.typeTouched()) return null;
-    if (!this.formType()) return 'El tipo es obligatorio';
-    return null;
-  });
-
-  baseUnitIdError = computed((): string | null => {
-    if (!this.baseUnitIdTouched() || this.formIsBaseUnit()) return null;
-    if (!this.formBaseUnitId()) return 'Debe seleccionar una unidad base';
-    return null;
-  });
-
-  conversionFactorError = computed((): string | null => {
-    if (!this.conversionFactorTouched() || this.formIsBaseUnit()) return null;
-    const val = this.formConversionFactor().trim();
-    if (!val) return 'El factor de conversión es obligatorio';
-    const num = parseFloat(val);
-    if (isNaN(num) || num <= 0) return 'Debe ser un número positivo';
-    return null;
-  });
-
-  hasClientErrors = computed(() => {
-    const name = this.formName().trim();
-    if (!name || name.length < 1 || name.length > 100) return true;
-    const abbr = this.formAbbreviation().trim();
-    if (!abbr || abbr.length < 1 || abbr.length > 20) return true;
-    if (!this.formType()) return true;
-    if (!this.formIsBaseUnit()) {
-      if (!this.formBaseUnitId()) return true;
-      const convFactor = this.formConversionFactor().trim();
-      if (!convFactor || parseFloat(convFactor) <= 0) return true;
-    }
-    return false;
-  });
-
-  isFormValid = computed(() => this.formName().trim().length > 0);
-
-  selectedBaseUnitDisplay = computed(() => {
-    if (this.formIsBaseUnit()) {
-      return 'N/A - Es unidad base';
-    }
-    const detail = this.state.selectedDetail();
-    if (!detail || !detail.baseUnit) {
-      return 'No seleccionada';
-    }
-    return `${detail.baseUnit.name} (${detail.baseUnit.abbreviation})`;
-  });
-
-  formatConversionFactor(factor: number | null): string {
-    if (factor === null || factor === undefined) return '—';
-    // Convertir a string y remover ceros finales después del punto
-    return parseFloat(factor.toString()).toString();
-  }
+  isActiveFilter = signal<'all' | 'active' | 'inactive'>('all');
 
   tableColumns: DataTableColumn[] = [
     { key: 'isBaseUnit', label: 'Base', type: 'checkbox-disabled', align: 'center' },
@@ -157,18 +88,8 @@ export class UnitsComponent implements OnInit {
     effect(() => {
       if (!this.modalService.isOpen()) {
         this.state.clearErrors();
-        this.formName.set('');
-        this.formAbbreviation.set('');
-        this.formType.set(null);
-        this.formIsBaseUnit.set(false);
-        this.formBaseUnitId.set(null);
-        this.formConversionFactor.set('');
+        this.resetFormSignals();
         this.selectedUnit.set(null);
-        this.nameTouched.set(false);
-        this.abbreviationTouched.set(false);
-        this.typeTouched.set(false);
-        this.baseUnitIdTouched.set(false);
-        this.conversionFactorTouched.set(false);
       }
     });
 
@@ -182,7 +103,6 @@ export class UnitsComponent implements OnInit {
           this.formIsBaseUnit.set(detail.isBaseUnit);
           this.formBaseUnitId.set(detail.baseUnitId);
           this.formConversionFactor.set(detail.conversionFactor ? detail.conversionFactor.toString() : '');
-          // baseUnit ya viene completo en el detail, no necesita carga adicional
         }
       }
     });
@@ -194,34 +114,31 @@ export class UnitsComponent implements OnInit {
     });
   }
 
+  private resetFormSignals(): void {
+    this.formName.set('');
+    this.formAbbreviation.set('');
+    this.formType.set(null);
+    this.formIsBaseUnit.set(true);
+    this.formBaseUnitId.set(null);
+    this.formConversionFactor.set('');
+  }
+
   ngOnInit(): void {
     const filterValue = this.state.isActiveFilter();
     this.state.loadUnits(0, this.state.pageSize(), filterValue);
   }
 
-  private markAllTouched(): void {
-    this.nameTouched.set(true);
-    this.abbreviationTouched.set(true);
-    this.typeTouched.set(true);
-    if (!this.formIsBaseUnit()) {
-      this.baseUnitIdTouched.set(true);
-      this.conversionFactorTouched.set(true);
-    }
-  }
-
-  onTypeChange(): void {
-    // Solo aplica en modo creación (create modal)
-    // En edición, el tipo es readonly
-    if (this.formType() && !this.formIsBaseUnit()) {
-      this.state.loadBaseUnitsOfType(this.formType()!);
+  onTypeChange(type: UnitType | null): void {
+    this.formType.set(type);
+    if (type && !this.formIsBaseUnit()) {
+      this.state.loadBaseUnitsOfType(type);
       this.formBaseUnitId.set(null);
     }
   }
 
-  onIsBaseUnitChange(): void {
-    // Solo aplica en modo creación (create modal)
-    // En edición, isBaseUnit es readonly
-    if (this.formIsBaseUnit()) {
+  onIsBaseUnitChange(isBase: boolean): void {
+    this.formIsBaseUnit.set(isBase);
+    if (isBase) {
       this.formBaseUnitId.set(null);
       this.formConversionFactor.set('');
     } else if (this.formType()) {
@@ -230,16 +147,11 @@ export class UnitsComponent implements OnInit {
   }
 
   openCreateModal(): void {
-    this.formName.set('');
-    this.formAbbreviation.set('');
-    this.formType.set(null);
-    this.formIsBaseUnit.set(false);
-    this.formBaseUnitId.set(null);
-    this.formConversionFactor.set('');
+    this.resetFormSignals();
     this.state.clearErrors();
     this.modalService.open({
       title: 'Nueva Unidad de Medida',
-      template: this.createModalTemplate,
+      template: this.createModalComponent.templateRef,
       size: 'lg',
       onConfirm: () => this.confirmCreateUnit(),
       onCancel: () => {},
@@ -247,23 +159,24 @@ export class UnitsComponent implements OnInit {
   }
 
   confirmCreateUnit(): false | void {
-    this.markAllTouched();
+    this.createModalComponent.form.markAllTouched();
 
-    if (this.hasClientErrors()) {
+    if (this.createModalComponent.form.hasErrors()) {
       return false;
     }
 
     this.pendingAction.set('create');
+    const formValues = this.createModalComponent.form.getFormValues();
     const request: CreateMeasurementUnitRequest = {
-      name: this.formName(),
-      abbreviation: this.formAbbreviation(),
-      type: this.formType()!,
-      isBaseUnit: this.formIsBaseUnit(),
-      baseUnitId: this.formIsBaseUnit() ? undefined : this.formBaseUnitId() || undefined,
-      conversionFactor: this.formIsBaseUnit()
+      name: formValues.name,
+      abbreviation: formValues.abbreviation,
+      type: formValues.type!,
+      isBaseUnit: formValues.isBaseUnit,
+      baseUnitId: formValues.isBaseUnit ? undefined : formValues.baseUnitId || undefined,
+      conversionFactor: formValues.isBaseUnit
         ? undefined
-        : this.formConversionFactor()
-          ? parseFloat(this.formConversionFactor())
+        : formValues.conversionFactor
+          ? parseFloat(formValues.conversionFactor)
           : undefined,
     };
 
@@ -274,16 +187,16 @@ export class UnitsComponent implements OnInit {
     this.selectedUnit.set(unit);
     this.state.loadUnitById(unit.id);
     this.state.clearErrors();
-    
+
     // Si es unidad base, cargar sus unidades derivadas
     if (unit.isBaseUnit) {
       this.state.loadRelatedUnits(unit.id);
     }
-    
+
     this.modalService.open({
       title: 'Editar Unidad de Medida',
-      template: this.editModalTemplate,
-      size: 'lg',
+      template: this.editModalComponent.templateRef,
+      size: unit.isBaseUnit ? 'xl' : 'lg',
       onConfirm: () => this.confirmEditUnit(),
       onCancel: () => {},
       isLoading: () => this.state.isLoadingDetail(),
@@ -291,20 +204,21 @@ export class UnitsComponent implements OnInit {
   }
 
   confirmEditUnit(): false | void {
-    this.markAllTouched();
+    this.editModalComponent.form.markAllTouched();
 
-    if (this.hasClientErrors() || !this.selectedUnit()) {
+    if (this.editModalComponent.form.hasErrors() || !this.selectedUnit()) {
       return false;
     }
 
     this.pendingAction.set('edit');
+    const formValues = this.editModalComponent.form.getFormValues();
     const request: UpdateMeasurementUnitRequest = {
-      name: this.formName(),
-      abbreviation: this.formAbbreviation(),
-      conversionFactor: this.formIsBaseUnit()
+      name: formValues.name,
+      abbreviation: formValues.abbreviation,
+      conversionFactor: formValues.isBaseUnit
         ? undefined
-        : this.formConversionFactor()
-          ? parseFloat(this.formConversionFactor())
+        : formValues.conversionFactor
+          ? parseFloat(formValues.conversionFactor)
           : undefined,
     };
 
@@ -315,7 +229,7 @@ export class UnitsComponent implements OnInit {
     this.selectedUnit.set(unit);
     this.modalService.open({
       title: 'Eliminar Unidad de Medida',
-      template: this.deleteModalTemplate,
+      template: this.deleteModalComponent.templateRef,
       size: 'md',
       onConfirm: () => this.confirmDeleteUnit(),
       onCancel: () => {},
@@ -335,7 +249,6 @@ export class UnitsComponent implements OnInit {
     } else if (value === 'inactive') {
       isActive = false;
     }
-    // Volver a la primera página con el nuevo filtro
     this.state.loadUnits(0, this.state.pageSize(), isActive);
   }
 

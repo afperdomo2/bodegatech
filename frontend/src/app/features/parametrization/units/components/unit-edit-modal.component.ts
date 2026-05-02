@@ -45,48 +45,50 @@ import type { MeasurementUnitSummaryDto, MeasurementUnitDetail, MeasurementUnitR
             (typeChange)="typeChange.emit($event)"
             (isBaseUnitChange)="isBaseUnitChange.emit($event)" />
 
-          <!-- Read-only fields: Tipo and Es unidad base -->
-          <div class="p-4 rounded-lg bg-surface-container border border-outline-variant space-y-3">
-            <div>
-              <p class="text-xs text-on-surface-variant mb-1">Tipo</p>
-              <p class="text-sm font-medium text-on-surface">{{ getTypeLabel() }}</p>
-              <p class="text-xs text-on-surface-variant italic mt-1">Este campo no se puede modificar</p>
-            </div>
-            <div class="border-t border-outline-variant pt-3">
-              <p class="text-xs text-on-surface-variant mb-1">Es unidad base</p>
-              <div class="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  [checked]="formIsBaseUnit()"
-                  disabled
-                  class="w-4 h-4 rounded border border-outline-variant bg-surface-container" />
-                <span class="text-sm text-on-surface">{{ formIsBaseUnit() ? 'Sí' : 'No' }}</span>
-              </div>
-              <p class="text-xs text-on-surface-variant italic mt-1">Este campo no se puede modificar</p>
-            </div>
-          </div>
+           <!-- Read-only: Tipo (not editable) -->
+           <div>
+             <label class="block text-xs text-on-surface-variant mb-1">Tipo</label>
+             <input
+               type="text"
+               [value]="getTypeLabel()"
+               readonly
+               class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface text-sm cursor-not-allowed opacity-75" />
+           </div>
 
-          <!-- Conditional: Unidad derivadas table (when IS base unit) -->
-          @if (formIsBaseUnit()) {
-            <div class="max-h-[30rem] overflow-y-auto">
-              <bt-unit-related-table
-                [relatedUnits]="relatedUnits()"
-                [isLoading]="isLoadingRelated()"
-                [baseName]="selectedDetail()?.name || ''" />
-            </div>
-          }
+           <!-- Read-only: Es unidad base (not editable) -->
+           <div>
+             <label class="block text-xs text-on-surface-variant mb-1">Es unidad base</label>
+             <div class="flex items-center gap-2">
+               <input
+                 type="checkbox"
+                 [checked]="formIsBaseUnit()"
+                 disabled
+                 class="w-4 h-4 rounded border border-outline-variant bg-surface-container cursor-not-allowed" />
+               <span class="text-sm text-on-surface">{{ formIsBaseUnit() ? 'Sí' : 'No' }}</span>
+             </div>
+           </div>
 
-          <!-- Conditional: Read-only Unidad base + editable Factor (when NOT base unit) -->
-          @if (!formIsBaseUnit() && selectedDetail()) {
-            <div class="p-4 rounded-lg bg-surface-container border border-outline-variant space-y-3">
-              <div>
-                <p class="text-xs text-on-surface-variant mb-1">Unidad Base</p>
-                <p class="text-sm font-medium text-on-surface">
-                  {{ selectedDetail()?.baseUnit?.name }}
-                </p>
-              </div>
-            </div>
-          }
+           <!-- Conditional: Unidad Base read-only (when NOT base unit) -->
+           @if (!formIsBaseUnit() && selectedDetail()?.baseUnit) {
+             <div>
+               <label class="block text-xs text-on-surface-variant mb-1">Unidad Base</label>
+               <input
+                 type="text"
+                 [value]="selectedDetail()?.baseUnit?.name"
+                 readonly
+                 class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface text-sm cursor-not-allowed opacity-75" />
+             </div>
+           }
+
+           <!-- Conditional: Unidad derivadas table (when IS base unit) -->
+           @if (formIsBaseUnit()) {
+             <div class="max-h-[30rem] overflow-y-auto">
+               <bt-unit-related-table
+                 [relatedUnits]="relatedUnits()"
+                 [isLoading]="isLoadingRelated()"
+                 [baseName]="selectedDetail()?.name || ''" />
+             </div>
+           }
         }
       </div>
     </ng-template>

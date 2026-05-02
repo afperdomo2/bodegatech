@@ -717,3 +717,203 @@ confirmCreateCategory(): false | void {
 ```
 
 **Referencia:** `frontend/src/app/shared/services/toast.service.ts`, `frontend/src/app/shared/components/toast/`
+
+---
+
+## Componentización de Features — Patrón Smart/Dumb (Angular 20+)
+
+### Cuándo Componentizar
+
+Extrae componentes cuando una página crece demasiado:
+- **HTML > 300 líneas** → evalúa extraer secciones en sub-componentes
+- **TypeScript > 250 líneas** → con validadores, efectos y lógica de negocio entrelazados
+- **Múltiples ng-template** → cada modal o sección compleja merece su propio componente
+- **Ejemplo real**: `features/parametrization/units/` — la página original tenía **443 líneas de HTML + 3 modales inline** + 250 líneas de validadores. Componentizamos en 5 componentes separados.
+
+### Estructura de Carpetas
+
+```
+features/{modulo}/
+├── components/                          ← SUB-COMPONENTES
+│   ├── {entity}-form.component.ts      ← shared form, single-file
+│   ├── {entity}-create-modal.component.ts  ← modal wrapper, single-file
+│   ├── {entity}-edit-modal.component.ts    ← modal wrapper, single-file
+│   ├── {entity}-delete-modal.component.ts  ← confirmation, single-file
+│   └── {entity}-related-table.component.ts ← presentational list, single-file
+├── pages/{entity}/
+│   ├── {entity}.ts      ← container/smart (coordinación solo)
+│   ├── {entity}.html    ← layout limpio (80-100 líneas)
+│   └── {entity}.scss    ← estilos globales de página
+└── state/
+    └── {entity}-state.service.ts
+```
+
+### Single-file vs 3-archivos
+
+**Single-file (.ts con template + styles inline):**
+- ✅ Cuando el componente < ~150 líneas combinadas
+- ✅ Para componentes pequeños, reutilizables, puros
+- ✅ Ejemplos: formulario reutilizable, tabla presentacional, modal simple
+- 📌 **Siempre use esta opción para sub-componentes dentro de `components/`**
+
+**3-archivos (.ts, .html, .scss separados):**
+- ✅ Cuando el componente > ~150 líneas
+- ✅ Para `pages/` (siempre)
+- ✅ Cuando necesita archivos SCSS complejos con animaciones o estado visual
+- 📌 **Regla estricta: `pages/` y `layout/` usan SIEMPRE 3 archivos**
+
+### Patrón Smart/Dumb
+
+**Container (Smart) — la página:**
+- ✅ Único que inyecta `StateService`
+- ✅ Lee `@input()` signals del estado
+- ✅ Maneja modal open/close via `ModalService`
+- ✅ Coordina eventos de hijos (`@Output()` handlers)
+- ✅ Ejecuta `ngOnInit()`, effects globales, métodos de confirmación
+
+**Presentational (Dumb) — los componentes:**
+- ✅ Reciben datos via `@input()` signals
+- ✅ Emiten eventos via `@output()`
+- ✅ **NO inyectan el StateService** (salvo modales que inyecten `ModalService`)
+- ✅ Validan localmente con `computed()`
+- ✅ Son 100% reutilizables, testeables, sin acoplamiento
+
+### Patrón TemplateRef para Modales
+
+Los componentes de modal **exponen su `TemplateRef` via `@ViewChild`**, la página los lee y pasa al `ModalService`:
+
+**Modal Component:**
+```typescript
+export class UnitDeleteModalComponent {
+  @ViewChild('deleteModalTemplate') templateRef!: TemplateRef<unknown>;
+  
+  @input() unitName = input<string>('');
+  @input() generalError = input<string | null>(null);
+}
+```
+
+**Template:**
+```html
+<ng-template #deleteModalTemplate>
+  <p>¿Seguro de eliminar {{ unitName() }}?</p>
+</ng-template>
+```
+
+**Page Component:**
+```typescript
+@ViewChild(UnitDeleteModalComponent) deleteModalComponent!: UnitDeleteModalComponent;
+
+openDeleteModal(unit: Unit): void {
+  this.selectedUnit.set(unit);
+  this.modalService.open({
+    title: 'Eliminar',
+    template: this.deleteModalComponent.templateRef,  ← HERE
+    size: 'md',
+    onConfirm: () => this.confirmDelete(),
+  });
+}
+```
+
+### Patrón de Formularios en Componentes
+
+Formularios reutilizables con **local signals para ngModel** + **methods expuestos via `@ViewChild`**:
+
+**Form Component:**
+```typescript
+export class UnitFormComponent {
+  @input() formName = input<string>('');
+  @input() formAbbreviation = input<string>('');
+  @input() fieldErrors = input<Record<string, string>>({});
+  
+  @output() typeChange = output<UnitType | null>();
+  
+  // Local writable signals (para ngModel two-way binding)
+  protected formNameLocal = signal('');
+  protected formAbbreviationLocal = signal('');
+  
+  // Validadores computed
+  protected nameError = computed(() => { ... });
+  
+  // Public gate
+  hasErrors = computed(() => { ... });
+  
+  // Methods for parent to call
+  markAllTouched(): void { ... }
+  getFormValues() { return { name: this.formNameLocal(), ... }; }
+}
+```
+
+**Page Component — acceso a hijos:**
+```typescript
+@ViewChild(UnitFormComponent) form!: UnitFormComponent;
+
+confirmCreate(): false | void {
+  this.form.markAllTouched();
+  if (this.form.hasErrors()) return false;
+  
+  const values = this.form.getFormValues();
+  this.state.createUnit(values);
+}
+```
+
+### Flujo de Datos — Creación y Edición
+
+```
+PAGE (smart)
+  ├─ Lee state.units(), state.fieldErrors(), state.generalError()
+  ├─ Pasa inputs a CREATE-MODAL
+  │   ├─ CREATE-MODAL pasa inputs a FORM
+  │   │   └─ FORM: validación, touch signals, local state
+  │   └─ onConfirm() en página → form.markAllTouched() + form.getFormValues()
+  └─ Modal cierra al incrementar state.operationSuccess()
+```
+
+### Ejemplo Canónico — Feature Units
+
+**Componentes creados:**
+
+| Archivo | Tipo | Líneas | Propósito |
+|---------|------|--------|----------|
+| `unit-related-table.component.ts` | single-file | ~60 | Tabla read-only de unidades derivadas (presentational puro) |
+| `unit-form.component.ts` | single-file | ~130 | Formulario reutilizable create + edit, validación, touch signals |
+| `unit-delete-modal.component.ts` | single-file | ~40 | Confirmación de eliminación, expone templateRef |
+| `unit-create-modal.component.ts` | single-file | ~50 | Wrapper del modal create, incluye unit-form |
+| `unit-edit-modal.component.ts` | single-file | ~90 | Wrapper del modal edit + tabla de derivadas |
+
+**Página refactorizada:**
+
+| Archivo | Antes | Después |
+|---------|-------|---------|
+| `units.ts` | 363 líneas | 160 líneas (solo coordinación) |
+| `units.html` | 443 líneas | 82 líneas (solo layout + tabla) |
+| Lógica | 5 computed validadores + 5 efectos | 0 (en componentes) |
+
+**Beneficios:**
+- ✅ Página fácil de leer: solo coordinación de estado
+- ✅ Componentes reutilizables: `unit-form` se puede usar en otros features
+- ✅ Validación centralizada: form component maneja todo
+- ✅ Modales encapsulados: cada uno es independiente
+- ✅ Crecimiento futuro: agregar componentes sin crecer la página
+
+**Referencia completa:**
+- `features/parametrization/units/components/` — todos los componentes
+- `features/parametrization/units/pages/units/` — página refactorizada
+- `features/parametrization/units/state/unit-state.service.ts` — state service sin cambios
+
+### Checklista para Futuros Features
+
+Cuando crees un nuevo feature (ej: Products, Inventory, Reports):
+
+1. **Crea la página + state** normalmente
+2. **Si HTML crece > 300 líneas** → extrae:
+   - Formulario compartido → `{entity}-form.component.ts` (single-file)
+   - Cada modal → `{entity}-{action}-modal.component.ts` (single-file)
+   - Tablas/listas complejas → `{entity}-{section}-table.component.ts` (single-file)
+3. **La página queda: solo layout + coordinación**
+4. **Valida el tamaño final:**
+   - HTML ~ 80-120 líneas ✅
+   - TS ~ 150-200 líneas ✅
+5. **Verifica compilación:** `pnpm build` sin errores
+6. **Aplica el mismo patrón Smart/Dumb en otros features** para consistencia
+
+---

@@ -7,10 +7,10 @@ import type { MeasurementUnitRelatedDto } from '../../../../core/models/response
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="rounded-lg border border-outline-variant bg-surface-container overflow-hidden">
+    <div class="rounded-lg border border-outline-variant overflow-hidden">
       <!-- Header -->
       <div class="px-4 py-3 flex items-center gap-2 border-b border-outline-variant bg-surface">
-        <span class="material-symbols-outlined text-on-surface-variant">conversion_path</span>
+        <span class="material-symbols-outlined text-on-surface-variant text-sm">conversion_path</span>
         <h3 class="text-sm font-semibold text-on-surface">Unidades derivadas</h3>
       </div>
 
@@ -25,34 +25,39 @@ import type { MeasurementUnitRelatedDto } from '../../../../core/models/response
             </div>
           </div>
         } @else if (relatedUnits().length > 0) {
-          <!-- Table -->
-          <div class="space-y-2">
-            @for (unit of relatedUnits(); track unit.id; let isEven = $even) {
-              <div
-                [class]="'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ' +
-                         (isEven ? 'bg-surface-container-high' : 'bg-surface-container')">
-                <!-- Base Unit (readonly, grayed) -->
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs text-on-surface-variant truncate">{{ baseName() }}</p>
-                </div>
+          <!-- Datagrid with fixed columns and borders -->
+          <div class="grid gap-0" style="grid-template-columns: 1fr auto 1fr auto;">
+            <!-- Header Row -->
+            <div class="text-xs font-semibold text-on-surface-variant py-2 px-2 border-b border-outline-variant/50">Unidad Base</div>
+            <div class="border-b border-outline-variant/50"></div>
+            <div class="text-xs font-semibold text-on-surface-variant py-2 px-2 border-b border-outline-variant/50">Unidad Derivada</div>
+            <div class="text-xs font-semibold text-on-surface-variant py-2 px-2 text-right border-b border-outline-variant/50">Factor</div>
 
-                <!-- Arrow -->
-                <span class="material-symbols-outlined text-on-surface-variant flex-shrink-0">
+            <!-- Data Rows -->
+            @for (unit of relatedUnits(); track unit.id; let isLast = $last) {
+              <!-- Base Unit Name -->
+              <div [class]="'text-xs text-on-surface-variant py-2 px-2 truncate' + (!isLast ? ' border-b border-outline-variant/50' : '')">
+                {{ baseName() }}
+              </div>
+
+              <!-- Arrow -->
+              <div [class]="'flex items-center justify-center py-2 px-1' + (!isLast ? ' border-b border-outline-variant/50' : '')">
+                <span class="material-symbols-outlined text-on-surface-variant text-sm">
                   trending_flat
                 </span>
+              </div>
 
-                <!-- Derived Unit -->
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-on-surface truncate">{{ unit.name }}</p>
-                  <p class="text-xs text-on-surface-variant">{{ unit.abbreviation }}</p>
-                </div>
+              <!-- Derived Unit (Name + Abbreviation) -->
+              <div [class]="'py-2 px-2 min-w-0' + (!isLast ? ' border-b border-outline-variant/50' : '')">
+                <p class="text-sm font-medium text-on-surface truncate">{{ unit.name }}</p>
+                <p class="text-xs text-on-surface-variant truncate">{{ unit.abbreviation }}</p>
+              </div>
 
-                <!-- Conversion Factor (monospace) -->
-                <div class="flex-shrink-0 text-right">
-                  <p class="font-mono text-sm text-primary font-semibold">
-                    {{ formatFactor(unit.conversionFactor) }}
-                  </p>
-                </div>
+              <!-- Conversion Factor -->
+              <div [class]="'text-right py-2 px-2' + (!isLast ? ' border-b border-outline-variant/50' : '')">
+                <p class="font-mono text-sm text-primary font-semibold whitespace-nowrap">
+                  {{ formatFactor(unit.conversionFactor) }}
+                </p>
               </div>
             }
           </div>
