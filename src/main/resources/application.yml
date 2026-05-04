@@ -49,3 +49,11 @@ app:
     allowed-headers: ${CORS_ALLOWED_HEADERS:*}
     allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
     max-age: ${CORS_MAX_AGE:3600}
+  aws:
+    region: ${AWS_REGION:us-east-1}
+    access-key-id: ${AWS_ACCESS_KEY_ID:}
+    secret-access-key: ${AWS_SECRET_ACCESS_KEY:}
+    s3:
+      bucket-name: ${AWS_S3_BUCKET_NAME:bodegatech-uploads}
+      public-url: ${AWS_S3_PUBLIC_URL:https://bodegatech-uploads.s3.amazonaws.com}
+      presigned-url-expiration-minutes: ${AWS_S3_PRESIGNED_EXPIRATION:15}

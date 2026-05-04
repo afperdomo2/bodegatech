@@ -38,6 +38,10 @@ dependencies {
 	implementation 'org.mapstruct:mapstruct:1.6.0'
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.0'
 
+	// AWS SDK v2
+	implementation platform('software.amazon.awssdk:bom:2.25.0')
+	implementation 'software.amazon.awssdk:s3'
+
 	// Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'

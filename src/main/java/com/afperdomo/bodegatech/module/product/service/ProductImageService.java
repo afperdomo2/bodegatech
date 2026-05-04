@@ -2,6 +2,7 @@ package com.afperdomo.bodegatech.module.product.service;
 
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
 import com.afperdomo.bodegatech.common.util.S3PresignedUrlGenerator;
+import com.afperdomo.bodegatech.config.AwsProperties;
 import com.afperdomo.bodegatech.module.product.dto.PresignedUrlDto;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductImageDto;
 import com.afperdomo.bodegatech.module.product.entity.Product;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +29,8 @@ public class ProductImageService {
     private final ProductImageRepository productImageRepository;
     private final ProductRepository productRepository;
     private final S3PresignedUrlGenerator s3PresignedUrlGenerator;
+    private final S3Client s3Client;
+    private final AwsProperties awsProperties;
 
     /**
      * Genera URLs pre-firmadas para que el cliente suba imágenes directamente a S3.
@@ -91,7 +96,7 @@ public class ProductImageService {
 
     /**
      * Elimina una imagen de un producto.
-     * Elimina el registro en la BD. La eliminación en S3 queda pendiente para integración futura.
+     * Elimina el objeto de S3 y el registro de la BD.
      *
      * @param productId ID del producto propietario de la imagen
      * @param imageId ID de la imagen a eliminar
@@ -102,22 +107,33 @@ public class ProductImageService {
         ProductImage productImage = productImageRepository.findByIdAndProductId(imageId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Imagen de producto", imageId));
 
-        productImageRepository.delete(productImage);
+        // Eliminar objeto de S3
+        try {
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(awsProperties.getS3().getBucketName())
+                    .key(productImage.getFileKey())
+                    .build();
 
+            s3Client.deleteObject(deleteRequest);
+            log.debug("Objeto eliminado de S3. FileKey: {}", productImage.getFileKey());
+        } catch (Exception e) {
+            log.warn("Error al eliminar objeto de S3. FileKey: {}. Error: {}", productImage.getFileKey(), e.getMessage());
+        }
+
+        // Eliminar registro de la BD
+        productImageRepository.delete(productImage);
         log.info("Imagen {} eliminada de la BD.", imageId);
-        log.warn("TODO: Eliminar imagen de AWS S3. FileKey: {}", productImage.getFileKey());
     }
 
     /**
      * Helper privado para construir URL pública desde un fileKey.
-     * Por ahora genera una URL de CloudFront hardcodeada.
+     * Usa la URL pública configurada de S3/CloudFront.
      *
-     * @param fileKey Clave del archivo en S3 (ej: "products/123/imagen.jpg")
+     * @param fileKey Clave del archivo en S3 (ej: "products/123/uuid_imagen.jpg")
      * @return URL pública del objeto en S3/CloudFront
      */
     private String constructPublicUrl(String fileKey) {
-        // TODO: Usar CloudFront o URL pública de S3 configurada
-        return "https://cdn.example.com/" + fileKey;
+        return awsProperties.getS3().getPublicUrl() + "/" + fileKey;
     }
 
     /**

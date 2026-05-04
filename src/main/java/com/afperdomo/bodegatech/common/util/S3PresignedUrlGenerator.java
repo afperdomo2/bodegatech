@@ -1,43 +1,52 @@
 package com.afperdomo.bodegatech.common.util;
 
+import com.afperdomo.bodegatech.config.AwsProperties;
 import com.afperdomo.bodegatech.module.product.dto.PresignedUrlDto;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
+import java.time.Duration;
 import java.util.UUID;
 
-/**
- * Generador de URLs pre-firmadas para S3.
- * Actualmente genera URLs hardcodeadas como placeholders.
- * 
- * TODO: Integrar AWS S3 SDK (software.amazon.awssdk:s3) para generar URLs pre-firmadas reales
- * utilizando software.amazon.awssdk.s3.presigner.S3Presigner
- */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class S3PresignedUrlGenerator {
 
-    private static final String S3_BUCKET_URL = "https://bodegatech-uploads.s3.amazonaws.com";
+    private final S3Presigner s3Presigner;
+    private final AwsProperties awsProperties;
 
-    /**
-     * Genera una URL pre-firmada para carga de imagen en S3.
-     * 
-     * @param productId ID del producto
-     * @param fileName Nombre original del archivo
-     * @return DTO con fileKey y uploadUrl pre-firmada
-     */
     public PresignedUrlDto generatePresignedUrl(UUID productId, String fileName) {
         log.debug("Generando URL pre-firmada para producto {} - archivo {}", productId, fileName);
 
-        // Construir fileKey: "products/{productId}/{fileName}"
-        String fileKey = String.format("products/%s/%s", productId, fileName);
+        // Construir fileKey con UUID para evitar colisiones: "products/{productId}/{uuid}_{fileName}"
+        String fileKey = String.format("products/%s/%s_%s", productId, UUID.randomUUID(), fileName);
 
-        // TODO: Reemplazar con URL real de S3 pre-firmada (válida por 15 minutos)
-        String uploadUrl = String.format(
-                "%s/%s?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=PLACEHOLDER&X-Amz-Date=PLACEHOLDER&X-Amz-Expires=900&X-Amz-Signature=PLACEHOLDER",
-                S3_BUCKET_URL,
-                fileKey
-        );
+        // Obtener expiración desde configuración (default: 15 minutos)
+        Integer expirationMinutes = awsProperties.getS3().getPresignedUrlExpirationMinutes();
+        Duration expiration = Duration.ofMinutes(expirationMinutes != null ? expirationMinutes : 15);
+
+        // Construir solicitud de presigned PUT
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(awsProperties.getS3().getBucketName())
+                .key(fileKey)
+                .build();
+
+        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                .signatureDuration(expiration)
+                .putObjectRequest(putObjectRequest)
+                .build();
+
+        // Generar URL pre-firmada
+        PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
+        String uploadUrl = presignedRequest.url().toString();
+
+        log.debug("URL pre-firmada generada exitosamente. FileKey: {}, Expiración: {} minutos", fileKey, expirationMinutes);
 
         return PresignedUrlDto.builder()
                 .fileName(fileName)
