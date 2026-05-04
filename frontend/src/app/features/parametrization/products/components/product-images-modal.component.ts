@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ViewChild,
   inject,
@@ -54,7 +55,7 @@ interface ImageUploadItem {
   selector: 'bt-product-images-modal',
   standalone: true,
   imports: [CommonModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.Default,
   template: `
     <ng-template #imagesModalTemplate>
       <div class="space-y-6">
@@ -145,26 +146,16 @@ interface ImageUploadItem {
                     class="h-32 w-full object-cover"
                   />
 
-                  <!-- Overlay por estado -->
-                  <div class="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <!-- Overlay por estado (solo uploading y error) -->
+                  <div class="absolute inset-0 flex items-center justify-center">
                     @switch (item.status) {
                       <!-- Uploading: Spinner + Progress -->
                       @case ('uploading') {
-                        <div class="flex flex-col items-center gap-2">
+                        <div class="flex flex-col items-center gap-2 bg-black/50 rounded">
                           <div class="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                           <span class="text-xs font-medium text-white">
                             {{ item.uploadProgress }}%
                           </span>
-                        </div>
-                      }
-                      <!-- Success: Green checkmark -->
-                      @case ('success') {
-                        <div class="flex items-center justify-center">
-                          <div
-                            class="flex h-12 w-12 items-center justify-center rounded-full bg-success/90"
-                          >
-                            <span class="text-xl">✓</span>
-                          </div>
                         </div>
                       }
                       <!-- Error: Red X -->
@@ -181,38 +172,19 @@ interface ImageUploadItem {
                   </div>
 
                   <!-- Footer: Filename + Actions -->
-                  <div class="w-full border-t border-surface-dim/50 bg-surface-container p-2 text-center">
-                    <p class="mb-1 truncate text-xs font-medium text-text-primary">
+                  <div class="w-full border-t border-surface-dim/50 bg-surface-container p-2">
+                    <!-- Filename -->
+                    <p class="mb-2 truncate text-xs font-medium text-text-primary text-center">
                       {{ item.file?.name ?? 'Imagen guardada' }}
                     </p>
 
                     <!-- Error message (if applicable) -->
                     @if (item.status === 'error' && item.errorMessage) {
-                      <p class="mb-1 text-xs text-error">
+                      <p class="mb-2 text-xs text-error text-center line-clamp-2">
                         {{ item.errorMessage }}
                       </p>
                     }
 
-                    <!-- Actions -->
-                    <div class="flex items-center justify-center gap-2">
-                      @if (item.status === 'error') {
-                        <button
-                          type="button"
-                          class="text-xs font-medium text-primary hover:underline"
-                          (click)="retryUpload(item)"
-                        >
-                          Reintentar
-                        </button>
-                      }
-
-                      <button
-                        type="button"
-                        class="text-xs font-medium text-error hover:underline"
-                        (click)="removeImage(item)"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
                   </div>
                 </div>
               }
@@ -238,6 +210,7 @@ export class ProductImagesModalComponent {
   private imageService = inject(ProductImageService);
   private productService = inject(ProductService);
   private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   // Inputs
   productId = input.required<string>();
@@ -247,6 +220,8 @@ export class ProductImagesModalComponent {
   uploadItems = signal<ImageUploadItem[]>([]);
   isDragOver = signal(false);
   isLoadingExistingImages = signal(false);
+  itemPendingDelete = signal<string | null>(null); // previewUrl del item siendo eliminado
+  previewItem = signal<ImageUploadItem | null>(null); // item en vista previa
 
   // Computed
   isAtLimit = computed(() => this.uploadItems().length >= 10);
@@ -384,6 +359,7 @@ export class ProductImagesModalComponent {
     // En este punto, TypeScript sabe que item.file es File (no undefined)
     const file = item.file;
     const productId = this.productId();
+    const itemPreviewUrl = item.previewUrl; // Usar previewUrl como identificador único
 
     // 1. Generar presigned URL
     this.imageService
@@ -392,18 +368,17 @@ export class ProductImagesModalComponent {
         next: (response) => {
           const presignedData = response.data[0];
           if (!presignedData) {
-            this.updateItemStatus(item, 'error', 'No se recibió URL pre-firmada');
+            this.updateItemStatusByPreviewUrl(itemPreviewUrl, 'error', 'No se recibió URL pre-firmada');
             return;
           }
 
           // Guardar fileKey para confirmar después
-          item.fileKey = presignedData.fileKey;
           const uploadUrl = presignedData.uploadUrl;
 
           // 2. Subir a S3
           this.uploadItems.update((items) =>
             items.map((i) =>
-              i === item ? { ...i, status: 'uploading' as const } : i
+              i.previewUrl === itemPreviewUrl ? { ...i, status: 'uploading' as const } : i
             )
           );
 
@@ -414,14 +389,14 @@ export class ProductImagesModalComponent {
                 const progress = Math.round((event.loaded / event.total) * 100);
                 this.uploadItems.update((items) =>
                   items.map((i) =>
-                    i === item ? { ...i, uploadProgress: progress } : i
+                    i.previewUrl === itemPreviewUrl ? { ...i, uploadProgress: progress } : i
                   )
                 );
               } else if (event.type === HttpEventType.Response) {
                 // S3 upload exitoso → confirmar en BD
                 // AWS S3 devuelve 200 OK sin body — HttpEventType.Response se emite al completar
                 if (presignedData.fileKey) {
-                  this.confirmUploadInBackend(item, presignedData.fileKey);
+                  this.confirmUploadInBackend(itemPreviewUrl, presignedData.fileKey);
                 }
               }
             },
@@ -430,7 +405,7 @@ export class ProductImagesModalComponent {
                 error instanceof HttpErrorResponse
                   ? error.message
                   : 'Error en subida a S3';
-              this.updateItemStatus(item, 'error', msg);
+              this.updateItemStatusByPreviewUrl(itemPreviewUrl, 'error', msg);
             },
           });
         },
@@ -439,7 +414,7 @@ export class ProductImagesModalComponent {
             error instanceof HttpErrorResponse
               ? error.error?.detail || error.message
               : 'Error al generar URL pre-firmada';
-          this.updateItemStatus(item, 'error', msg);
+          this.updateItemStatusByPreviewUrl(itemPreviewUrl, 'error', msg);
         },
       });
   }
@@ -448,7 +423,7 @@ export class ProductImagesModalComponent {
    * Confirmar la subida en el backend (crear registro en BD).
    */
   private confirmUploadInBackend(
-    item: ImageUploadItem,
+    itemPreviewUrl: string,
     fileKey: string
   ): void {
     const productId = this.productId();
@@ -457,11 +432,16 @@ export class ProductImagesModalComponent {
       next: (response) => {
         const imageDto = response.data[0];
         if (imageDto) {
-          item.imageId = imageDto.id;
-          this.updateItemStatus(item, 'success');
-          if (item.file) {
-            this.toast.success(`${item.file.name} subida exitosamente`);
-          }
+          this.uploadItems.update((items) =>
+            items.map((i) =>
+              i.previewUrl === itemPreviewUrl
+                ? { ...i, imageId: imageDto.id, fileKey }
+                : i
+            )
+          );
+          this.updateItemStatusByPreviewUrl(itemPreviewUrl, 'success');
+          this.getItemByPreviewUrl(itemPreviewUrl)?.file &&
+            this.toast.success(`${this.getItemByPreviewUrl(itemPreviewUrl)?.file?.name} subida exitosamente`);
         }
       },
       error: (error) => {
@@ -469,9 +449,40 @@ export class ProductImagesModalComponent {
           error instanceof HttpErrorResponse
             ? error.error?.detail || error.message
             : 'Error al confirmar imagen';
-        this.updateItemStatus(item, 'error', msg);
+        this.updateItemStatusByPreviewUrl(itemPreviewUrl, 'error', msg);
       },
     });
+  }
+
+  /**
+   * Actualizar el estado de un item de imagen por previewUrl.
+   */
+  private updateItemStatusByPreviewUrl(
+    previewUrl: string,
+    status: 'success' | 'error',
+    errorMessage?: string
+  ): void {
+    this.uploadItems.update((items) =>
+      items.map((i) =>
+        i.previewUrl === previewUrl
+          ? {
+              ...i,
+              status,
+              errorMessage:
+                errorMessage ||
+                (status === 'success' ? undefined : 'Error desconocido'),
+              uploadProgress: status === 'success' ? 100 : i.uploadProgress,
+            }
+          : i
+      )
+    );
+  }
+
+  /**
+   * Obtener un item por previewUrl.
+   */
+  private getItemByPreviewUrl(previewUrl: string): ImageUploadItem | undefined {
+    return this.uploadItems().find((i) => i.previewUrl === previewUrl);
   }
 
   /**
@@ -504,12 +515,45 @@ export class ProductImagesModalComponent {
   retryUpload(item: ImageUploadItem): void {
     this.uploadItems.update((items) =>
       items.map((i) =>
-        i === item
+        i.previewUrl === item.previewUrl
           ? { ...i, status: 'pending' as const, uploadProgress: 0 }
           : i
       )
     );
     this.uploadImage(item);
+  }
+
+  /**
+   * Verificar si un item está pendiente de eliminación.
+   * Método helper para el template con OnPush change detection.
+   */
+  isItemPendingDelete(previewUrl: string): boolean {
+    return this.itemPendingDelete() === previewUrl;
+  }
+
+  /**
+   * Abrir vista previa de una imagen (lightbox).
+   * Dispara change detection para asegurar que el lightbox sea visible.
+   */
+  openPreview(item: ImageUploadItem): void {
+    this.previewItem.set(item);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Mostrar confirmación inline para eliminar una imagen.
+   */
+  confirmDeleteImage(item: ImageUploadItem): void {
+    this.itemPendingDelete.set(item.previewUrl);
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Cancelar la eliminación.
+   */
+  cancelDeleteImage(): void {
+    this.itemPendingDelete.set(null);
+    this.cdr.markForCheck();
   }
 
   /**
@@ -524,10 +568,11 @@ export class ProductImagesModalComponent {
       this.imageService.deleteImage(productId, item.imageId).subscribe({
         next: () => {
           this.uploadItems.update((items) =>
-            items.filter((i) => i !== item)
+            items.filter((i) => i.previewUrl !== item.previewUrl)
           );
           URL.revokeObjectURL(item.previewUrl);
           this.toast.success(`Imagen eliminada`);
+          this.itemPendingDelete.set(null);
         },
         error: (error) => {
           const msg =
@@ -540,9 +585,10 @@ export class ProductImagesModalComponent {
     } else {
       // Solo eliminar de la lista local
       this.uploadItems.update((items) =>
-        items.filter((i) => i !== item)
+        items.filter((i) => i.previewUrl !== item.previewUrl)
       );
       URL.revokeObjectURL(item.previewUrl);
+      this.itemPendingDelete.set(null);
     }
   }
 

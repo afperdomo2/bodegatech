@@ -3,6 +3,7 @@
 ## Reglas críticas (leer siempre)
 
 - **NO hacer commits automáticos.** Preparar cambios y dejar que el usuario decida.
+- **SOLO comentarios muy necesarios en el código.** Solo agregar comentarios a código complejo que se considere necesario
 - **BD requerida antes de cualquier comando backend:** `docker-compose up -d`
 - **Frontend:** todos los comandos npm/pnpm se ejecutan **dentro de `frontend/`**, no desde la raíz.
 - `pnpm build` ejecuta `ng lint && ng build` — el lint falla el build si hay errores.

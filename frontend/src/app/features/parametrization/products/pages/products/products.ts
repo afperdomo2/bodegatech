@@ -265,6 +265,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       title: `Imágenes: ${product.name}`,
       template: this.imagesModalComponent.imagesModalTemplate,
       size: 'xl',
+      hideFooter: true,
       onCancel: () => {},
     });
   }
