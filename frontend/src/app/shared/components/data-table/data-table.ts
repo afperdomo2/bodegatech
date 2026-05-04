@@ -6,7 +6,7 @@ export interface DataTableColumn {
   label: string;
   width?: string;
   align?: 'left' | 'center' | 'right';
-  type?: 'text' | 'number' | 'status' | 'badge' | 'date' | 'actions' | 'name-with-badge' | 'checkbox-disabled';
+  type?: 'text' | 'number' | 'status' | 'badge' | 'date' | 'actions' | 'name-with-badge' | 'checkbox-disabled' | 'image';
   formatter?: (value: unknown) => string;
   badgeKey?: string;
   badgeLabel?: string;

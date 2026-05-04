@@ -51,6 +51,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   private _editPending = signal(false);
 
   tableColumns: DataTableColumn[] = [
+    { key: 'mainImageUrl', label: '', type: 'image', align: 'center', width: '60px' },
     { key: 'name', label: 'Nombre', type: 'text', align: 'left' },
     { key: 'sku', label: 'SKU', type: 'text', align: 'center' },
     { key: 'salePrice', label: 'Precio de Venta', type: 'number', align: 'right' },
