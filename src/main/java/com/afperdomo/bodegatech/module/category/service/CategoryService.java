@@ -79,7 +79,7 @@ public class CategoryService {
     public CategoryDto updateCategory(UUID id, UpdateCategoryRequest request) {
         log.info("Actualizando categoría con ID: {}", id);
 
-        Category category = categoryRepository.findByIdActive(id)
+        Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría", id));
 
         // Si el nombre cambió, validar que sea único

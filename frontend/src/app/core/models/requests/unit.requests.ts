@@ -16,4 +16,5 @@ export interface UpdateMeasurementUnitRequest {
   isBaseUnit?: boolean;
   baseUnitId?: string | null;
   conversionFactor?: number | null;
+  isActive?: boolean;
 }

@@ -109,7 +109,7 @@ public class ProductService {
     public ProductDto updateProduct(UUID id, UpdateProductRequest request) {
         log.info("Actualizando producto con ID: {}", id);
 
-        Product product = productRepository.findByIdActive(id)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
 
         // Si la categoría cambió, validar que exista
@@ -166,6 +166,11 @@ public class ProductService {
         // Asignar la nueva unidad si cambió
         if (request.getUnitId() != null) {
             product.setUnit(newUnit);
+        }
+
+        // Actualizar isActive si se proporciona
+        if (request.getIsActive() != null) {
+            product.setIsActive(request.getIsActive());
         }
 
         productMapper.updateEntity(request, product);

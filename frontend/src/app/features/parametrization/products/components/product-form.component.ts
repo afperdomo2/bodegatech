@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToggleSwitchComponent } from '../../../../core/components/toggle-switch.component';
 import type { CategorySummaryDto } from '../../../../core/models/responses/category.responses';
 import type { MeasurementUnitSummaryDto } from '../../../../core/models/responses/unit.responses';
 import type { ProductDetail } from '../../../../core/models/responses/product.responses';
@@ -41,7 +42,7 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
 @Component({
   selector: 'bt-product-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ToggleSwitchComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="space-y-4">
@@ -303,6 +304,15 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             El stock se gestiona a través de movimientos de inventario
           </p>
         </div>
+
+        <!-- Toggle isActive (solo en edición) -->
+        <div class="pt-2">
+          <bt-toggle-switch
+            [checked]="isActive()"
+            (checkedChange)="isActive.set($event)"
+            label="Producto activo"
+          />
+        </div>
       }
     </div>
   `,
@@ -340,6 +350,7 @@ export class ProductFormComponent {
   maxStock = signal<number | null>(null);
   sku = signal('');
   barcode = signal<string | null>(null);
+  isActive = signal(true);
 
   // Computed
   currentStock = computed(() => this.detailedProduct()?.stock ?? 0);
@@ -364,6 +375,14 @@ export class ProductFormComponent {
         this.barcode.set(values.barcode);
       }
     });
+
+    // Sincronizar isActive desde detailedProduct (edición)
+    effect(() => {
+      const product = this.detailedProduct();
+      if (product && this.isEditMode()) {
+        this.isActive.set(product.isActive);
+      }
+    });
   }
 
   // Métodos públicos (API)
@@ -384,6 +403,7 @@ export class ProductFormComponent {
       maxStock: this.maxStock() ?? undefined,
       sku: this.sku(),
       barcode: this.barcode() || undefined,
+      ...(this.isEditMode() && { isActive: this.isActive() }),
     };
   }
 

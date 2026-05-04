@@ -52,4 +52,7 @@ public class UpdateMeasurementUnitRequest {
         example = "1000.0000000000"
     )
     private BigDecimal conversionFactor;
+
+    @Schema(description = "Estado activo de la unidad (opcional)", example = "true", nullable = true)
+    private Boolean isActive;
 }

@@ -204,14 +204,23 @@
         }
       </div>
 
-      @if (state.generalError()) {
-        <div class="p-3 bg-error/10 border border-error rounded-lg">
-          <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
-        </div>
-      }
-    </form>
-  }
-</ng-template>
+       @if (state.generalError()) {
+         <div class="p-3 bg-error/10 border border-error rounded-lg">
+           <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
+         </div>
+       }
+
+       <!-- Toggle isActive -->
+       <div class="pt-2">
+         <bt-toggle-switch
+           [checked]="editingIsActive()"
+           (checkedChange)="editingIsActive.set($event)"
+           label="Categoría activa"
+         />
+       </div>
+     </form>
+   }
+ </ng-template>
 
 <!-- Delete Modal Template -->
 <ng-template #deleteModalTemplate>

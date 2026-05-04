@@ -1,14 +1,15 @@
-import { Component, input, output, ViewChild, type TemplateRef, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, input, output, ViewChild, type TemplateRef, ChangeDetectionStrategy, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UnitFormComponent } from './unit-form.component';
 import { UnitRelatedTableComponent } from './unit-related-table.component';
+import { ToggleSwitchComponent } from '../../../../core/components/toggle-switch.component';
 import { type UnitType } from '../../../../core/constants/unit-type.constants';
 import type { MeasurementUnitSummaryDto, MeasurementUnitDetail, MeasurementUnitRelatedDto } from '../../../../core/models/responses/unit.responses';
 
 @Component({
   selector: 'bt-unit-edit-modal',
   standalone: true,
-  imports: [CommonModule, UnitFormComponent, UnitRelatedTableComponent],
+  imports: [CommonModule, UnitFormComponent, UnitRelatedTableComponent, ToggleSwitchComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-template #editModalTemplate>
@@ -80,19 +81,28 @@ import type { MeasurementUnitSummaryDto, MeasurementUnitDetail, MeasurementUnitR
              </div>
            }
 
-           <!-- Conditional: Unidad derivadas table (when IS base unit) -->
-           @if (formIsBaseUnit()) {
-             <div class="max-h-[30rem] overflow-y-auto">
-               <bt-unit-related-table
-                 [relatedUnits]="relatedUnits()"
-                 [isLoading]="isLoadingRelated()"
-                 [baseName]="selectedDetail()?.name || ''" />
-             </div>
-           }
-        }
-      </div>
-    </ng-template>
-  `,
+            <!-- Conditional: Unidad derivadas table (when IS base unit) -->
+            @if (formIsBaseUnit()) {
+              <div class="max-h-[30rem] overflow-y-auto">
+                <bt-unit-related-table
+                  [relatedUnits]="relatedUnits()"
+                  [isLoading]="isLoadingRelated()"
+                  [baseName]="selectedDetail()?.name || ''" />
+              </div>
+            }
+
+            <!-- Toggle isActive -->
+            <div class="pt-2">
+              <bt-toggle-switch
+                [checked]="isActive()"
+                (checkedChange)="isActive.set($event)"
+                label="Unidad activa"
+              />
+            </div>
+         }
+       </div>
+     </ng-template>
+   `,
   styles: [`
     :host {
       display: none;
@@ -124,6 +134,9 @@ export class UnitEditModalComponent {
   typeChange = output<UnitType | null>();
   isBaseUnitChange = output<boolean>();
 
+  // Local signals
+  isActive = signal(true);
+
   // Computed
   private unitTypeMap = computed(() => {
     const detail = this.selectedDetail();
@@ -142,5 +155,22 @@ export class UnitEditModalComponent {
 
   getTypeLabel(): string {
     return this.unitTypeMap();
+  }
+
+  /**
+   * Obtener valor isActive actual.
+   */
+  getIsActive(): boolean {
+    return this.isActive();
+  }
+
+  constructor() {
+    // Sincronizar isActive desde selectedDetail
+    effect(() => {
+      const detail = this.selectedDetail();
+      if (detail) {
+        this.isActive.set(detail.isActive);
+      }
+    });
   }
 }

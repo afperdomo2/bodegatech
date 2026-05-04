@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, t
 import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../../core/models/category.models';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
+import { ToggleSwitchComponent } from '../../../../../core/components/toggle-switch.component';
 import { ModalService } from '../../../../../shared/services/modal.service';
 import { ToastService } from '../../../../../shared/services/toast.service';
 import { CategoryStateService } from '../../state/category-state.service';
@@ -15,6 +16,7 @@ import { CategoryStateService } from '../../state/category-state.service';
     CommonModule,
     PageHeader,
     DataTable,
+    ToggleSwitchComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './categories.html',
@@ -31,6 +33,7 @@ export class CategoriesComponent implements OnInit {
 
   formName = signal('');
   formDescription = signal('');
+  editingIsActive = signal(true);
   nameTouched = signal(false);
   descriptionTouched = signal(false);
   selectedCategory = signal<CategoryDto | null>(null);
@@ -94,6 +97,7 @@ export class CategoriesComponent implements OnInit {
         this.state.clearErrors();
         this.formName.set('');
         this.formDescription.set('');
+        this.editingIsActive.set(true);
         this.selectedCategory.set(null);
         this.nameTouched.set(false);
         this.descriptionTouched.set(false);
@@ -106,6 +110,7 @@ export class CategoriesComponent implements OnInit {
         if (detail) {
           this.formName.set(detail.name);
           this.formDescription.set(detail.description || '');
+          this.editingIsActive.set(detail.isActive);
         }
       }
     });
@@ -178,6 +183,7 @@ export class CategoriesComponent implements OnInit {
     const request: UpdateCategoryRequest = {
       name: this.formName(),
       description: this.formDescription() || undefined,
+      isActive: this.editingIsActive(),
     };
 
     this.state.updateCategory(this.selectedCategory()!.id, request);

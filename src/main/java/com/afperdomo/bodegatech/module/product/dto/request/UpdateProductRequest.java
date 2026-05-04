@@ -63,4 +63,7 @@ public class UpdateProductRequest {
 
     @Schema(description = "Código de barras (opcional, máx 100 caracteres)", example = "7501234567890", nullable = true)
     private String barcode;
+
+    @Schema(description = "Estado activo del producto (opcional)", example = "true", nullable = true)
+    private Boolean isActive;
 }

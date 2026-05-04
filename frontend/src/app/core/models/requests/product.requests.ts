@@ -28,4 +28,5 @@ export interface UpdateProductRequest {
   minStock?: number;       // opcional, >= 0 si se proporciona
   maxStock?: number;       // opcional, >= 0 si se proporciona
   barcode?: string;        // opcional, único si se proporciona
+  isActive?: boolean;      // opcional
 }

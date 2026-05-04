@@ -167,9 +167,14 @@ public class MeasurementUnitService {
         }
 
          // Validar que si conversionFactor se actualiza, la unidad no sea base
-         if (request.getConversionFactor() != null && Boolean.TRUE.equals(unit.getIsBaseUnit())) {
-             throw new BusinessException("Una unidad base no puede tener conversionFactor");
-         }
+          if (request.getConversionFactor() != null && Boolean.TRUE.equals(unit.getIsBaseUnit())) {
+              throw new BusinessException("Una unidad base no puede tener conversionFactor");
+          }
+
+        // Actualizar isActive si se proporciona
+        if (request.getIsActive() != null) {
+            unit.setIsActive(request.getIsActive());
+        }
 
         // Aplicar actualización parcial
         unitMapper.updateEntity(request, unit);
