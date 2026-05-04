@@ -51,7 +51,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     { key: 'name', label: 'Nombre', type: 'text', align: 'left' },
     { key: 'sku', label: 'SKU', type: 'text', align: 'center' },
     { key: 'salePrice', label: 'Precio de Venta', type: 'number', align: 'right' },
-    { key: 'stock', label: 'Stock', type: 'number', align: 'center' },
+    { key: 'stock', label: 'Stock', type: 'text', align: 'center', formatter: (val: unknown) => val != null ? String(val) : '-' },
     { key: 'unitName', label: 'Unidad', type: 'text', align: 'center' },
     { key: 'isActive', label: 'Estado', type: 'badge', align: 'center' },
     { key: 'createdAt', label: 'Creado', type: 'date', align: 'center' },

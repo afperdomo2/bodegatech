@@ -236,58 +236,52 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
         </div>
       </div>
 
-      <!-- SKU & Barcode -->
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-1">
-            SKU
-            @if (isEditMode()) {
-              <span class="text-on-surface-variant">(lectura)</span>
-            } @else {
-              <span class="text-error">*</span>
-            }
-          </label>
-          <input
-            type="text"
-            [(ngModel)]="sku"
-            (change)="onFieldChange('sku')"
-            [readonly]="isEditMode()"
-            placeholder="Ej: ARZ-INT-001"
-            maxlength="50"
-            [required]="!isEditMode()"
-            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
-                   placeholder:text-on-surface-variant text-sm
-                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-            [class.bg-surface-container]="isEditMode()"
-            [class.cursor-not-allowed]="isEditMode()"
-            [class.opacity-75]="isEditMode()"
-            [class.border-error]="hasFieldError('sku')"
-            [class.focus:ring-error/20]="hasFieldError('sku')"
-          />
-          @if (hasFieldError('sku')) {
-            <p class="text-xs text-error mt-1">{{ fieldErrors()['sku'] }}</p>
-          }
-        </div>
+       <!-- SKU & Barcode -->
+       <div class="grid grid-cols-2 gap-4">
+         <!-- SKU (solo en edición) -->
+         @if (isEditMode()) {
+           <div>
+             <label class="block text-sm font-medium text-on-surface mb-1">
+               SKU <span class="text-on-surface-variant">(lectura)</span>
+             </label>
+             <input
+               type="text"
+               [(ngModel)]="sku"
+               (change)="onFieldChange('sku')"
+               readonly
+               placeholder="Ej: ARZ-INT-001"
+               maxlength="50"
+               class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface
+                      placeholder:text-on-surface-variant text-sm
+                      focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors
+                      cursor-not-allowed opacity-75"
+             />
+             @if (hasFieldError('sku')) {
+               <p class="text-xs text-error mt-1">{{ fieldErrors()['sku'] }}</p>
+             }
+           </div>
+         }
 
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-1">Código de Barras</label>
-          <input
-            type="text"
-            [(ngModel)]="barcode"
-            (change)="onFieldChange('barcode')"
-            placeholder="Ej: 7896014250014"
-            maxlength="50"
-            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
-                   placeholder:text-on-surface-variant text-sm
-                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-            [class.border-error]="hasFieldError('barcode')"
-            [class.focus:ring-error/20]="hasFieldError('barcode')"
-          />
-          @if (hasFieldError('barcode')) {
-            <p class="text-xs text-error mt-1">{{ fieldErrors()['barcode'] }}</p>
-          }
-        </div>
-      </div>
+         <!-- Código de Barras -->
+         <div>
+           <label class="block text-sm font-medium text-on-surface mb-1">Código de Barras</label>
+           <input
+             type="text"
+             [(ngModel)]="barcode"
+             (change)="onFieldChange('barcode')"
+             placeholder="Ej: 7896014250014"
+             maxlength="50"
+             class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                    placeholder:text-on-surface-variant text-sm
+                    focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+             [class.border-error]="hasFieldError('barcode')"
+             [class.focus:ring-error/20]="hasFieldError('barcode')"
+           />
+           @if (hasFieldError('barcode')) {
+             <p class="text-xs text-error mt-1">{{ fieldErrors()['barcode'] }}</p>
+           }
+         </div>
+       </div>
 
       <!-- Stock actual (solo lectura en edición) -->
       @if (isEditMode()) {
@@ -401,9 +395,8 @@ export class ProductFormComponent {
       unitId: this.unitId(),
       minStock: this.minStock(),
       maxStock: this.maxStock() ?? undefined,
-      sku: this.sku(),
       barcode: this.barcode() || undefined,
-      ...(this.isEditMode() && { isActive: this.isActive() }),
+      ...(this.isEditMode() && { sku: this.sku(), isActive: this.isActive() }),
     };
   }
 
