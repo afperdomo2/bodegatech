@@ -101,21 +101,20 @@ public class CategoryService {
     }
 
     public void deleteCategory(UUID id) {
-        log.info("Desactivando categoría con ID: {}", id);
+        log.info("Eliminando categoría con ID: {}", id);
 
-        Category category = categoryRepository.findByIdActive(id)
+        Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría", id));
 
-        // Validar que no haya productos usando esta categoría
-        long productCount = productRepository.countByCategoryIdAndIsActiveTrue(id);
+        // Validar que no haya productos usando esta categoría (activos o inactivos)
+        long productCount = categoryRepository.countByCategoryId(id);
         if (productCount > 0) {
-            log.warn("Intento de eliminar categoría {} que tiene {} productos activos", id, productCount);
+            log.warn("Intento de eliminar categoría {} que tiene {} productos asociados", id, productCount);
             throw new CategoryInUseException(category.getName(), productCount);
         }
 
-        category.setIsActive(false);
-        categoryRepository.save(category);
+        categoryRepository.delete(category);
 
-        log.info("Categoría desactivada exitosamente con ID: {}", id);
+        log.info("Categoría eliminada exitosamente con ID: {}", id);
     }
 }

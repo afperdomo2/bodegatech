@@ -181,14 +181,13 @@ public class ProductService {
     }
 
     public void deleteProduct(UUID id) {
-        log.info("Desactivando producto con ID: {}", id);
+        log.info("Eliminando producto con ID: {}", id);
 
-        Product product = productRepository.findByIdActive(id)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
 
-        product.setIsActive(false);
-        productRepository.save(product);
+        productRepository.delete(product);
 
-        log.info("Producto desactivado exitosamente con ID: {}", id);
+        log.info("Producto eliminado exitosamente con ID: {}", id);
     }
 }

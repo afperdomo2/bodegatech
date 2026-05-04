@@ -28,4 +28,10 @@ public interface CategoryRepository extends JpaRepository<Category, UUID>, JpaSp
      */
     @Query("SELECT c FROM Category c WHERE c.id = :id AND c.isActive = true")
     Optional<Category> findByIdActive(UUID id);
+
+    /**
+     * Cuenta todos los productos (activos e inactivos) asociados a una categoría.
+     */
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.id = :categoryId")
+    long countByCategoryId(UUID categoryId);
 }

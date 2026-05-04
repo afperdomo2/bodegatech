@@ -48,4 +48,12 @@ public interface MeasurementUnitRepository extends JpaRepository<MeasurementUnit
      */
     @Query("SELECT u FROM MeasurementUnit u WHERE u.baseUnit.id = :baseUnitId AND u.isActive = true ORDER BY u.conversionFactor ASC")
     List<MeasurementUnit> findActiveByBaseUnitIdOrderByConversionFactor(UUID baseUnitId);
+
+    /**
+     * Cuenta todas las unidades derivadas (activas e inactivas) de una unidad base.
+     * @param baseUnitId ID de la unidad base
+     * @return cantidad de unidades derivadas
+     */
+    @Query("SELECT COUNT(u) FROM MeasurementUnit u WHERE u.baseUnit.id = :baseUnitId")
+    long countByBaseUnitId(UUID baseUnitId);
 }

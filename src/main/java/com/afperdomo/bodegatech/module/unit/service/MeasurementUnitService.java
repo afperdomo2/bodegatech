@@ -185,23 +185,24 @@ public class MeasurementUnitService {
     }
 
     /**
-     * Realiza soft delete de una unidad (desactivación).
-     * Una unidad solo se puede eliminar si no tiene unidades que dependan de ella
-     * (es decir, no es baseUnit de ninguna otra unidad activa).
+     * Realiza hard delete de una unidad.
+     * Una unidad solo se puede eliminar si no tiene unidades derivadas que dependan de ella
+     * (es decir, no es baseUnit de ninguna otra unidad, activa o inactiva).
      */
     public void deleteUnit(UUID id) {
         MeasurementUnit unit = unitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Unidad de medida no encontrada con ID: " + id));
 
-        // Validar que esta unidad no sea la unidad base de otras unidades activas
-        // (evitar orfandad de registros)
-        // Nota: Si en el futuro necesitas esta validación, implementa una query en el repository
-        // @Query("SELECT COUNT(u) FROM MeasurementUnit u WHERE u.baseUnit.id = :id AND u.isActive = true")
+        // Validar que no haya unidades derivadas (activas o inactivas) que dependan de esta como baseUnit
+        long derivedCount = unitRepository.countByBaseUnitId(id);
+        if (derivedCount > 0) {
+            log.warn("Intento de eliminar unidad {} que tiene {} unidades derivadas", id, derivedCount);
+            throw new BusinessException("La unidad tiene " + derivedCount + " unidades derivadas asociadas y no puede ser eliminada");
+        }
 
-        unit.setIsActive(false);
-        unitRepository.save(unit);
+        unitRepository.delete(unit);
 
-        log.info("Unidad de medida desactivada: {} ({})", unit.getName(), unit.getAbbreviation());
+        log.info("Unidad de medida eliminada: {} ({})", unit.getName(), unit.getAbbreviation());
     }
 
     /**
