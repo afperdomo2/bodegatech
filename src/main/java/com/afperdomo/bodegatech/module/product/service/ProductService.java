@@ -38,9 +38,15 @@ public class ProductService {
     private final MeasurementUnitRepository measurementUnitRepository;
 
     @Transactional(readOnly = true)
-    public Page<ProductSummaryDto> findAllProducts(Pageable pageable) {
-        log.info("Obteniendo productos activos. Página: {}, Tamaño: {}", pageable.getPageNumber(), pageable.getPageSize());
-        return productRepository.findAllActive(pageable).map(productMapper::toSummaryDto);
+    public Page<ProductSummaryDto> findAllProducts(Pageable pageable, Boolean isActive) {
+        log.info("Obteniendo productos. Página: {}, Tamaño: {}, isActive: {}", pageable.getPageNumber(), pageable.getPageSize(), isActive);
+        if (isActive == null) {
+            return productRepository.findAll(pageable).map(productMapper::toSummaryDto);
+        } else if (isActive) {
+            return productRepository.findAllActive(pageable).map(productMapper::toSummaryDto);
+        } else {
+            return productRepository.findAllInactive(pageable).map(productMapper::toSummaryDto);
+        }
     }
 
     @Transactional(readOnly = true)

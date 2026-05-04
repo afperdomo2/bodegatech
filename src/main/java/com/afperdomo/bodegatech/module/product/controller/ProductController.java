@@ -48,7 +48,7 @@ public class ProductController {
     private final ProductImageService productImageService;
 
     @GetMapping
-    @Operation( summary = "Listar todos los productos", description = "Obtiene una lista de todos los productos activos" )
+    @Operation( summary = "Listar todos los productos", description = "Obtiene una lista de productos con filtro opcional por estado (activos/inactivos)." )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -61,10 +61,12 @@ public class ProductController {
             @Parameter(description = "Campo para ordenar (createdAt por defecto)")
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Dirección del ordenamiento (ASC o DESC)")
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @Parameter(description = "Filtro por estado (true=activos, false=inactivos, null=todos)")
+            @RequestParam(required = false) Boolean isActive) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<ProductSummaryDto> products = productService.findAllProducts(pageable);
+        Page<ProductSummaryDto> products = productService.findAllProducts(pageable, isActive);
         PagedResponse<ProductSummaryDto> pagedResponse = new PagedResponse<>(products);
 
         return ResponseEntity.ok(ApiResponse.success("Productos obtenidos exitosamente", pagedResponse));

@@ -29,6 +29,12 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, SkuVali
     Page<Product> findAllActive(Pageable pageable);
 
     /**
+     * Lista todos los productos inactivos con paginación.
+     */
+    @Query("SELECT p FROM Product p WHERE p.isActive = false ORDER BY p.createdAt DESC")
+    Page<Product> findAllInactive(Pageable pageable);
+
+    /**
      * Busca un producto activo por su ID.
      */
     @Query("SELECT p FROM Product p WHERE p.id = :id AND p.isActive = true")
