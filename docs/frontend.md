@@ -5,6 +5,32 @@
 > - `angular-developer` — para componentes, signals, routing, DI, forms, HTTP
 > - `frontend-design` — para UI, layouts, páginas visuales, estilos con Tailwind
 
+## Skills disponibles — Cuándo cargar cada una
+
+**OBLIGATORIO:** Leer esta sección y cargar la(s) skill(s) apropiada(s) según la tarea específica.
+
+### Por tipo de tarea
+
+| Tarea | Skills a cargar | Descripción |
+|-------|-----------------|-------------|
+| **Crear componente / página** | `angular-component`, `angular-developer`, `frontend-design` | Para nuevos componentes standalone, señales, change detection, y estilos Tailwind |
+| **State management / signals** | `angular-signals`, `angular-developer` | Crear estado reactivo con signal(), computed(), linkedSignal(), effects |
+| **Formularios / modales** | `angular-forms`, `angular-developer` | Signal Forms API (v21+), validación, forms en modales |
+| **HTTP / API calls** | `angular-http`, `angular-developer` | resource(), httpResource(), HttpClient, request/response, interceptors |
+| **Routing / navegación** | `angular-routing`, `angular-developer` | Route config, lazy loading, guards funcionales, parámetros de ruta |
+| **Servicios / DI** | `angular-di`, `angular-developer` | inject(), injection tokens, providers, jerarquía de DI |
+| **Directivas custom** | `angular-directives`, `angular-developer` | Attribute directives, structural directives, host directives |
+| **Tests unitarios** | `angular-testing` | Vitest/Jasmine, TestBed, signals, mocking, componentes con OnPush |
+| **SSR / hydration** | `angular-ssr` | Server-side rendering, hydration, prerendering, browser-only APIs |
+| **Build / CLI / optimización** | `angular-tooling` | Angular CLI, generación de código, builds, testing, optimización |
+| **UI / layouts / diseño** | `frontend-design` | Componentes visuales, páginas, estilos Tailwind v4, diseño distintivo |
+
+### Cuando en duda
+
+- **Nueva feature de UI:** carga todas las 3 base: `angular-component`, `angular-developer`, `frontend-design`
+- **Bug o refactoring:** carga `angular-developer` + la(s) que corresponda(n) al área específica
+- **Backend + Frontend:** carga `java-springboot`, `postgresql-optimization` para backend, luego llama los skills frontend según la UI
+
 ## Stack verificado
 
 - Angular **21.2** (standalone components) — el `package.json` dice `^21.2.0`

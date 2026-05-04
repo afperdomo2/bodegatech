@@ -47,8 +47,8 @@ pnpm ng generate service core/services/{service}
 - **Backend (Spring Boot, servicios, controladores, entidades, JPA, índices, queries):**
   leer `docs/backend.md` + cargar skills `java-springboot` y `postgresql-optimization`.
 
-- **Frontend (componentes, signals, routing, DI, forms, HTTP, UI, Tailwind):**
-  leer `docs/frontend.md` + cargar skills `angular-developer` y `frontend-design`.
+- **Frontend (componentes, signals, routing, DI, forms, HTTP, UI, Tailwind, directivas, testing, etc.):**
+  leer `docs/frontend.md` **COMPLETAMENTE** (sección de skills disponibles) y cargar **OBLIGATORIAMENTE** la(s) skill(s) apropiada(s) según la tarea específica. Ver tabla de referencia en `docs/frontend.md`.
 
 - **Convenciones REST, DTOs, envelopes, códigos de error:**
   leer `docs/api-conventions.md` antes de crear o modificar cualquier endpoint o DTO.
