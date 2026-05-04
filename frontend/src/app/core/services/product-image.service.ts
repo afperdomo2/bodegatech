@@ -31,12 +31,14 @@ interface ConfirmImagesRequest {
  * Servicio HTTP puro para gestión de imágenes de productos.
  * Maneja comunicación con endpoints de imágenes — sin estado, sin signals.
  * 
+/**
  * Flujo típico:
- * 1. generatePresignedUrls() → obtiene URLs pre-firmadas
- * 2. uploadToS3() → sube el archivo directamente a S3
- * 3. confirmImages() → confirma la subida en el backend
- * 4. deleteImage() → elimina la imagen (BD + S3)
- */
+   * 1. generatePresignedUrls() → obtiene URLs pre-firmadas
+   * 2. uploadToS3() → sube el archivo directamente a S3
+   * 3. confirmImages() → confirma la subida en el backend
+   * 4. setMainImage() → establece una imagen como principal
+   * 5. deleteImage() → elimina la imagen (BD + S3)
+   */
 @Injectable({
   providedIn: 'root',
 })
@@ -110,6 +112,21 @@ export class ProductImageService {
   deleteImage(productId: string, imageId: string) {
     return this.api.delete<void>(
       `/products/${productId}/images/${imageId}`
+    );
+  }
+
+  /**
+   * Establecer una imagen como la principal del producto.
+   * PATCH /api/products/{productId}/images/{imageId}/set-main
+   * 
+   * @param productId ID del producto
+   * @param imageId ID de la imagen a establecer como principal
+   * @returns Observable void (204 No Content)
+   */
+  setMainImage(productId: string, imageId: string) {
+    return this.api.patch<void>(
+      `/products/${productId}/images/${imageId}/set-main`,
+      {}
     );
   }
 }

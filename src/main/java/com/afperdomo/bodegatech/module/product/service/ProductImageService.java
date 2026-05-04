@@ -95,8 +95,29 @@ public class ProductImageService {
     }
 
     /**
+     * Establece una imagen como la imagen principal del producto.
+     * Actualiza product.mainImageUrl con la URL de la imagen.
+     *
+     * @param productId ID del producto propietario de la imagen
+     * @param imageId ID de la imagen a establecer como principal
+     */
+    public void setMainImage(UUID productId, UUID imageId) {
+        log.info("Estableciendo imagen {} como principal del producto {}", imageId, productId);
+
+        ProductImage productImage = productImageRepository.findByIdAndProductId(imageId, productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Imagen de producto", imageId));
+
+        Product product = productImage.getProduct();
+        product.setMainImageUrl(productImage.getUrl());
+        productRepository.save(product);
+
+        log.info("Imagen {} establecida como principal del producto {}", imageId, productId);
+    }
+
+    /**
      * Elimina una imagen de un producto.
      * Elimina el objeto de S3 y el registro de la BD.
+     * Si la imagen es la principal, limpia mainImageUrl en el producto.
      *
      * @param productId ID del producto propietario de la imagen
      * @param imageId ID de la imagen a eliminar
@@ -106,6 +127,15 @@ public class ProductImageService {
 
         ProductImage productImage = productImageRepository.findByIdAndProductId(imageId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Imagen de producto", imageId));
+
+        Product product = productImage.getProduct();
+
+        // Si esta imagen es la principal, limpiar mainImageUrl
+        if (product.getMainImageUrl() != null && product.getMainImageUrl().equals(productImage.getUrl())) {
+            product.setMainImageUrl(null);
+            productRepository.save(product);
+            log.info("Imagen principal del producto {} limpiada", productId);
+        }
 
         // Eliminar objeto de S3
         try {

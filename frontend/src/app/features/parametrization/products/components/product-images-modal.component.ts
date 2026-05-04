@@ -138,13 +138,35 @@ interface ImageUploadItem {
 
             <div class="grid grid-cols-3 gap-4">
               @for (item of uploadItems(); track item.previewUrl) {
-                <div class="relative flex flex-col items-center rounded-lg border border-surface-dim bg-surface-dim/50 overflow-hidden">
+                <!-- Image Card: Clickeable si es existente (tiene imageId) -->
+                <button
+                  type="button"
+                  (click)="item.imageId ? setAsMain(item) : null"
+                  [disabled]="!item.imageId || item.status !== 'success'"
+                  [class.cursor-pointer]="item.imageId && item.status === 'success'"
+                  [class.cursor-not-allowed]="!item.imageId || item.status !== 'success'"
+                  class="relative flex flex-col items-center rounded-lg border overflow-hidden transition-all"
+                  [class.border-primary]="item.imageId && item.previewUrl === mainImageUrl()"
+                  [class.ring-2]="item.imageId && item.previewUrl === mainImageUrl()"
+                  [class.ring-primary]="item.imageId && item.previewUrl === mainImageUrl()"
+                  [class.border-surface-dim]="item.imageId && item.previewUrl !== mainImageUrl()"
+                  [class.bg-surface-dim/50]="item.imageId && item.previewUrl !== mainImageUrl()"
+                  [class.border-surface-dim]="!item.imageId"
+                  [class.bg-surface-dim/50]="!item.imageId"
+                >
                   <!-- Thumbnail Preview -->
                   <img
                     [src]="item.previewUrl"
                     alt="imagen"
                     class="h-32 w-full object-cover"
                   />
+
+                  <!-- Star Badge (si es imagen principal) -->
+                  @if (item.imageId && item.previewUrl === mainImageUrl()) {
+                    <div class="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400">
+                      <span class="text-sm">★</span>
+                    </div>
+                  }
 
                   <!-- Overlay por estado (solo uploading y error) -->
                   <div class="absolute inset-0 flex items-center justify-center">
@@ -171,22 +193,27 @@ interface ImageUploadItem {
                     }
                   </div>
 
-                  <!-- Footer: Filename + Actions -->
-                  <div class="w-full border-t border-surface-dim/50 bg-surface-container p-2">
-                    <!-- Filename -->
-                    <p class="mb-2 truncate text-xs font-medium text-text-primary text-center">
+                  <!-- Footer: Filename -->
+                  <div class="w-full border-t transition-colors"
+                    [class.border-primary]="item.imageId && item.previewUrl === mainImageUrl()"
+                    [class.border-surface-dim/50]="item.imageId && item.previewUrl !== mainImageUrl()"
+                    [class.border-surface-dim/50]="!item.imageId"
+                    [class.bg-surface-container]="item.imageId && item.previewUrl !== mainImageUrl()"
+                    [class.bg-primary/10]="item.imageId && item.previewUrl === mainImageUrl()"
+                    [class.bg-surface-container]="!item.imageId"
+                  >
+                    <p class="px-2 py-2 truncate text-xs font-medium text-text-primary text-center">
                       {{ item.file?.name ?? 'Imagen guardada' }}
                     </p>
 
                     <!-- Error message (if applicable) -->
                     @if (item.status === 'error' && item.errorMessage) {
-                      <p class="mb-2 text-xs text-error text-center line-clamp-2">
+                      <p class="px-2 pb-2 text-xs text-error text-center line-clamp-2">
                         {{ item.errorMessage }}
                       </p>
                     }
-
                   </div>
-                </div>
+                </button>
               }
             </div>
           </div>
@@ -220,6 +247,7 @@ export class ProductImagesModalComponent {
   uploadItems = signal<ImageUploadItem[]>([]);
   isDragOver = signal(false);
   isLoadingExistingImages = signal(false);
+  mainImageUrl = signal<string | null>(null); // URL de la imagen principal del producto
   itemPendingDelete = signal<string | null>(null); // previewUrl del item siendo eliminado
   previewItem = signal<ImageUploadItem | null>(null); // item en vista previa
 
@@ -238,6 +266,8 @@ export class ProductImagesModalComponent {
     this.productService.getById(id).subscribe({
       next: (response) => {
         const images = response.data.images || [];
+        const mainImageUrl = response.data.mainImageUrl || null;
+        
         const existingItems: ImageUploadItem[] = images.map((img: ProductImageDto) => ({
           previewUrl: img.url,
           status: 'success' as const,
@@ -247,6 +277,7 @@ export class ProductImagesModalComponent {
           isExisting: true,
         }));
 
+        this.mainImageUrl.set(mainImageUrl);
         this.uploadItems.set(existingItems);
         this.isLoadingExistingImages.set(false);
       },
@@ -438,10 +469,12 @@ export class ProductImagesModalComponent {
                 ? { ...i, imageId: imageDto.id, fileKey }
                 : i
             )
-          );
-          this.updateItemStatusByPreviewUrl(itemPreviewUrl, 'success');
-          this.getItemByPreviewUrl(itemPreviewUrl)?.file &&
-            this.toast.success(`${this.getItemByPreviewUrl(itemPreviewUrl)?.file?.name} subida exitosamente`);
+           );
+           this.updateItemStatusByPreviewUrl(itemPreviewUrl, 'success');
+           const fileName = this.getItemByPreviewUrl(itemPreviewUrl)?.file?.name;
+           if (fileName) {
+             this.toast.success(`${fileName} subida exitosamente`);
+           }
         }
       },
       error: (error) => {
@@ -604,6 +637,34 @@ export class ProductImagesModalComponent {
       }
     });
     this.uploadItems.set([]);
+    this.mainImageUrl.set(null);
     this.isLoadingExistingImages.set(false);
+  }
+
+  /**
+   * Establecer una imagen como la principal del producto.
+   * Solo disponible para imágenes existentes (con imageId).
+   */
+  setAsMain(item: ImageUploadItem): void {
+    // Solo imágenes con imageId (ya confirmadas en BD) pueden ser principales
+    if (!item.imageId) {
+      this.toast.error('La imagen aún no ha sido guardada');
+      return;
+    }
+
+    const productId = this.productId();
+    this.imageService.setMainImage(productId, item.imageId).subscribe({
+      next: () => {
+        this.mainImageUrl.set(item.previewUrl);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        const msg =
+          error instanceof HttpErrorResponse
+            ? error.error?.detail || error.message
+            : 'Error al establecer imagen principal';
+        this.toast.error(msg);
+      },
+    });
   }
 }

@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -83,6 +84,23 @@ public class ProductImageController {
             @PathVariable UUID imageId) {
 
         productImageService.deleteImage(productId, imageId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{imageId}/set-main")
+    @Operation(summary = "Establecer imagen como principal", description = "Establece una imagen específica como la imagen principal del producto")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Imagen establecida como principal exitosamente"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto o imagen no encontrados"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    public ResponseEntity<Void> setMainImage(
+            @Parameter(description = "ID único del producto propietario de la imagen")
+            @PathVariable UUID productId,
+            @Parameter(description = "ID único de la imagen a establecer como principal")
+            @PathVariable UUID imageId) {
+
+        productImageService.setMainImage(productId, imageId);
         return ResponseEntity.noContent().build();
     }
 }
