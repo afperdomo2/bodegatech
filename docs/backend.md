@@ -59,7 +59,7 @@ Referencia: `common/exception/GlobalExceptionHandler.java`
 ## Entidades JPA — Reglas del proyecto
 
 ### Índices
-- `unique = true` ya crea índice B-tree en PostgreSQL — NO agregar `@Index` adicional.
+- `unique = true` ya crea índice B-tree en PostgreSQL — **NO agregar `@Index` adicional para el mismo campo** (redundante).
 - Un UNIQUE compuesto `(col_a, col_b)` cubre búsquedas por `col_a` — índice individual en `col_a` es redundante.
 - Prefijo de nombres: `idx_{tabla}_{campo}` (ej: `idx_products_is_active`).
 
@@ -69,6 +69,17 @@ Referencia: `common/exception/GlobalExceptionHandler.java`
 
 ### Auditoría
 - Entidades que NO extienden `BaseEntity` y usan `@CreatedDate` necesitan `@EntityListeners(AuditingEntityListener.class)` explícito.
+
+### Validaciones — Regla DTO vs Servicio
+
+| Tipo | Dónde | Mecanismo | Ejemplo |
+|------|-------|-----------|---------|
+| Campo individual (`@NotNull`, `@Positive`, `@Min`) | **DTO** únicamente | Bean Validation | `@Positive BigDecimal salePrice` |
+| Validación cruzada entre campos | **Service** | `IllegalArgumentException` | `minStock <= maxStock` |
+| Unicidad de negocio | **Service** | `BusinessException` → HTTP 409 | barcode/SKU duplicado |
+
+- **NO duplicar** en el Servicio validaciones individuales que ya existen en el DTO.
+- `BusinessException` ya está manejada en `GlobalExceptionHandler` y devuelve HTTP 409.
 
 ## Patrón Mapper MapStruct
 

@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * Repositorio para la entidad Product.
- * Proporciona operaciones CRUD, consultas personalizadas y validación de SKU.
+ * Proporciona operaciones CRUD, consultas personalizadas, validación de SKU y unicidad de barcode.
  */
 @Repository
 public interface ProductRepository extends JpaRepository<Product, UUID>, SkuValidationRepository {
@@ -56,4 +56,17 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, SkuVali
     default boolean skuExists(String sku) {
         return findBySku(sku).isPresent();
     }
+
+    /**
+     * Busca un producto activo por su código de barras.
+     * Utilizado para validar unicidad al crear un producto.
+     */
+    Optional<Product> findByBarcodeAndIsActiveTrue(String barcode);
+
+    /**
+     * Busca un producto activo con el barcode dado, excluyendo un ID específico.
+     * Utilizado para validar unicidad al actualizar un producto.
+     */
+    @Query("SELECT p FROM Product p WHERE p.barcode = :barcode AND p.isActive = true AND p.id <> :excludeId")
+    Optional<Product> findByBarcodeExcluding(String barcode, UUID excludeId);
 }

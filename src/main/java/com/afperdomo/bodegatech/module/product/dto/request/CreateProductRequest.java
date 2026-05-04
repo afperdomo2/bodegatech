@@ -19,6 +19,9 @@ import java.util.UUID;
  * <p>El SKU se genera automáticamente por el sistema basado en el nombre y categoría.
  * No es necesario (ni permitido) enviarlo en el request.
  *
+ * <p>Stock se inicializa automáticamente en 0.0000 y se gestiona únicamente vía
+ * Movimientos de Inventario. No puede especificarse en la creación.
+ *
  * <p>Las imágenes se manejan en endpoints separados:
  * POST /products/{id}/images/presigned — obtener URLs pre-firmadas
  * POST /products/{id}/images/confirm — confirmar imágenes subidas
@@ -37,17 +40,31 @@ public class CreateProductRequest {
     @Schema(description = "Descripción del producto", example = "Laptop de 15 pulgadas con procesador Intel i7")
     private String description;
 
-    @NotNull(message = "El precio es obligatorio")
-    @Positive(message = "El precio debe ser mayor a 0")
-    @Schema(description = "Precio del producto", example = "1500.00")
-    private BigDecimal price;
+    @NotNull(message = "El precio de venta es obligatorio")
+    @Positive(message = "El precio de venta debe ser mayor a 0")
+    @Schema(description = "Precio de venta del producto", example = "1500.0000")
+    private BigDecimal salePrice;
 
-    @NotNull(message = "El stock es obligatorio")
-    @Min(value = 0, message = "El stock no puede ser negativo")
-    @Schema(description = "Cantidad inicial en stock", example = "10")
-    private Integer stock;
+    @Min(value = 0, message = "El costo no puede ser negativo")
+    @Schema(description = "Costo del producto (opcional, default 0.0000)", example = "800.0000", nullable = true)
+    private BigDecimal costPrice;
+
+    @Min(value = 0, message = "Stock mínimo no puede ser negativo")
+    @Schema(description = "Stock mínimo recomendado (opcional, default 0.0000)", example = "10.0000", nullable = true)
+    private BigDecimal minStock;
+
+    @Min(value = 0, message = "Stock máximo no puede ser negativo")
+    @Schema(description = "Stock máximo permitido (opcional)", example = "500.0000", nullable = true)
+    private BigDecimal maxStock;
 
     @NotNull(message = "La categoría es obligatoria")
     @Schema(description = "ID de la categoría del producto", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID categoryId;
+
+    @NotNull(message = "La unidad de medida es obligatoria")
+    @Schema(description = "ID de la unidad de medida base para este producto", example = "550e8400-e29b-41d4-a716-446655440000")
+    private UUID unitId;
+
+    @Schema(description = "Código de barras (opcional, máx 100 caracteres)", example = "7501234567890", nullable = true)
+    private String barcode;
 }

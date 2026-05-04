@@ -14,7 +14,8 @@ import java.util.UUID;
 /**
  * DTO de respuesta completa para un producto.
  * Utilizado al obtener el detalle de un producto (GET /api/products/{id}).
- * Incluye la lista de imágenes del producto, timestamps y versión para optimistic locking.
+ * Incluye la lista de imágenes del producto, timestamps, versión para optimistic locking,
+ * y TODOS los campos incluyendo información sensible como costPrice.
  */
 @Data
 @Builder
@@ -32,11 +33,20 @@ public class ProductDetail {
     @Schema(description = "Descripción del producto", example = "Laptop de 15 pulgadas con procesador Intel i7")
     private String description;
 
-    @Schema(description = "Precio del producto", example = "1500.00")
-    private BigDecimal price;
+    @Schema(description = "Precio de venta del producto", example = "1500.0000")
+    private BigDecimal salePrice;
 
-    @Schema(description = "Cantidad disponible en stock", example = "10")
-    private Integer stock;
+    @Schema(description = "Costo del producto (información sensible)", example = "800.0000")
+    private BigDecimal costPrice;
+
+    @Schema(description = "Stock actual del producto", example = "25.0000")
+    private BigDecimal stock;
+
+    @Schema(description = "Stock mínimo recomendado", example = "10.0000")
+    private BigDecimal minStock;
+
+    @Schema(description = "Stock máximo permitido", example = "500.0000")
+    private BigDecimal maxStock;
 
     @Schema(
             description = "Código único del producto (SKU) — generado automáticamente por el sistema",
@@ -50,6 +60,21 @@ public class ProductDetail {
 
     @Schema(description = "Nombre de la categoría del producto", example = "Electrónica")
     private String categoryName;
+
+    @Schema(description = "ID de la unidad de medida base", example = "550e8400-e29b-41d4-a716-446655440000")
+    private UUID unitId;
+
+    @Schema(description = "Nombre de la unidad de medida", example = "Kilogramo")
+    private String unitName;
+
+    @Schema(description = "Abreviación de la unidad de medida", example = "kg")
+    private String unitAbbreviation;
+
+    @Schema(description = "Código de barras del producto (opcional)", example = "7501234567890")
+    private String barcode;
+
+    @Schema(description = "URL de la imagen principal (opcional)", example = "https://s3.amazonaws.com/products/laptop-dell-main.jpg")
+    private String mainImageUrl;
 
     @Schema(description = "Indica si el producto está activo", example = "true")
     private Boolean isActive;

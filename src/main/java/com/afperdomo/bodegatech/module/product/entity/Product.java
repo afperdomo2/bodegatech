@@ -2,9 +2,11 @@ package com.afperdomo.bodegatech.module.product.entity;
 
 import com.afperdomo.bodegatech.common.audit.BaseEntity;
 import com.afperdomo.bodegatech.module.category.entity.Category;
+import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,10 +16,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-/**
- * Entidad Product.
- * Representa un producto en la bodega.
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -25,7 +23,8 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "products", indexes = {
         @Index(name = "idx_products_is_active", columnList = "is_active"),
-        @Index(name = "idx_products_category_id", columnList = "category_id")
+        @Index(name = "idx_products_category_id", columnList = "category_id"),
+        @Index(name = "idx_products_unit_id", columnList = "unit_id")
 })
 @EqualsAndHashCode(callSuper = true)
 public class Product extends BaseEntity {
@@ -37,13 +36,29 @@ public class Product extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @NotNull
     @Positive
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal salePrice;
 
     @Min(0)
-    @Column(nullable = false)
-    private Integer stock;
+    @Column(nullable = false, precision = 19, scale = 4)
+    @Builder.Default
+    private BigDecimal costPrice = BigDecimal.ZERO;
+
+    @Min(0)
+    @Column(nullable = false, precision = 19, scale = 4)
+    @Builder.Default
+    private BigDecimal stock = BigDecimal.ZERO;
+
+    @Min(0)
+    @Column(nullable = false, precision = 19, scale = 4)
+    @Builder.Default
+    private BigDecimal minStock = BigDecimal.ZERO;
+
+    @Min(0)
+    @Column(precision = 19, scale = 4)
+    private BigDecimal maxStock;
 
     @NotBlank
     @Column(nullable = false, unique = true, length = 100)
@@ -52,6 +67,17 @@ public class Product extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_id", nullable = false)
+    private MeasurementUnit unit;
+
+    @Column(columnDefinition = "TEXT")
+    private String mainImageUrl;
+
+    @Column(unique = true, length = 100)
+    private String barcode;
 
     @Column(nullable = false)
     @Builder.Default

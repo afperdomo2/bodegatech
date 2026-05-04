@@ -10,6 +10,9 @@ import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import com.afperdomo.bodegatech.module.category.repository.CategoryRepository;
+import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
+import com.afperdomo.bodegatech.module.unit.repository.MeasurementUnitRepository;
+import com.afperdomo.bodegatech.common.exception.BusinessException;
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
 import com.afperdomo.bodegatech.common.util.SkuGenerator;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Slf4j
@@ -31,6 +35,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final SkuGenerator skuGenerator;
     private final CategoryRepository categoryRepository;
+    private final MeasurementUnitRepository measurementUnitRepository;
 
     @Transactional(readOnly = true)
     public Page<ProductSummaryDto> findAllProducts(Pageable pageable) {
@@ -51,11 +56,29 @@ public class ProductService {
     public ProductDto createProduct(CreateProductRequest request) {
         log.info("Creando nuevo producto: {}", request.getName());
 
-        // Buscar y validar la categoría
+        // Validar y obtener categoría
         Category category = categoryRepository.findByIdActive(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría", request.getCategoryId()));
 
-        // Generar SKU único automáticamente basado en nombre y categoría
+        // Validar y obtener unidad de medida (obligatoria)
+        MeasurementUnit unit = measurementUnitRepository.findByIdActive(request.getUnitId())
+                .orElseThrow(() -> new ResourceNotFoundException("Unidad de Medida", request.getUnitId()));
+
+        // Validar relación minStock <= maxStock (validación cruzada, no expresable en Bean Validation)
+        if (request.getMinStock() != null && request.getMaxStock() != null &&
+                request.getMinStock().compareTo(request.getMaxStock()) > 0) {
+            throw new IllegalArgumentException("Stock mínimo no puede ser mayor a stock máximo");
+        }
+
+        // Validar unicidad de barcode si se proporciona
+        if (request.getBarcode() != null) {
+            productRepository.findByBarcodeAndIsActiveTrue(request.getBarcode()).ifPresent(p -> {
+                throw new BusinessException(
+                        "El código de barras '" + request.getBarcode() + "' ya está registrado en otro producto");
+            });
+        }
+
+        // Generar SKU único automáticamente
         String generatedSku = skuGenerator.generateUniqueSku(
                 request.getName(),
                 category.getName(),
@@ -65,7 +88,11 @@ public class ProductService {
         Product product = productMapper.toEntity(request);
         product.setSku(generatedSku);
         product.setCategory(category);
+        product.setUnit(unit);
         product.setIsActive(true);
+        
+        // Stock inicial siempre es 0 al crear (se gestiona vía Movimientos)
+        product.setStock(BigDecimal.ZERO);
 
         Product savedProduct = productRepository.save(product);
         log.info("Producto creado exitosamente con ID: {} y SKU: {}", savedProduct.getId(), generatedSku);
@@ -84,6 +111,29 @@ public class ProductService {
         if (request.getCategoryId() != null && !request.getCategoryId().equals(product.getCategory().getId())) {
             newCategory = categoryRepository.findByIdActive(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Categoría", request.getCategoryId()));
+        }
+
+        // Si la unidad cambió, validar que exista
+        MeasurementUnit newUnit = product.getUnit();
+        if (request.getUnitId() != null && !request.getUnitId().equals(product.getUnit().getId())) {
+            newUnit = measurementUnitRepository.findByIdActive(request.getUnitId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Unidad de Medida", request.getUnitId()));
+        }
+
+        // Validar relación minStock vs maxStock (validación cruzada, usar valores existentes si no se actualizan)
+        BigDecimal finalMinStock = request.getMinStock() != null ? request.getMinStock() : product.getMinStock();
+        BigDecimal finalMaxStock = request.getMaxStock() != null ? request.getMaxStock() : product.getMaxStock();
+        if (finalMinStock != null && finalMaxStock != null &&
+                finalMinStock.compareTo(finalMaxStock) > 0) {
+            throw new IllegalArgumentException("Stock mínimo no puede ser mayor a stock máximo");
+        }
+
+        // Validar unicidad de barcode si se proporciona (excluyendo el producto actual)
+        if (request.getBarcode() != null) {
+            productRepository.findByBarcodeExcluding(request.getBarcode(), id).ifPresent(p -> {
+                throw new BusinessException(
+                        "El código de barras '" + request.getBarcode() + "' ya está registrado en otro producto");
+            });
         }
 
         // Regenerar SKU SOLO si cambian name o category
@@ -105,6 +155,11 @@ public class ProductService {
         // Asignar la nueva categoría si cambió
         if (request.getCategoryId() != null) {
             product.setCategory(newCategory);
+        }
+
+        // Asignar la nueva unidad si cambió
+        if (request.getUnitId() != null) {
+            product.setUnit(newUnit);
         }
 
         productMapper.updateEntity(request, product);
