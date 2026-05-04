@@ -129,6 +129,64 @@ bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-sm 
 ```
 No usar `<p>` simple — el texto se pierde visualmente sin estructura de campo.
 
+## Estilos estándar de formularios
+
+**Todos los inputs, selects y textareas deben seguir este patrón canónico:**
+
+### Label + campo obligatorio
+```html
+<label class="block text-sm font-medium text-on-surface mb-1">
+  Campo <span class="text-error">*</span>
+</label>
+```
+
+### Input / Textarea (estado normal)
+```html
+<input 
+  type="text"
+  class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+         placeholder:text-on-surface-variant text-sm
+         focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+  placeholder="Ej: Mi valor" />
+```
+
+### Select (estado normal)
+```html
+<select
+  class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
+         focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+  <option value="">-- Seleccionar --</option>
+</select>
+```
+
+### Clases de error (aplicar cuando hay errores)
+```html
+[class.border-error]="hasError"
+[class.focus:ring-error/20]="hasError"
+```
+
+### Mensaje de error
+```html
+<p class="text-xs text-error mt-1">Mensaje de error del backend o validación</p>
+```
+
+### Input read-only (para edición, SKU, stock, etc.)
+```html
+<input
+  type="text"
+  [value]="valor"
+  readonly
+  class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface text-sm
+         cursor-not-allowed opacity-75" />
+```
+
+### Componentes de ejemplo estandarizados
+- **Categorías** (`features/parametrization/categories/pages/categories/categories.html`) ✅ Correcto
+- **Unidades** (`features/parametrization/units/components/unit-form.component.ts`) ✅ Correcto
+- **Productos** (`features/parametrization/products/components/product-form.component.ts`) — debe ajustarse al estándar
+
+---
+
 ## Toast Notifications
 
 ```typescript

@@ -44,6 +44,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
   pendingAction = signal<'create' | 'edit' | 'delete' | null>(null);
   isActiveFilter = signal<'all' | 'active' | 'inactive'>('all');
 
+  // Control para el effect de edit modal
+  private _editPending = signal(false);
+
   tableColumns: DataTableColumn[] = [
     { key: 'name', label: 'Nombre', type: 'text', align: 'left' },
     { key: 'sku', label: 'SKU', type: 'text', align: 'center' },
@@ -87,6 +90,27 @@ export class ProductsComponent implements OnInit, OnDestroy {
     effect(() => {
       if (this.state.generalError()) {
         this.toastService.error(this.state.generalError() || 'Error desconocido');
+      }
+    });
+
+    // Effect: abre el modal de edición cuando el detalle llega
+    effect(() => {
+      const detail = this.state.selectedDetail();
+      const isLoading = this.state.isLoadingDetail();
+      if (this._editPending() && detail && !isLoading) {
+        this._editPending.set(false);
+        if (!this.editModalComponent) return;
+
+        // Cargar datos en el formulario
+        this.editModalComponent.loadProductData(detail);
+
+        this.modalService.open({
+          title: `Editar: ${detail.name}`,
+          template: this.editModalComponent.editModalTemplate,
+          size: 'xl',
+          onConfirm: () => this.confirmEditProduct(detail.id),
+          onCancel: () => {},
+        });
       }
     });
   }
@@ -140,35 +164,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   openEditModal(product: ProductSummaryDto): void {
     this.selectedProduct.set(product);
-
-    // Cargar dependencias + detalle del producto
+    this._editPending.set(true); // Activar el effect que espera el detalle
     this.state.loadFormDependencies();
     this.state.loadProductById(product.id);
-
-    // Usar un effect para esperar a que cargue y luego abrir el modal
-    const effectRef = effect(() => {
-      const detail = this.state.selectedDetail();
-      const isLoading = this.state.isLoadingDetail();
-
-      // Cuando el detalle esté cargado y no haya loading
-      if (detail && !isLoading) {
-        if (!this.editModalComponent) return;
-
-        // Cargar datos en el formulario
-        this.editModalComponent.loadProductData(detail);
-
-        this.modalService.open({
-          title: `Editar: ${detail.name}`,
-          template: this.editModalComponent.editModalTemplate,
-          size: 'xl',
-          onConfirm: () => this.confirmEditProduct(product.id),
-          onCancel: () => {},
-        });
-
-        // Destruir el effect para que no se vuelva a ejecutar
-        effectRef.destroy();
-      }
-    });
   }
 
   confirmEditProduct(productId: string): void {

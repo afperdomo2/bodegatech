@@ -47,7 +47,9 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
     <div class="space-y-4">
       <!-- Nombre -->
       <div>
-        <label class="block text-sm font-medium text-text-primary">Nombre *</label>
+        <label class="block text-sm font-medium text-on-surface mb-1">
+          Nombre <span class="text-error">*</span>
+        </label>
         <input
           type="text"
           [(ngModel)]="name"
@@ -55,32 +57,40 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
           placeholder="Ej: Arroz Integral"
           maxlength="100"
           required
-          class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary placeholder-text-secondary focus:border-primary focus:outline-none"
+          class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                 placeholder:text-on-surface-variant text-sm
+                 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
           [class.border-error]="hasFieldError('name')"
+          [class.focus:ring-error/20]="hasFieldError('name')"
         />
         @if (hasFieldError('name')) {
-          <p class="mt-1 text-xs text-error">{{ fieldErrors()['name'] }}</p>
+          <p class="text-xs text-error mt-1">{{ fieldErrors()['name'] }}</p>
         }
       </div>
 
       <!-- Descripción -->
       <div>
-        <label class="block text-sm font-medium text-text-primary">Descripción</label>
+        <label class="block text-sm font-medium text-on-surface mb-1">Descripción</label>
         <textarea
           [(ngModel)]="description"
           (change)="onFieldChange('description')"
           placeholder="Descripción adicional (opcional)"
           rows="3"
           maxlength="500"
-          class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary placeholder-text-secondary focus:border-primary focus:outline-none"
+          class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                 placeholder:text-on-surface-variant text-sm
+                 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors resize-none"
           [class.border-error]="hasFieldError('description')"
+          [class.focus:ring-error/20]="hasFieldError('description')"
         ></textarea>
       </div>
 
       <!-- Precio de Venta & Precio de Costo -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-text-primary">Precio de Venta *</label>
+          <label class="block text-sm font-medium text-on-surface mb-1">
+            Precio de Venta <span class="text-error">*</span>
+          </label>
           <input
             type="number"
             [(ngModel)]="salePrice"
@@ -89,16 +99,19 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             min="0"
             step="0.01"
             required
-            class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary placeholder-text-secondary focus:border-primary focus:outline-none"
+            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                   placeholder:text-on-surface-variant text-sm
+                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
             [class.border-error]="hasFieldError('salePrice')"
+            [class.focus:ring-error/20]="hasFieldError('salePrice')"
           />
           @if (hasFieldError('salePrice')) {
-            <p class="mt-1 text-xs text-error">{{ fieldErrors()['salePrice'] }}</p>
+            <p class="text-xs text-error mt-1">{{ fieldErrors()['salePrice'] }}</p>
           }
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-text-primary">Precio de Costo</label>
+          <label class="block text-sm font-medium text-on-surface mb-1">Precio de Costo</label>
           <input
             type="number"
             [(ngModel)]="costPrice"
@@ -106,11 +119,14 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             placeholder="0.00"
             min="0"
             step="0.01"
-            class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary placeholder-text-secondary focus:border-primary focus:outline-none"
+            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                   placeholder:text-on-surface-variant text-sm
+                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
             [class.border-error]="hasFieldError('costPrice')"
+            [class.focus:ring-error/20]="hasFieldError('costPrice')"
           />
           @if (hasFieldError('costPrice')) {
-            <p class="mt-1 text-xs text-error">{{ fieldErrors()['costPrice'] }}</p>
+            <p class="text-xs text-error mt-1">{{ fieldErrors()['costPrice'] }}</p>
           }
         </div>
       </div>
@@ -118,9 +134,11 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
       <!-- Categoría & Unidad -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-text-primary">Categoría *</label>
+          <label class="block text-sm font-medium text-on-surface mb-1">
+            Categoría <span class="text-error">*</span>
+          </label>
           @if (isLoadingDeps()) {
-            <div class="mt-1 rounded border border-outline bg-surface-container px-3 py-2 text-text-secondary">
+            <div class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface-variant text-sm">
               Cargando...
             </div>
           } @else {
@@ -128,8 +146,10 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
               [(ngModel)]="categoryId"
               (change)="onFieldChange('categoryId')"
               required
-              class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary focus:border-primary focus:outline-none"
+              class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
+                     focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
               [class.border-error]="hasFieldError('categoryId')"
+              [class.focus:ring-error/20]="hasFieldError('categoryId')"
             >
               <option value="">-- Seleccionar --</option>
               @for (cat of categories(); track cat.id) {
@@ -138,14 +158,16 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             </select>
           }
           @if (hasFieldError('categoryId')) {
-            <p class="mt-1 text-xs text-error">{{ fieldErrors()['categoryId'] }}</p>
+            <p class="text-xs text-error mt-1">{{ fieldErrors()['categoryId'] }}</p>
           }
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-text-primary">Unidad de Medida *</label>
+          <label class="block text-sm font-medium text-on-surface mb-1">
+            Unidad de Medida <span class="text-error">*</span>
+          </label>
           @if (isLoadingDeps()) {
-            <div class="mt-1 rounded border border-outline bg-surface-container px-3 py-2 text-text-secondary">
+            <div class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface-variant text-sm">
               Cargando...
             </div>
           } @else {
@@ -153,8 +175,10 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
               [(ngModel)]="unitId"
               (change)="onFieldChange('unitId')"
               required
-              class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary focus:border-primary focus:outline-none"
+              class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
+                     focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
               [class.border-error]="hasFieldError('unitId')"
+              [class.focus:ring-error/20]="hasFieldError('unitId')"
             >
               <option value="">-- Seleccionar --</option>
               @for (unit of units(); track unit.id) {
@@ -163,7 +187,7 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             </select>
           }
           @if (hasFieldError('unitId')) {
-            <p class="mt-1 text-xs text-error">{{ fieldErrors()['unitId'] }}</p>
+            <p class="text-xs text-error mt-1">{{ fieldErrors()['unitId'] }}</p>
           }
         </div>
       </div>
@@ -171,7 +195,7 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
       <!-- Stock Mínimo & Stock Máximo -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-text-primary">Stock Mínimo</label>
+          <label class="block text-sm font-medium text-on-surface mb-1">Stock Mínimo</label>
           <input
             type="number"
             [(ngModel)]="minStock"
@@ -179,16 +203,19 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             placeholder="0"
             min="0"
             step="1"
-            class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary placeholder-text-secondary focus:border-primary focus:outline-none"
+            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                   placeholder:text-on-surface-variant text-sm
+                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
             [class.border-error]="hasFieldError('minStock')"
+            [class.focus:ring-error/20]="hasFieldError('minStock')"
           />
           @if (hasFieldError('minStock')) {
-            <p class="mt-1 text-xs text-error">{{ fieldErrors()['minStock'] }}</p>
+            <p class="text-xs text-error mt-1">{{ fieldErrors()['minStock'] }}</p>
           }
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-text-primary">Stock Máximo</label>
+          <label class="block text-sm font-medium text-on-surface mb-1">Stock Máximo</label>
           <input
             type="number"
             [(ngModel)]="maxStock"
@@ -196,24 +223,27 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             placeholder="0"
             min="0"
             step="1"
-            class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary placeholder-text-secondary focus:border-primary focus:outline-none"
+            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                   placeholder:text-on-surface-variant text-sm
+                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
             [class.border-error]="hasFieldError('maxStock')"
+            [class.focus:ring-error/20]="hasFieldError('maxStock')"
           />
           @if (hasFieldError('maxStock')) {
-            <p class="mt-1 text-xs text-error">{{ fieldErrors()['maxStock'] }}</p>
+            <p class="text-xs text-error mt-1">{{ fieldErrors()['maxStock'] }}</p>
           }
         </div>
       </div>
 
-      <!-- Código & Barcode (SKU read-only en edición) -->
+      <!-- SKU & Barcode -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-text-primary">
+          <label class="block text-sm font-medium text-on-surface mb-1">
             SKU
             @if (isEditMode()) {
-              <span class="text-text-secondary">(lectura)</span>
+              <span class="text-on-surface-variant">(lectura)</span>
             } @else {
-              <span>*</span>
+              <span class="text-error">*</span>
             }
           </label>
           <input
@@ -224,30 +254,36 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             placeholder="Ej: ARZ-INT-001"
             maxlength="50"
             [required]="!isEditMode()"
-            class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary placeholder-text-secondary focus:border-primary focus:outline-none"
+            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                   placeholder:text-on-surface-variant text-sm
+                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
             [class.bg-surface-container]="isEditMode()"
             [class.cursor-not-allowed]="isEditMode()"
             [class.opacity-75]="isEditMode()"
             [class.border-error]="hasFieldError('sku')"
+            [class.focus:ring-error/20]="hasFieldError('sku')"
           />
           @if (hasFieldError('sku')) {
-            <p class="mt-1 text-xs text-error">{{ fieldErrors()['sku'] }}</p>
+            <p class="text-xs text-error mt-1">{{ fieldErrors()['sku'] }}</p>
           }
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-text-primary">Código de Barras</label>
+          <label class="block text-sm font-medium text-on-surface mb-1">Código de Barras</label>
           <input
             type="text"
             [(ngModel)]="barcode"
             (change)="onFieldChange('barcode')"
             placeholder="Ej: 7896014250014"
             maxlength="50"
-            class="mt-1 w-full rounded border border-outline px-3 py-2 text-text-primary placeholder-text-secondary focus:border-primary focus:outline-none"
+            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
+                   placeholder:text-on-surface-variant text-sm
+                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
             [class.border-error]="hasFieldError('barcode')"
+            [class.focus:ring-error/20]="hasFieldError('barcode')"
           />
           @if (hasFieldError('barcode')) {
-            <p class="mt-1 text-xs text-error">{{ fieldErrors()['barcode'] }}</p>
+            <p class="text-xs text-error mt-1">{{ fieldErrors()['barcode'] }}</p>
           }
         </div>
       </div>
@@ -255,14 +291,15 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
       <!-- Stock actual (solo lectura en edición) -->
       @if (isEditMode()) {
         <div>
-          <label class="block text-sm font-medium text-text-primary">Stock Actual (lectura)</label>
+          <label class="block text-sm font-medium text-on-surface mb-1">Stock Actual (lectura)</label>
           <input
             type="number"
             [value]="currentStock()"
             readonly
-            class="mt-1 w-full rounded border border-outline bg-surface-container px-3 py-2 text-text-primary cursor-not-allowed opacity-75"
+            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface text-sm
+                   cursor-not-allowed opacity-75"
           />
-          <p class="mt-1 text-xs text-text-secondary">
+          <p class="text-xs text-on-surface-variant mt-1">
             El stock se gestiona a través de movimientos de inventario
           </p>
         </div>

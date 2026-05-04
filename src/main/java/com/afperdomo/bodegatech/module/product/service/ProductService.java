@@ -53,7 +53,7 @@ public class ProductService {
     public ProductDetail findProductById(UUID id) {
         log.info("Obteniendo producto con ID: {}", id);
 
-        Product product = productRepository.findByIdActive(id)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
 
         return productMapper.toDetail(product);

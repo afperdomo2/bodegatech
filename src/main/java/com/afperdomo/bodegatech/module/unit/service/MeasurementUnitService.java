@@ -63,7 +63,7 @@ public class MeasurementUnitService {
      */
     @Transactional(readOnly = true)
     public MeasurementUnitDetail findUnitById(UUID id) {
-        MeasurementUnit unit = unitRepository.findByIdActive(id)
+        MeasurementUnit unit = unitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Unidad de medida no encontrada con ID: " + id));
         return unitMapper.toDetail(unit);
     }

@@ -49,7 +49,7 @@ public class CategoryService {
     public CategoryDetail findCategoryById(UUID id) {
         log.info("Obteniendo categoría con ID: {}", id);
 
-        Category category = categoryRepository.findByIdActive(id)
+        Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría", id));
 
         return categoryMapper.toDetail(category);

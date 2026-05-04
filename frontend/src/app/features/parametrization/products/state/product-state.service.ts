@@ -233,6 +233,7 @@ export class ProductStateService {
   loadProductById(id: string): void {
     this._isLoadingDetail.set(true);
     this._generalError.set(null);
+    this._selectedDetail.set(null); // Limpiar el detalle anterior
 
     this.productService.getById(id).pipe(
       catchError((error: AppError) => {
@@ -251,10 +252,18 @@ export class ProductStateService {
 
   /**
    * Limpiar errores manualmente (ej: al cerrar un modal).
+   * NO resetea selectedDetail — eso se hace al abrir un nuevo edit.
    */
   clearErrors(): void {
     this._fieldErrors.set({});
     this._generalError.set(null);
+  }
+
+  /**
+   * Limpiar el detalle del producto seleccionado.
+   * Se llama al abrir un nuevo modal de edición (en loadProductById).
+   */
+  clearSelectedDetail(): void {
     this._selectedDetail.set(null);
   }
 }
