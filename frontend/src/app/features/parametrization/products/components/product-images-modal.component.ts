@@ -132,88 +132,116 @@ interface ImageUploadItem {
         <!-- Images Grid -->
         @if (uploadItems().length > 0) {
           <div class="space-y-4">
-            <h3 class="font-medium text-text-primary">
+            <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wider">
               {{ uploadItems().length }} imagen(es)
             </h3>
 
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-4 gap-3">
               @for (item of uploadItems(); track item.previewUrl) {
-                <!-- Image Card: Clickeable si es existente (tiene imageId) -->
-                <button
-                  type="button"
-                  (click)="item.imageId ? setAsMain(item) : null"
-                  [disabled]="!item.imageId || item.status !== 'success'"
-                  [class.cursor-pointer]="item.imageId && item.status === 'success'"
-                  [class.cursor-not-allowed]="!item.imageId || item.status !== 'success'"
-                  class="relative flex flex-col items-center rounded-lg border overflow-hidden transition-all"
-                  [class.border-primary]="item.imageId && item.previewUrl === mainImageUrl()"
+                <!-- Image Card Container -->
+                <div class="group relative aspect-square overflow-hidden rounded-xl border border-surface-dim/50 bg-surface-container shadow-sm transition-all hover:shadow-md"
                   [class.ring-2]="item.imageId && item.previewUrl === mainImageUrl()"
                   [class.ring-primary]="item.imageId && item.previewUrl === mainImageUrl()"
-                  [class.border-surface-dim]="item.imageId && item.previewUrl !== mainImageUrl()"
-                  [class.bg-surface-dim/50]="item.imageId && item.previewUrl !== mainImageUrl()"
-                  [class.border-surface-dim]="!item.imageId"
-                  [class.bg-surface-dim/50]="!item.imageId"
+                  [class.border-primary/50]="item.imageId && item.previewUrl === mainImageUrl()"
                 >
-                  <!-- Thumbnail Preview -->
+                  <!-- Image -->
                   <img
                     [src]="item.previewUrl"
-                    alt="imagen"
-                    class="h-32 w-full object-cover"
+                    alt="producto"
+                    class="h-full w-full object-cover"
                   />
 
-                  <!-- Star Badge (si es imagen principal) -->
-                  @if (item.imageId && item.previewUrl === mainImageUrl()) {
-                    <div class="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400">
-                      <span class="text-sm">★</span>
+                  <!-- Status Overlay: Uploading -->
+                  @if (item.status === 'uploading') {
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                      <div class="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent mb-2"></div>
+                      <span class="text-xs font-semibold text-white">{{ item.uploadProgress }}%</span>
                     </div>
                   }
 
-                  <!-- Overlay por estado (solo uploading y error) -->
-                  <div class="absolute inset-0 flex items-center justify-center">
-                    @switch (item.status) {
-                      <!-- Uploading: Spinner + Progress -->
-                      @case ('uploading') {
-                        <div class="flex flex-col items-center gap-2 bg-black/50 rounded">
-                          <div class="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                          <span class="text-xs font-medium text-white">
-                            {{ item.uploadProgress }}%
-                          </span>
-                        </div>
+                  <!-- Status Overlay: Error -->
+                  @if (item.status === 'error') {
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-error/80 backdrop-blur-sm">
+                      <div class="text-3xl mb-1">⚠</div>
+                      @if (item.errorMessage) {
+                        <p class="text-xs text-white font-medium text-center px-2 line-clamp-2">
+                          {{ item.errorMessage }}
+                        </p>
                       }
-                      <!-- Error: Red X -->
-                      @case ('error') {
-                        <div class="flex items-center justify-center">
-                          <div
-                            class="flex h-12 w-12 items-center justify-center rounded-full bg-error/90"
+                    </div>
+                  }
+
+                  <!-- Main Image Badge (top-left) -->
+                  @if (item.imageId && item.previewUrl === mainImageUrl()) {
+                    <div class="absolute top-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 shadow-md">
+                      <span class="text-xs font-bold">★</span>
+                    </div>
+                  }
+
+                  <!-- Action Overlay: Normal state (on hover) -->
+                  @if (item.status === 'success' && item.imageId && !isItemPendingDelete(item.previewUrl)) {
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 backdrop-blur-sm">
+                      <div class="flex gap-2">
+                        <!-- Mark as Main Button (only if not already main) -->
+                        @if (item.previewUrl !== mainImageUrl()) {
+                          <button
+                            type="button"
+                            (click)="setAsMain(item)"
+                            class="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-400 hover:bg-yellow-500 transition-colors shadow-lg"
+                            title="Marcar como principal"
                           >
-                            <span class="text-xl">✕</span>
-                          </div>
-                        </div>
-                      }
-                    }
-                  </div>
+                            <svg class="h-5 w-5 text-yellow-900" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                          </button>
+                        }
 
-                  <!-- Footer: Filename -->
-                  <div class="w-full border-t transition-colors"
-                    [class.border-primary]="item.imageId && item.previewUrl === mainImageUrl()"
-                    [class.border-surface-dim/50]="item.imageId && item.previewUrl !== mainImageUrl()"
-                    [class.border-surface-dim/50]="!item.imageId"
-                    [class.bg-surface-container]="item.imageId && item.previewUrl !== mainImageUrl()"
-                    [class.bg-primary/10]="item.imageId && item.previewUrl === mainImageUrl()"
-                    [class.bg-surface-container]="!item.imageId"
-                  >
-                    <p class="px-2 py-2 truncate text-xs font-medium text-text-primary text-center">
-                      {{ item.file?.name ?? 'Imagen guardada' }}
-                    </p>
+                        <!-- Delete Button -->
+                        <button
+                          type="button"
+                          (click)="confirmDeleteImage(item)"
+                          class="flex h-10 w-10 items-center justify-center rounded-full bg-red-500 hover:bg-red-600 transition-colors shadow-lg"
+                          title="Eliminar imagen"
+                        >
+                          <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-9l-1 1H5v2h14V4z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  }
 
-                    <!-- Error message (if applicable) -->
-                    @if (item.status === 'error' && item.errorMessage) {
-                      <p class="px-2 pb-2 text-xs text-error text-center line-clamp-2">
-                        {{ item.errorMessage }}
+                  <!-- Delete Confirmation Overlay -->
+                  @if (isItemPendingDelete(item.previewUrl)) {
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm gap-3">
+                      <p class="text-xs font-semibold text-white text-center px-2">
+                        ¿Eliminar esta imagen?
                       </p>
-                    }
-                  </div>
-                </button>
+                      <div class="flex gap-2">
+                        <!-- Cancel -->
+                        <button
+                          type="button"
+                          (click)="cancelDeleteImage()"
+                          class="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container hover:bg-surface-dim transition-colors"
+                          title="Cancelar"
+                        >
+                          <span class="text-lg text-text-primary">✕</span>
+                        </button>
+                        <!-- Confirm Delete -->
+                        <button
+                          type="button"
+                          (click)="removeImage(item)"
+                          class="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 hover:bg-red-700 transition-colors"
+                          title="Confirmar eliminación"
+                        >
+                          <svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
               }
             </div>
           </div>
