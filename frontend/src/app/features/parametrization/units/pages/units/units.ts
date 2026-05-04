@@ -220,6 +220,7 @@ export class UnitsComponent implements OnInit {
         : formValues.conversionFactor
           ? parseFloat(formValues.conversionFactor)
           : undefined,
+      isActive: this.editModalComponent.getIsActive(),
     };
 
     this.state.updateUnit(this.selectedUnit()!.id, request);

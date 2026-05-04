@@ -216,7 +216,7 @@ public class MeasurementUnitService {
     @Transactional(readOnly = true)
     public List<MeasurementUnitRelatedDto> findRelatedUnits(UUID baseUnitId) {
         // Validar que la unidad existe y está activa
-        MeasurementUnit baseUnit = unitRepository.findByIdActive(baseUnitId)
+        MeasurementUnit baseUnit = unitRepository.findById(baseUnitId)
             .orElseThrow(() -> new ResourceNotFoundException("Unidad de medida no encontrada con ID: " + baseUnitId));
 
         // Validar que es unidad base
