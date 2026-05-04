@@ -1,0 +1,93 @@
+<div class="flex flex-col gap-6 p-6 md:p-8">
+  <!-- Page Header -->
+  <bt-page-header
+    [title]="'Productos'"
+    [subtitle]="'Gestión del catálogo de productos'">
+    <div class="flex items-center gap-4">
+      <!-- Filter by isActive Status -->
+      <select
+        [value]="isActiveFilter()"
+        (change)="onIsActiveFilterChange($any($event.target).value)"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
+               focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+        <option value="all">Todos</option>
+        <option value="active">Activos</option>
+        <option value="inactive">Inactivos</option>
+      </select>
+
+      <!-- Refrescar (Secondary) -->
+      <button
+        (click)="refreshProducts()"
+        class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-on-surface text-sm font-medium rounded-lg hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-lg">refresh</span>
+        Refrescar
+      </button>
+
+      <!-- Nuevo Producto (Primary) - TODO -->
+      <button
+        (click)="openCreateModal()"
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors">
+        <span class="material-symbols-outlined text-lg">add</span>
+        Nuevo Producto
+      </button>
+    </div>
+  </bt-page-header>
+
+  <!-- Loading State -->
+  @if (state.isLoading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-on-surface-variant">Cargando productos...</p>
+      </div>
+    </div>
+  } @else {
+    <!-- Empty State -->
+    @if (state.isEmpty()) {
+      <div class="flex items-center justify-center py-12 bg-surface-container rounded-lg">
+        <div class="text-center">
+          <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4">inventory_2</span>
+          <p class="text-on-surface-variant">No hay productos registrados</p>
+          <button
+            (click)="openCreateModal()"
+            class="mt-4 px-4 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors">
+            Crear el primer producto
+          </button>
+        </div>
+      </div>
+    } @else {
+      <!-- Data Table using shared component -->
+      <bt-data-table
+        [columns]="tableColumns"
+        [data]="state.products()"
+        [currentPage]="getCurrentPageForDataTable()"
+        [pageSize]="state.pageSize()"
+        [totalItems]="state.totalElements()"
+        [loading]="state.isLoading()"
+        (pageChange)="onPageChange($event)"
+        (editClick)="onEditClick($event)"
+        (deleteClick)="onDeleteClick($event)">
+      </bt-data-table>
+    }
+  }
+</div>
+
+<!-- Delete Modal Template -->
+<ng-template #deleteModalTemplate>
+  <div class="space-y-4">
+    <p class="text-sm text-on-surface">
+      ¿Está seguro de que desea eliminar el producto
+      <strong>{{ selectedProduct()?.name }}</strong>?
+    </p>
+
+    @if (state.generalError()) {
+      <div class="p-3 bg-error/10 border border-error rounded-lg">
+        <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
+      </div>
+    }
+
+    <p class="text-xs text-on-surface-variant italic">
+      Esta acción no se puede deshacer.
+    </p>
+  </div>
+</ng-template>

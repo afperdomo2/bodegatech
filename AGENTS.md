@@ -35,19 +35,25 @@ pnpm ng generate component features/{feature}/pages/{page} --standalone --skip-t
 pnpm ng generate service core/services/{service}
 ```
 
-## Documentación detallada
+## Documentación obligatoria — leer ANTES de planificar
 
-Leer según la tarea a realizar:
+> ⚠️ Leer el archivo correspondiente COMPLETO antes de planificar o escribir código.
+> No asumir — la documentación tiene reglas y trampas que no son evidentes.
 
-| Tema | Archivo | Skills |
-|------|---------|--------|
-| Arquitectura general, estructura de carpetas, perfiles | `docs/architecture.md` | — |
-| Backend: Spring Boot, servicios, controladores, entidades | `docs/backend.md` | `java-springboot` |
-| Backend: JPA, índices, tipos de columna, queries | `docs/backend.md` | `postgresql-optimization` |
-| Frontend: componentes, signals, routing, DI, forms, HTTP | `docs/frontend.md` | `angular-developer` |
-| Frontend: UI, layouts, páginas visuales, estilos Tailwind | `docs/frontend.md` | `frontend-design` |
-| Convenciones REST, DTOs, envelopes, errores | `docs/api-conventions.md` | — |
-| Build de producción, variables de entorno, Testcontainers | `docs/deployment.md` | — |
+- **Arquitectura general, estructura de carpetas, perfiles de Spring:**
+  leer `docs/architecture.md` antes de crear módulos, paquetes o perfiles nuevos.
+
+- **Backend (Spring Boot, servicios, controladores, entidades, JPA, índices, queries):**
+  leer `docs/backend.md` + cargar skills `java-springboot` y `postgresql-optimization`.
+
+- **Frontend (componentes, signals, routing, DI, forms, HTTP, UI, Tailwind):**
+  leer `docs/frontend.md` + cargar skills `angular-developer` y `frontend-design`.
+
+- **Convenciones REST, DTOs, envelopes, códigos de error:**
+  leer `docs/api-conventions.md` antes de crear o modificar cualquier endpoint o DTO.
+
+- **Build de producción, variables de entorno, Testcontainers:**
+  leer `docs/deployment.md` antes de tocar configuración de build, Docker o CI.
 
 ## Trampas frecuentes (resumen ejecutivo)
 

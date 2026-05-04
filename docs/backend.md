@@ -62,6 +62,7 @@ Referencia: `common/exception/GlobalExceptionHandler.java`
 - `unique = true` ya crea índice B-tree en PostgreSQL — **NO agregar `@Index` adicional para el mismo campo** (redundante).
 - Un UNIQUE compuesto `(col_a, col_b)` cubre búsquedas por `col_a` — índice individual en `col_a` es redundante.
 - Prefijo de nombres: `idx_{tabla}_{campo}` (ej: `idx_products_is_active`).
+- **Máximo 5 índices por tabla** (contando los implícitos de constraints UNIQUE y PK). Más de 5 indica que la tabla necesita ser revisada o particionada.
 
 ### Tipos de columna
 - Texto libre sin límite de negocio → `columnDefinition = "TEXT"` (`description`, `url`, `file_key`).

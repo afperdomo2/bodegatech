@@ -9,16 +9,24 @@ export interface ProductImageDto {
 
 /**
  * Datos básicos de un producto (POST/PATCH response).
+ * NO incluye costPrice (información sensible).
  */
 export interface ProductDto {
   id: string;
   name: string;
   description: string | null;
-  price: number;
+  salePrice: number;
   stock: number;
+  minStock: number;
+  maxStock: number | null;
   sku: string;
   categoryId: string;
   categoryName: string;
+  unitId: string;
+  unitName: string;
+  unitAbbreviation: string;
+  mainImageUrl: string | null;
+  barcode: string | null;
   isActive: boolean;
   createdAt: string; // ISO-8601 datetime
 }
@@ -31,10 +39,10 @@ export type ProductSummaryDto = ProductDto;
 
 /**
  * Datos completos de un producto (GET /{id}).
- * Incluye timestamps, version para control concurrente, e imágenes.
+ * Incluye costPrice, timestamps y version para control concurrente.
  */
 export interface ProductDetail extends ProductSummaryDto {
+  costPrice: number;
   updatedAt: string; // ISO-8601 datetime
   version: number;   // para optimistic locking
-  images: ProductImageDto[];
 }
