@@ -23,7 +23,7 @@
         Refrescar
       </button>
 
-      <!-- Nuevo Producto (Primary) - TODO -->
+      <!-- Nuevo Producto (Primary) -->
       <button
         (click)="openCreateModal()"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors">
@@ -72,22 +72,49 @@
   }
 </div>
 
-<!-- Delete Modal Template -->
-<ng-template #deleteModalTemplate>
-  <div class="space-y-4">
-    <p class="text-sm text-on-surface">
-      ¿Está seguro de que desea eliminar el producto
-      <strong>{{ selectedProduct()?.name }}</strong>?
-    </p>
+<!-- Modal Components (dumb) -->
+<bt-product-create-modal
+  #createModalComponent
+  [name]="''"
+  [description]="null"
+  [salePrice]="0"
+  [costPrice]="null"
+  [categoryId]="''"
+  [unitId]="''"
+  [minStock]="0"
+  [maxStock]="null"
+  [sku]="''"
+  [barcode]="null"
+  [categories]="state.categories()"
+  [units]="state.units()"
+  [fieldErrors]="state.fieldErrors()"
+  [generalError]="state.generalError()"
+  [isLoadingDeps]="state.isLoadingFormDeps()"
+/>
 
-    @if (state.generalError()) {
-      <div class="p-3 bg-error/10 border border-error rounded-lg">
-        <p class="text-xs text-error font-medium">{{ state.generalError() }}</p>
-      </div>
-    }
+<bt-product-edit-modal
+  #editModalComponent
+  [name]="selectedProduct()?.name ?? ''"
+  [description]="selectedProduct()?.description ?? null"
+  [salePrice]="selectedProduct()?.salePrice ?? 0"
+  [costPrice]="state.selectedDetail()?.costPrice ?? null"
+  [categoryId]="selectedProduct()?.categoryId ?? ''"
+  [unitId]="selectedProduct()?.unitId ?? ''"
+  [minStock]="selectedProduct()?.minStock ?? 0"
+  [maxStock]="selectedProduct()?.maxStock ?? null"
+  [sku]="selectedProduct()?.sku ?? ''"
+  [barcode]="selectedProduct()?.barcode ?? null"
+  [categories]="state.categories()"
+  [units]="state.units()"
+  [fieldErrors]="state.fieldErrors()"
+  [generalError]="state.generalError()"
+  [isLoadingDeps]="state.isLoadingFormDeps()"
+  [isLoadingDetail]="state.isLoadingDetail()"
+  [detailedProduct]="state.selectedDetail()"
+/>
 
-    <p class="text-xs text-on-surface-variant italic">
-      Esta acción no se puede deshacer.
-    </p>
-  </div>
-</ng-template>
+<bt-product-delete-modal
+  #deleteModalComponent
+  [productName]="selectedProduct()?.name ?? ''"
+  [generalError]="state.generalError()"
+/>

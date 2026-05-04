@@ -1,13 +1,17 @@
 import { CommonModule } from '@angular/common';
-import type { OnInit } from '@angular/core';
+import type { OnInit, OnDestroy } from '@angular/core';
 import { ChangeDetectionStrategy, Component, effect, inject, signal, ViewChild } from '@angular/core';
-import type { TemplateRef } from '@angular/core';
+import { Subject } from 'rxjs';
 import type { ProductSummaryDto } from '../../../../../core/models/responses/product.responses';
+import type { CreateProductRequest, UpdateProductRequest } from '../../../../../core/models/requests/product.requests';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
 import { ModalService } from '../../../../../shared/services/modal.service';
 import { ToastService } from '../../../../../shared/services/toast.service';
 import { ProductStateService } from '../../state/product-state.service';
+import { ProductCreateModalComponent } from '../../components/product-create-modal.component';
+import { ProductEditModalComponent } from '../../components/product-edit-modal.component';
+import { ProductDeleteModalComponent } from '../../components/product-delete-modal.component';
 
 @Component({
   selector: 'bt-products',
@@ -16,20 +20,28 @@ import { ProductStateService } from '../../state/product-state.service';
     CommonModule,
     PageHeader,
     DataTable,
+    ProductCreateModalComponent,
+    ProductEditModalComponent,
+    ProductDeleteModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './products.html',
   styleUrl: './products.scss',
 })
-export class ProductsComponent implements OnInit {
+export class ProductsComponent implements OnInit, OnDestroy {
   protected state = inject(ProductStateService);
   protected modalService = inject(ModalService);
   protected toastService = inject(ToastService);
 
-  @ViewChild('deleteModalTemplate') deleteModalTemplate!: TemplateRef<unknown>;
+  private destroy$ = new Subject<void>();
+
+  // ViewChild para los 3 componentes modales
+  @ViewChild('createModalComponent') createModalComponent?: ProductCreateModalComponent;
+  @ViewChild('editModalComponent') editModalComponent?: ProductEditModalComponent;
+  @ViewChild('deleteModalComponent') deleteModalComponent?: ProductDeleteModalComponent;
 
   selectedProduct = signal<ProductSummaryDto | null>(null);
-  pendingAction = signal<'delete' | null>(null);
+  pendingAction = signal<'create' | 'edit' | 'delete' | null>(null);
   isActiveFilter = signal<'all' | 'active' | 'inactive'>('all');
 
   tableColumns: DataTableColumn[] = [
@@ -44,22 +56,26 @@ export class ProductsComponent implements OnInit {
   ];
 
   constructor() {
+    // Effect: operación exitosa (create, edit, delete)
     effect(() => {
       if (this.state.operationSuccess() > 0) {
         this.modalService.close();
 
         const messages = {
+          create: 'Producto creado correctamente',
+          edit: 'Producto actualizado correctamente',
           delete: 'Producto eliminado correctamente',
         };
 
         const action = this.pendingAction();
-        if (action) {
-          this.toastService.success(messages[action]);
+        if (action && action in messages) {
+          this.toastService.success(messages[action as keyof typeof messages]);
           this.pendingAction.set(null);
         }
       }
     });
 
+    // Effect: cerrar modal y limpiar errores
     effect(() => {
       if (!this.modalService.isOpen()) {
         this.state.clearErrors();
@@ -67,6 +83,7 @@ export class ProductsComponent implements OnInit {
       }
     });
 
+    // Effect: mostrar errores generales
     effect(() => {
       if (this.state.generalError()) {
         this.toastService.error(this.state.generalError() || 'Error desconocido');
@@ -79,11 +96,107 @@ export class ProductsComponent implements OnInit {
     this.state.loadProducts(0, this.state.pageSize(), filterValue);
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ========== CREATE ==========
+
+  openCreateModal(): void {
+    // Cargar dependencias (categorías, unidades) de forma lazy
+    this.state.loadFormDependencies();
+
+    if (!this.createModalComponent) return;
+    this.createModalComponent.resetForm();
+
+    this.modalService.open({
+      title: 'Crear Producto',
+      template: this.createModalComponent.createModalTemplate,
+      size: 'xl',
+      onConfirm: () => this.confirmCreateProduct(),
+      onCancel: () => {},
+    });
+  }
+
+  confirmCreateProduct(): void {
+    if (!this.createModalComponent) return;
+
+    // Validar que no haya errores en el formulario
+    if (this.createModalComponent.hasErrors()) {
+      this.toastService.error('Por favor, corrija los errores en el formulario');
+      return;
+    }
+
+    // Marcar todos los campos como touched para mostrar errores si los hay
+    this.createModalComponent.markAllTouched();
+
+    const formValues = this.createModalComponent.getFormValues() as CreateProductRequest;
+    this.pendingAction.set('create');
+    this.state.createProduct(formValues);
+  }
+
+  // ========== EDIT ==========
+
+  openEditModal(product: ProductSummaryDto): void {
+    this.selectedProduct.set(product);
+
+    // Cargar dependencias + detalle del producto
+    this.state.loadFormDependencies();
+    this.state.loadProductById(product.id);
+
+    // Usar un effect para esperar a que cargue y luego abrir el modal
+    const effectRef = effect(() => {
+      const detail = this.state.selectedDetail();
+      const isLoading = this.state.isLoadingDetail();
+
+      // Cuando el detalle esté cargado y no haya loading
+      if (detail && !isLoading) {
+        if (!this.editModalComponent) return;
+
+        // Cargar datos en el formulario
+        this.editModalComponent.loadProductData(detail);
+
+        this.modalService.open({
+          title: `Editar: ${detail.name}`,
+          template: this.editModalComponent.editModalTemplate,
+          size: 'xl',
+          onConfirm: () => this.confirmEditProduct(product.id),
+          onCancel: () => {},
+        });
+
+        // Destruir el effect para que no se vuelva a ejecutar
+        effectRef.destroy();
+      }
+    });
+  }
+
+  confirmEditProduct(productId: string): void {
+    if (!this.editModalComponent) return;
+
+    // Validar que no haya errores
+    if (this.editModalComponent.hasErrors()) {
+      this.toastService.error('Por favor, corrija los errores en el formulario');
+      return;
+    }
+
+    this.editModalComponent.markAllTouched();
+
+    const formValues = this.editModalComponent.getFormValues() as UpdateProductRequest;
+    this.pendingAction.set('edit');
+    this.state.updateProduct(productId, formValues);
+  }
+
+  // ========== DELETE ==========
+
   openDeleteModal(product: ProductSummaryDto): void {
     this.selectedProduct.set(product);
+
+    if (!this.deleteModalComponent) return;
+
     this.modalService.open({
       title: 'Eliminar Producto',
-      template: this.deleteModalTemplate,
+      template: this.deleteModalComponent.deleteModalTemplate,
       size: 'md',
       onConfirm: () => this.confirmDeleteProduct(),
       onCancel: () => {},
@@ -96,6 +209,8 @@ export class ProductsComponent implements OnInit {
     this.state.deleteProduct(this.selectedProduct()!.id);
   }
 
+  // ========== FILTER & PAGINATION ==========
+
   onIsActiveFilterChange(value: string): void {
     let isActive: boolean | null = null;
     if (value === 'active') {
@@ -103,31 +218,40 @@ export class ProductsComponent implements OnInit {
     } else if (value === 'inactive') {
       isActive = false;
     }
+    this.isActiveFilter.set(value as 'all' | 'active' | 'inactive');
     this.state.loadProducts(0, this.state.pageSize(), isActive);
   }
 
   onPageChange(newPage: number): void {
-    const filterValue = this.state.isActiveFilter();
-    this.state.loadProducts(newPage - 1, this.state.pageSize(), filterValue);
+    const filterValue = this.isActiveFilter();
+    let isActive: boolean | null = null;
+    if (filterValue === 'active') {
+      isActive = true;
+    } else if (filterValue === 'inactive') {
+      isActive = false;
+    }
+    this.state.loadProducts(newPage - 1, this.state.pageSize(), isActive);
   }
 
+  // ========== TABLE ACTIONS ==========
+
   onEditClick(product: unknown): void {
-    // TODO: Implementar modal de edición
-    console.log('Editar:', product);
+    this.openEditModal(product as ProductSummaryDto);
   }
 
   onDeleteClick(product: unknown): void {
     this.openDeleteModal(product as ProductSummaryDto);
   }
 
-  openCreateModal(): void {
-    // TODO: Implementar modal de creación
-    console.log('Crear nuevo producto');
-  }
-
   refreshProducts(): void {
-    const filterValue = this.state.isActiveFilter();
-    this.state.loadProducts(this.state.currentPage(), this.state.pageSize(), filterValue);
+    const filterValue = this.isActiveFilter();
+    let isActive: boolean | null = null;
+    if (filterValue === 'active') {
+      isActive = true;
+    } else if (filterValue === 'inactive') {
+      isActive = false;
+    }
+    this.state.loadProducts(this.state.currentPage(), this.state.pageSize(), isActive);
   }
 
   getCurrentPageForDataTable(): number {
