@@ -10,12 +10,13 @@ BodegaTech es una API REST desarrollada con **Spring Boot 4** y **Java 25**, dis
 2. [Requisitos previos](#-requisitos-previos)
 3. [Estructura del proyecto](#-estructura-del-proyecto)
 4. [Docker — servicios e infraestructura](#-docker--servicios-e-infraestructura)
-5. [Entornos de ejecución](#-entornos-de-ejecución)
-6. [Instalación y ejecución](#-instalación-y-ejecución)
-7. [Documentación de la API (Swagger)](#-documentación-de-la-api-swagger)
-8. [Estándar de errores — RFC 9457](#-estándar-de-errores--rfc-9457)
-9. [Testing](#-testing)
-10. [Autor](#-autor)
+5. [Almacenamiento de imágenes — AWS S3](#-almacenamiento-de-imágenes--aws-s3)
+6. [Entornos de ejecución](#-entornos-de-ejecución)
+7. [Instalación y ejecución](#-instalación-y-ejecución)
+8. [Documentación de la API (Swagger)](#-documentación-de-la-api-swagger)
+9. [Estándar de errores — RFC 9457](#-estándar-de-errores--rfc-9457)
+10. [Testing](#-testing)
+11. [Autor](#-autor)
 
 ---
 
@@ -135,6 +136,56 @@ docker-compose down
 # Detener y eliminar volúmenes (borra datos)
 docker-compose down -v
 ```
+
+---
+
+## ☁️ Almacenamiento de imágenes — AWS S3
+
+BodegaTech utiliza **Amazon S3** para almacenar imágenes de productos. Las imágenes se suben mediante **presigned URLs** generadas por el backend, proporcionando un mecanismo seguro sin exponer credenciales AWS al cliente.
+
+### Configuración — Variables de entorno
+
+La configuración de AWS S3 se centraliza en `src/main/resources/application.yml` bajo la sección `app.aws.*`:
+
+| Variable de entorno | Clave YAML | Valor por defecto | Descripción |
+|---|---|---|---|
+| `AWS_REGION` | `app.aws.region` | `us-east-1` | Región de AWS donde reside el bucket S3 |
+| `AWS_ACCESS_KEY_ID` | `app.aws.access-key-id` | (vacío) | ID de clave de acceso IAM para autenticación con AWS |
+| `AWS_SECRET_ACCESS_KEY` | `app.aws.secret-access-key` | (vacío) | Clave secreta IAM para autenticación con AWS |
+| `AWS_S3_BUCKET_NAME` | `app.aws.s3.bucket-name` | `bodegatech-uploads` | Nombre del bucket S3 (por ambiente: `-dev`, `-prod`) |
+| `AWS_S3_PUBLIC_URL` | `app.aws.s3.public-url` | (vacío) | URL pública del bucket (ej: `https://s3.amazonaws.com/bodegatech-uploads-dev`) |
+| `AWS_S3_PRESIGNED_EXPIRATION` | `app.aws.s3.presigned-url-expiration-minutes` | `15` | Duración en minutos de las presigned URLs generadas |
+
+### Presigned URLs
+
+Las presigned URLs permiten que el cliente suba archivos directamente a S3 sin credenciales AWS. Características:
+
+- **Generadas por el backend** mediante `S3Presigner`
+- **Expiración:** 15 minutos por defecto (configurable)
+- **Uso:** Cliente solicita URL → backend genera → cliente sube a S3 → cliente confirma en backend
+- **Seguridad:** Acceso restringido por IAM (solo `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` en prefijo `/products/*`)
+
+### Endpoints de imágenes
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `POST` | `/api/products/{productId}/images/presigned` | Generar presigned URLs para subida |
+| `POST` | `/api/products/{productId}/images/confirm` | Confirmar imágenes subidas |
+| `DELETE` | `/api/products/{productId}/images/{imageId}` | Eliminar imagen del bucket y BD |
+
+### Configuración por ambiente
+
+**Desarrollo (`dev`):**
+- Credenciales: Generadas por Terraform o AWS IAM local
+- Bucket: `bodegatech-uploads-dev`
+- CORS: `http://localhost:4200`
+
+**Producción (`prod`):**
+- Credenciales: Mediante variables de entorno secretas en CI/CD
+- Bucket: `bodegatech-uploads-prod`
+- CORS: Dominio(s) configurado(s) en Terraform
+
+> **Nota:** Las credenciales AWS **nunca deben ser hardcodeadas**. Siempre usar variables de entorno o `terraform.tfvars` (excluido de Git).
 
 ---
 

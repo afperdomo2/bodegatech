@@ -5,7 +5,9 @@ import com.afperdomo.bodegatech.module.product.dto.request.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductSummaryDto;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductDetail;
+import com.afperdomo.bodegatech.module.product.dto.response.ProductImageDto;
 import com.afperdomo.bodegatech.module.product.entity.Product;
+import com.afperdomo.bodegatech.module.product.entity.ProductImage;
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import org.mapstruct.BeanMapping;
@@ -16,6 +18,7 @@ import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -65,6 +68,7 @@ public interface ProductMapper {
     @Mapping(source = "unit", target = "unitId", qualifiedByName = "mapUnitId")
     @Mapping(source = "unit", target = "unitName", qualifiedByName = "mapUnitName")
     @Mapping(source = "unit", target = "unitAbbreviation", qualifiedByName = "mapUnitAbbreviation")
+    @Mapping(source = "images", target = "images", qualifiedByName = "mapProductImages")
     ProductDetail toDetail(Product product);
 
     /**
@@ -127,5 +131,24 @@ public interface ProductMapper {
     @Named("mapUnitAbbreviation")
     default String mapUnitAbbreviation(MeasurementUnit unit) {
         return unit != null ? unit.getAbbreviation() : null;
+    }
+
+    /**
+     * Helper para convertir lista de ProductImage a lista de ProductImageDto.
+     * Usada en toDetail() para incluir las imágenes del producto.
+     */
+    @Named("mapProductImages")
+    default List<ProductImageDto> mapProductImages(List<ProductImage> images) {
+        if (images == null || images.isEmpty()) {
+            return List.of();
+        }
+        return images.stream()
+            .map(image -> ProductImageDto.builder()
+                .id(image.getId())
+                .fileKey(image.getFileKey())
+                .url(image.getUrl())
+                .createdAt(image.getCreatedAt())
+                .build())
+            .toList();
     }
 }

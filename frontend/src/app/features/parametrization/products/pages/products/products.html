@@ -65,6 +65,7 @@
         [totalItems]="state.totalElements()"
         [loading]="state.isLoading()"
         (pageChange)="onPageChange($event)"
+        (imagesClick)="onImagesClick($event)"
         (editClick)="onEditClick($event)"
         (deleteClick)="onDeleteClick($event)">
       </bt-data-table>
@@ -117,4 +118,10 @@
   #deleteModalComponent
   [productName]="selectedProduct()?.name ?? ''"
   [generalError]="state.generalError()"
+/>
+
+<bt-product-images-modal
+  #imagesModalComponent
+  [productId]="selectedProduct()?.id ?? ''"
+  [productName]="selectedProduct()?.name ?? ''"
 />

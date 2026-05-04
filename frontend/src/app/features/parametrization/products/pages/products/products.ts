@@ -12,6 +12,7 @@ import { ProductStateService } from '../../state/product-state.service';
 import { ProductCreateModalComponent } from '../../components/product-create-modal.component';
 import { ProductEditModalComponent } from '../../components/product-edit-modal.component';
 import { ProductDeleteModalComponent } from '../../components/product-delete-modal.component';
+import { ProductImagesModalComponent } from '../../components/product-images-modal.component';
 
 @Component({
   selector: 'bt-products',
@@ -23,6 +24,7 @@ import { ProductDeleteModalComponent } from '../../components/product-delete-mod
     ProductCreateModalComponent,
     ProductEditModalComponent,
     ProductDeleteModalComponent,
+    ProductImagesModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './products.html',
@@ -39,6 +41,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   @ViewChild('createModalComponent') createModalComponent?: ProductCreateModalComponent;
   @ViewChild('editModalComponent') editModalComponent?: ProductEditModalComponent;
   @ViewChild('deleteModalComponent') deleteModalComponent?: ProductDeleteModalComponent;
+  @ViewChild('imagesModalComponent') imagesModalComponent?: ProductImagesModalComponent;
 
   selectedProduct = signal<ProductSummaryDto | null>(null);
   pendingAction = signal<'create' | 'edit' | 'delete' | null>(null);
@@ -239,6 +242,31 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   onDeleteClick(product: unknown): void {
     this.openDeleteModal(product as ProductSummaryDto);
+  }
+
+  onImagesClick(product: unknown): void {
+    this.openImagesModal(product as ProductSummaryDto);
+  }
+
+  // ========== IMAGES MODAL ==========
+
+  openImagesModal(product: ProductSummaryDto): void {
+    this.selectedProduct.set(product);
+
+    if (!this.imagesModalComponent) return;
+
+    // Resetear el formulario (limpiar lista de imágenes)
+    this.imagesModalComponent.resetForm();
+
+    // Cargar imágenes existentes desde el backend
+    this.imagesModalComponent.loadExistingImages(product.id);
+
+    this.modalService.open({
+      title: `Imágenes: ${product.name}`,
+      template: this.imagesModalComponent.imagesModalTemplate,
+      size: 'xl',
+      onCancel: () => {},
+    });
   }
 
   refreshProducts(): void {

@@ -80,22 +80,28 @@
                         }
                       </div>
                     }
-                    @case ('actions') {
-                      <div class="flex items-center justify-center gap-2">
-                        <button
-                          (click)="onEdit(item)"
-                          class="p-2 hover:bg-surface-200 rounded-lg transition-colors text-surface-600 hover:text-surface-900"
-                          aria-label="Editar">
-                          <span class="material-symbols-outlined text-xl">edit</span>
-                        </button>
-                        <button
-                          (click)="onDelete(item)"
-                          class="p-2 hover:bg-error/10 rounded-lg transition-colors text-error hover:text-error/90"
-                          aria-label="Eliminar">
-                          <span class="material-symbols-outlined text-xl">delete</span>
-                        </button>
-                      </div>
-                    }
+                     @case ('actions') {
+                       <div class="flex items-center justify-center gap-2">
+                         <button
+                           (click)="onImages(item)"
+                           class="p-2 hover:bg-primary/10 rounded-lg transition-colors text-primary hover:text-primary/90"
+                           aria-label="Imágenes">
+                           <span class="material-symbols-outlined text-xl">photo_library</span>
+                         </button>
+                         <button
+                           (click)="onEdit(item)"
+                           class="p-2 hover:bg-surface-200 rounded-lg transition-colors text-surface-600 hover:text-surface-900"
+                           aria-label="Editar">
+                           <span class="material-symbols-outlined text-xl">edit</span>
+                         </button>
+                         <button
+                           (click)="onDelete(item)"
+                           class="p-2 hover:bg-error/10 rounded-lg transition-colors text-error hover:text-error/90"
+                           aria-label="Eliminar">
+                           <span class="material-symbols-outlined text-xl">delete</span>
+                         </button>
+                       </div>
+                     }
                     @default {
                       {{ getValue(item, column.key) }}
                     }

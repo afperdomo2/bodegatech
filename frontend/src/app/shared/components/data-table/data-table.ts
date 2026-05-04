@@ -30,6 +30,7 @@ export class DataTable {
   pageChange = output<number>();
   editClick = output<unknown>();
   deleteClick = output<unknown>();
+  imagesClick = output<unknown>();
 
   get paginatedData() {
     // Server-side pagination: data() already contains only the current page
@@ -68,6 +69,10 @@ export class DataTable {
 
   onDelete(item: unknown): void {
     this.deleteClick.emit(item);
+  }
+
+  onImages(item: unknown): void {
+    this.imagesClick.emit(item);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

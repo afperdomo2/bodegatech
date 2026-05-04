@@ -3,8 +3,9 @@
  */
 export interface ProductImageDto {
   id: string;
-  url: string;
-  alt: string | null;
+  fileKey: string;        // clave en S3
+  url: string;            // URL pública
+  createdAt: string;      // ISO-8601 datetime
 }
 
 /**
@@ -39,10 +40,11 @@ export type ProductSummaryDto = ProductDto;
 
 /**
  * Datos completos de un producto (GET /{id}).
- * Incluye costPrice, timestamps y version para control concurrente.
+ * Incluye costPrice, timestamps, version para control concurrente, e imágenes.
  */
 export interface ProductDetail extends ProductSummaryDto {
   costPrice: number;
-  updatedAt: string; // ISO-8601 datetime
-  version: number;   // para optimistic locking
+  updatedAt: string;                        // ISO-8601 datetime
+  version: number;                          // para optimistic locking
+  images: ProductImageDto[];                // imágenes del producto
 }
