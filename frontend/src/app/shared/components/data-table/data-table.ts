@@ -1,5 +1,6 @@
-import { Component, input, output } from '@angular/core';
+import { Component, ContentChildren, input, output, QueryList, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BtCellDirective } from './data-table-cell.directive';
 
 export interface DataTableColumn {
   key: string;
@@ -20,6 +21,8 @@ export interface DataTableColumn {
   styleUrl: './data-table.scss',
 })
 export class DataTable {
+  @ContentChildren(BtCellDirective) cellTemplates!: QueryList<BtCellDirective>;
+
   columns = input<DataTableColumn[]>([]);
   data = input<unknown[]>([]);
   currentPage = input<number>(1);
@@ -110,5 +113,10 @@ export class DataTable {
 
   minValue(a: number, b: number) {
     return Math.min(a, b);
+  }
+
+  getCellTemplate(key: string): TemplateRef<unknown> | null {
+    const directive = this.cellTemplates?.find(d => d.btCell() === key);
+    return directive?.templateRef ?? null;
   }
 }

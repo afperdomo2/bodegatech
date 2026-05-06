@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import type { ProductSummaryDto } from '../../../../../core/models/responses/product.responses';
 import type { CreateProductRequest, UpdateProductRequest } from '../../../../../core/models/requests/product.requests';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
+import { BtCellDirective } from '../../../../../shared/components/data-table/data-table-cell.directive';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
 import { ModalService } from '../../../../../shared/services/modal.service';
 import { ToastService } from '../../../../../shared/services/toast.service';
@@ -21,6 +22,7 @@ import { ProductImagesModalComponent } from '../../components/product-images-mod
     CommonModule,
     PageHeader,
     DataTable,
+    BtCellDirective,
     ProductCreateModalComponent,
     ProductEditModalComponent,
     ProductDeleteModalComponent,
@@ -59,7 +61,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     { key: 'unitName', label: 'Unidad', type: 'text', align: 'center' },
     { key: 'isActive', label: 'Estado', type: 'badge', align: 'center' },
     { key: 'createdAt', label: 'Creado', type: 'date', align: 'center' },
-    { key: 'actions', label: 'Acciones', type: 'actions', align: 'center' },
+    { key: 'actions', label: 'Acciones', align: 'center' },
   ];
 
   constructor() {

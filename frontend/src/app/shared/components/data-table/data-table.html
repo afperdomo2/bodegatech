@@ -34,6 +34,9 @@
                 <td
                   [class]="'px-6 py-4 text-surface-900 ' +
                            (column.type === 'number' ? 'font-mono text-right' : getAlignClass(column.align))">
+                  @if (getCellTemplate(column.key); as tpl) {
+                    <ng-container *ngTemplateOutlet="tpl; context: { $implicit: getValue(item, column.key), row: item }"></ng-container>
+                  } @else {
                   @switch (column.type) {
                     @case ('text') {
                       {{ column.formatter ? column.formatter(getValue(item, column.key)) : getValue(item, column.key) }}
@@ -121,6 +124,7 @@
                     @default {
                       {{ getValue(item, column.key) }}
                     }
+                  }
                   }
                 </td>
               }

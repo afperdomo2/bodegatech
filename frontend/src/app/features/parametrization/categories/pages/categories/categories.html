@@ -64,9 +64,33 @@
         [pageSize]="state.pageSize()"
         [totalItems]="state.totalElements()"
         [loading]="state.isLoading()"
-        (pageChange)="onPageChange($event)"
-        (editClick)="onEditClick($event)"
-        (deleteClick)="onDeleteClick($event)">
+        (pageChange)="onPageChange($event)">
+        <ng-template btCell="actions" let-row="row">
+          <div class="flex items-center justify-center gap-2">
+            <div class="relative group/edit">
+              <button
+                (click)="onEditClick(row)"
+                class="p-2 hover:bg-surface-200 rounded-lg transition-colors text-surface-600 hover:text-surface-900"
+                aria-label="Editar">
+                <span class="material-symbols-outlined text-xl">edit</span>
+              </button>
+              <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-surface-900 text-white rounded opacity-0 group-hover/edit:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                Editar
+              </span>
+            </div>
+            <div class="relative group/delete">
+              <button
+                (click)="onDeleteClick(row)"
+                class="p-2 hover:bg-error/10 rounded-lg transition-colors text-error hover:text-error/90"
+                aria-label="Eliminar">
+                <span class="material-symbols-outlined text-xl">delete</span>
+              </button>
+              <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-surface-900 text-white rounded opacity-0 group-hover/delete:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                Eliminar
+              </span>
+            </div>
+          </div>
+        </ng-template>
       </bt-data-table>
     }
   }

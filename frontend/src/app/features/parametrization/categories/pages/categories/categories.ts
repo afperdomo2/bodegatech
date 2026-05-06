@@ -3,6 +3,7 @@ import type { OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, type TemplateRef, ViewChild } from '@angular/core';
 import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../../../../../core/models/category.models';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
+import { BtCellDirective } from '../../../../../shared/components/data-table/data-table-cell.directive';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
 import { ToggleSwitchComponent } from '../../../../../core/components/toggle-switch.component';
 import { ModalService } from '../../../../../shared/services/modal.service';
@@ -16,6 +17,7 @@ import { CategoryStateService } from '../../state/category-state.service';
     CommonModule,
     PageHeader,
     DataTable,
+    BtCellDirective,
     ToggleSwitchComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,7 +72,7 @@ export class CategoriesComponent implements OnInit {
     { key: 'description', label: 'Descripción', type: 'text', align: 'left' },
     { key: 'isActive', label: 'Estado', type: 'badge', align: 'center' },
     { key: 'createdAt', label: 'Creado', type: 'date', align: 'center' },
-    { key: 'actions', label: 'Acciones', type: 'actions', align: 'center' },
+    { key: 'actions', label: 'Acciones', align: 'center' },
   ];
 
   constructor() {

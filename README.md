@@ -36,6 +36,9 @@ BodegaTech es una API REST desarrollada con **Spring Boot 4** y **Java 25**, dis
 | Testcontainers | 1.20.0 | Tests de integración con BD real |
 | Gradle | 9.x | Sistema de build |
 | Docker / Compose | cualquier versión reciente | Infraestructura local |
+| Angular | 21.2 | Frontend SPA |
+| Tailwind CSS | v4.2.4 | Estilos del frontend |
+| pnpm | 10.30.3 | Gestor de paquetes frontend |
 
 > **Nota:** SpringDoc 3.x es requerido para Spring Boot 4.x. La versión 2.x causa `NoSuchMethodError: ControllerAdviceBean.<init>` y no es compatible.
 
@@ -76,18 +79,67 @@ bodegatech/
 │   │   │   │   └── util/
 │   │   │   │       └── SkuGenerator.java            # Componente para generar SKUs únicos
 │   │   │   └── module/
-│   │   │       └── product/                         # Módulo: Productos
-│   │   │           ├── controller/ProductController.java
-│   │   │           ├── service/ProductService.java
+│   │   │       ├── product/                         # Módulo: Productos
+│   │   │       │   ├── controller/
+│   │   │       │   │   ├── ProductController.java
+│   │   │       │   │   └── ProductImageController.java
+│   │   │       │   ├── service/
+│   │   │       │   │   ├── ProductService.java
+│   │   │       │   │   └── ProductImageService.java
+│   │   │       │   ├── repository/
+│   │   │       │   │   ├── ProductRepository.java
+│   │   │       │   │   ├── SkuValidationRepository.java
+│   │   │       │   │   └── ProductImageRepository.java
+│   │   │       │   ├── entity/
+│   │   │       │   │   ├── Product.java
+│   │   │       │   │   └── ProductImage.java
+│   │   │       │   ├── dto/
+│   │   │       │   │   ├── request/
+│   │   │       │   │   │   ├── CreateProductRequest.java
+│   │   │       │   │   │   └── UpdateProductRequest.java
+│   │   │       │   │   ├── response/
+│   │   │       │   │   │   ├── ProductDto.java
+│   │   │       │   │   │   ├── ProductDetail.java
+│   │   │       │   │   │   ├── ProductSummaryDto.java
+│   │   │       │   │   │   └── ProductImageDto.java
+│   │   │       │   │   ├── PresignedUrlRequest.java
+│   │   │       │   │   ├── PresignedUrlDto.java
+│   │   │       │   │   └── ConfirmImagesRequest.java
+│   │   │       │   └── mapper/ProductMapper.java
+│   │   │       ├── category/                        # Módulo: Categorías
+│   │   │       │   ├── controller/CategoryController.java
+│   │   │       │   ├── service/CategoryService.java
+│   │   │       │   ├── repository/
+│   │   │       │   │   ├── CategoryRepository.java
+│   │   │       │   │   └── CategorySpecifications.java
+│   │   │       │   ├── entity/Category.java
+│   │   │       │   ├── dto/
+│   │   │       │   │   ├── request/
+│   │   │       │   │   │   ├── CreateCategoryRequest.java
+│   │   │       │   │   │   └── UpdateCategoryRequest.java
+│   │   │       │   │   └── response/
+│   │   │       │   │   │       ├── CategoryDto.java
+│   │   │       │   │   │       ├── CategoryDetail.java
+│   │   │       │   │   │       └── CategorySummaryDto.java
+│   │   │       │   └── mapper/CategoryMapper.java
+│   │   │       └── unit/                            # Módulo: Unidades de medida
+│   │   │           ├── controller/MeasurementUnitController.java
+│   │   │           ├── service/MeasurementUnitService.java
 │   │   │           ├── repository/
-│   │   │           │   ├── ProductRepository.java
-│   │   │           │   └── SkuValidationRepository.java # Interfaz para validación de SKU
-│   │   │           ├── entity/Product.java
+│   │   │           │   ├── MeasurementUnitRepository.java
+│   │   │           │   └── MeasurementUnitSpecifications.java
+│   │   │           ├── entity/MeasurementUnit.java
+│   │   │           ├── enums/UnitType.java          # weight, volume, quantity, length
 │   │   │           ├── dto/
-│   │   │           │   ├── CreateProductRequest.java
-│   │   │           │   ├── UpdateProductRequest.java
-│   │   │           │   └── ProductDto.java
-│   │   │           └── mapper/ProductMapper.java
+│   │   │           │   ├── request/
+│   │   │           │   │   ├── CreateMeasurementUnitRequest.java
+│   │   │           │   │   │   └── UpdateMeasurementUnitRequest.java
+│   │   │           │   └── response/
+│   │   │           │   │       ├── MeasurementUnitDto.java
+│   │   │           │   │       ├── MeasurementUnitDetail.java
+│   │   │           │   │       ├── MeasurementUnitSummaryDto.java
+│   │   │           │   │       └── MeasurementUnitRelatedDto.java
+│   │   │           └── mapper/MeasurementUnitMapper.java
 │   │   └── resources/
 │   │       ├── application.yml          # Configuración base
 │   │       ├── application-dev.yml      # Perfil desarrollo
@@ -97,6 +149,23 @@ bodegatech/
 │           └── module/product/
 │               ├── ProductControllerTest.java
 │               └── ProductServiceTest.java
+├── frontend/                             # Angular SPA
+│   ├── src/app/
+│   │   ├── core/                       # Servicios globales (ApiService, etc.)
+│   │   ├── shared/                     # Componentes reutilizables (bt-*)
+│   │   ├── layout/                     # Estructura visual (main-layout, sidebar, topbar)
+│   │   └── features/                   # Módulos lazy
+│   │       ├── auth/                   # Login
+│   │       ├── dashboard/               # Dashboard principal
+│   │       ├── inventory/              # Control de inventario
+│   │       ├── parametrization/         # Configuración
+│   │       │   ├── products/           # Gestión de productos
+│   │       │   ├── categories/         # Gestión de categorías
+│   │       │   └── units/              # Gestión de unidades de medida
+│   │       ├── reports/                # Reportes
+│   │       └── admin/                  # Administración
+│   ├── package.json
+│   └── pnpm-lock.yaml
 ├── docker-compose.yml
 ├── build.gradle
 ├── settings.gradle
@@ -273,6 +342,31 @@ La documentación está en español e incluye ejemplos de request/response para 
 | `POST` | `/api/products` | Crear nuevo producto |
 | `PATCH` | `/api/products/{id}` | Actualizar producto parcialmente |
 | `DELETE` | `/api/products/{id}` | Desactivar producto (soft delete) |
+| `POST` | `/api/products/{productId}/images/presigned` | Generar presigned URLs para subida |
+| `POST` | `/api/products/{productId}/images/confirm` | Confirmar imágenes subidas |
+| `DELETE` | `/api/products/{productId}/images/{imageId}` | Eliminar imagen del bucket y BD |
+
+### Endpoints disponibles — Categorías
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/api/categories` | Listar categorías — **paginado** |
+| `GET` | `/api/categories/{id}` | Obtener categoría por ID |
+| `POST` | `/api/categories` | Crear nueva categoría |
+| `PATCH` | `/api/categories/{id}` | Actualizar categoría parcialmente |
+| `DELETE` | `/api/categories/{id}` | Desactivar categoría (soft delete) |
+
+### Endpoints disponibles — Unidades de medida
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/api/units` | Listar unidades — **paginado** |
+| `GET` | `/api/units/{id}` | Obtener unidad por ID |
+| `POST` | `/api/units` | Crear nueva unidad de medida |
+| `PATCH` | `/api/units/{id}` | Actualizar unidad parcialmente |
+| `DELETE` | `/api/units/{id}` | Desactivar unidad (soft delete) |
+
+Los tipos de unidades soportados son: `WEIGHT`, `VOLUME`, `QUANTITY`, `LENGTH`.
 
 ### Formato de respuesta exitosa
 
@@ -443,10 +537,10 @@ Para errores de validación (400), el campo `errors` detalla cada campo inválid
 
 ## 🎨 Frontend — BodegaTech UI
 
-La aplicación frontend está construida con **Angular 20+** y **Tailwind CSS**, en la carpeta `frontend`.
+La aplicación frontend está construida con **Angular 21.2** y **Tailwind CSS v4**, en la carpeta `frontend`.
 
 ### Stack Frontend
-- **Angular 20+** (standalone components)
+- **Angular 21.2** (standalone components con signals)
 - **TypeScript** con signals para estado reactivo
 - **Tailwind CSS v4** para estilos
 - **SCSS** para estilos modulares
@@ -463,16 +557,18 @@ cd frontend
 pnpm install
 ```
 
-### Estructura
-```
-frontend/src/app/
-├── core/              # Servicios globales (ApiService, etc.)
-├── shared/            # Componentes reutilizables (bt-*)
-├── layout/            # Estructura visual (sidebar, topbar)
-├── features/          # Módulos lazy (dashboard, inventory)
-├── app.routes.ts      # Configuración de rutas
-└── environments/      # Configuración por entorno
-```
+### Estructura de rutas
+
+| Ruta | Componente | Descripción |
+|---|---|---|
+| `/login` | Login | Autenticación de usuarios |
+| `/dashboard` | Dashboard | Panel principal |
+| `/inventory` | Inventory | Control de inventario |
+| `/parametrization/products` | Products | Gestión de productos |
+| `/parametrization/categories` | Categories | Gestión de categorías |
+| `/parametrization/units` | Units | Gestión de unidades de medida |
+| `/reports` | Reports | Reportes |
+| `/admin` | Admin | Administración |
 
 ### Comandos
 ```bash
@@ -481,7 +577,7 @@ cd frontend
 # Desarrollo (http://localhost:4200)
 pnpm start
 
-# Build producción
+# Build producción (lint + build)
 pnpm build
 
 # Tests
@@ -490,8 +586,14 @@ pnpm test
 # Lint
 pnpm lint
 
+# Lint con auto-fix
+pnpm lint:fix
+
 # Generar componente
 pnpm ng generate component features/mi-feature/pages/mi-pagina --standalone --skip-tests
+
+# Generar servicio
+pnpm ng generate service core/services/mi-servicio
 ```
 
 ### API Backend

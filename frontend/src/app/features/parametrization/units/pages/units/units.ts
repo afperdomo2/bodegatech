@@ -5,6 +5,7 @@ import type { MeasurementUnitDto } from '../../../../../core/models/responses/un
 import type { CreateMeasurementUnitRequest, UpdateMeasurementUnitRequest } from '../../../../../core/models/requests/unit.requests';
 import { getUnitTypeLabel, type UnitType } from '../../../../../core/constants/unit-type.constants';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
+import { BtCellDirective } from '../../../../../shared/components/data-table/data-table-cell.directive';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
 import { ModalService } from '../../../../../shared/services/modal.service';
 import { ToastService } from '../../../../../shared/services/toast.service';
@@ -20,6 +21,7 @@ import { UnitDeleteModalComponent } from '../../components/unit-delete-modal.com
     CommonModule,
     PageHeader,
     DataTable,
+    BtCellDirective,
     UnitCreateModalComponent,
     UnitEditModalComponent,
     UnitDeleteModalComponent,
@@ -63,7 +65,7 @@ export class UnitsComponent implements OnInit {
     },
     { key: 'isActive', label: 'Estado', type: 'badge', align: 'center' },
     { key: 'createdAt', label: 'Creado', type: 'date', align: 'center' },
-    { key: 'actions', label: 'Acciones', type: 'actions', align: 'center' },
+    { key: 'actions', label: 'Acciones', align: 'center' },
   ];
 
   constructor() {
