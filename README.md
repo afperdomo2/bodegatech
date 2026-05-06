@@ -633,6 +633,50 @@ Los tests de integración usan **Testcontainers** para levantar una instancia re
 
 ---
 
+## ☁️ Terraform — Infraestructura AWS
+
+El proyecto incluye configuración de infraestructura como código en `terraform/`.
+
+### Recursos creados
+
+| Recurso | Descripción |
+|---|---|
+| S3 Bucket | Almacenamiento de imágenes y uploads (`felipecorp-bodegatech-{env}-uploads`) |
+
+### Variables
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `region` | `us-east-1` | Región AWS |
+| `org_name` | `felipecorp` | Nombre de organización |
+| `project_name` | `bodegatech` | Nombre del proyecto |
+| `environment` | `dev` | Entorno (dev, prod) |
+
+### Comandos
+
+```bash
+cd terraform
+
+# Inicializar
+terraform init
+
+# Plan de cambios
+terraform plan -var="environment=dev"
+
+# Genera un plan especulativo de ejecución y lo guarda con el nombre dado
+terraform plan -out plan.out
+
+# Aplicar cambios
+terraform apply
+
+# Destruir recursos
+terraform destroy -var="environment=dev"
+```
+
+> **Nota:** Credenciales AWS deben estar configuradas en el entorno (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY).
+
+---
+
 ## 👤 Autor
 
 **Andrés Felipe Perdomo**
