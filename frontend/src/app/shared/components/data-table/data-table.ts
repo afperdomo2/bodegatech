@@ -1,4 +1,5 @@
-import { Component, ContentChildren, input, output, QueryList, TemplateRef } from '@angular/core';
+import type { QueryList, TemplateRef } from '@angular/core';
+import { Component, ContentChildren, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BtCellDirective } from './data-table-cell.directive';
 
