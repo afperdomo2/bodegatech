@@ -14,6 +14,7 @@ import { ProductCreateModalComponent } from '../../components/product-create-mod
 import { ProductEditModalComponent } from '../../components/product-edit-modal.component';
 import { ProductDeleteModalComponent } from '../../components/product-delete-modal.component';
 import { ProductImagesModalComponent } from '../../components/product-images-modal.component';
+import { ImageThumbnail } from '../../../../../shared/components/image-thumbnail/image-thumbnail';
 
 @Component({
   selector: 'bt-products',
@@ -23,6 +24,7 @@ import { ProductImagesModalComponent } from '../../components/product-images-mod
     PageHeader,
     DataTable,
     BtCellDirective,
+    ImageThumbnail,
     ProductCreateModalComponent,
     ProductEditModalComponent,
     ProductDeleteModalComponent,
@@ -53,7 +55,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   private _editPending = signal(false);
 
   tableColumns: DataTableColumn[] = [
-    { key: 'mainImageUrl', label: '', type: 'image', align: 'center', width: '60px' },
+    { key: 'mainImageUrl', label: '', align: 'center', width: '60px' },
     { key: 'name', label: 'Nombre', type: 'text', align: 'left' },
     { key: 'sku', label: 'SKU', type: 'text', align: 'center' },
     { key: 'salePrice', label: 'Precio de Venta', type: 'number', align: 'right' },
