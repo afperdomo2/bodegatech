@@ -2,6 +2,7 @@ package com.afperdomo.bodegatech.module.product.entity;
 
 import com.afperdomo.bodegatech.common.audit.BaseEntity;
 import com.afperdomo.bodegatech.module.category.entity.Category;
+import com.afperdomo.bodegatech.module.supplier.entity.Supplier;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -26,7 +27,8 @@ import java.util.List;
 @Table(name = "products", indexes = {
         @Index(name = "idx_products_is_active", columnList = "is_active"),
         @Index(name = "idx_products_category_id", columnList = "category_id"),
-        @Index(name = "idx_products_unit_id", columnList = "unit_id")
+        @Index(name = "idx_products_unit_id", columnList = "unit_id"),
+        @Index(name = "idx_products_supplier_id", columnList = "supplier_id")
 })
 @EqualsAndHashCode(callSuper = true)
 public class Product extends BaseEntity {
@@ -74,6 +76,10 @@ public class Product extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "unit_id", nullable = false)
     private MeasurementUnit unit;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "supplier_id", foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL"))
+    private Supplier supplier;
 
     @Column(columnDefinition = "TEXT")
     private String mainImageUrl;

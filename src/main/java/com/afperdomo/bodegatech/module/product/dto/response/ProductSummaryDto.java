@@ -1,5 +1,6 @@
 package com.afperdomo.bodegatech.module.product.dto.response;
 
+import com.afperdomo.bodegatech.module.supplier.dto.response.SupplierSummaryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -56,6 +57,9 @@ public class ProductSummaryDto {
 
     @Schema(description = "Abreviación de la unidad de medida", example = "kg")
     private String unitAbbreviation;
+
+    @Schema(description = "Proveedor principal del producto (opcional)", nullable = true)
+    private SupplierSummaryDto supplier;
 
     @Schema(description = "URL de la imagen principal (opcional)", example = "https://s3.amazonaws.com/products/laptop-dell-main.jpg")
     private String mainImageUrl;

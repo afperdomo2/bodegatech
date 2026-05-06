@@ -9,6 +9,8 @@ import com.afperdomo.bodegatech.module.product.dto.response.ProductImageDto;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.entity.ProductImage;
 import com.afperdomo.bodegatech.module.category.entity.Category;
+import com.afperdomo.bodegatech.module.supplier.dto.response.SupplierSummaryDto;
+import com.afperdomo.bodegatech.module.supplier.entity.Supplier;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -42,6 +44,7 @@ public interface ProductMapper {
     @Mapping(source = "unit", target = "unitId", qualifiedByName = "mapUnitId")
     @Mapping(source = "unit", target = "unitName", qualifiedByName = "mapUnitName")
     @Mapping(source = "unit", target = "unitAbbreviation", qualifiedByName = "mapUnitAbbreviation")
+    @Mapping(source = "supplier", target = "supplier", qualifiedByName = "mapSupplierSummary")
     ProductDto toDto(Product product);
 
     /**
@@ -55,6 +58,7 @@ public interface ProductMapper {
     @Mapping(source = "unit", target = "unitId", qualifiedByName = "mapUnitId")
     @Mapping(source = "unit", target = "unitName", qualifiedByName = "mapUnitName")
     @Mapping(source = "unit", target = "unitAbbreviation", qualifiedByName = "mapUnitAbbreviation")
+    @Mapping(source = "supplier", target = "supplier", qualifiedByName = "mapSupplierSummary")
     ProductSummaryDto toSummaryDto(Product product);
 
     /**
@@ -69,16 +73,18 @@ public interface ProductMapper {
     @Mapping(source = "unit", target = "unitName", qualifiedByName = "mapUnitName")
     @Mapping(source = "unit", target = "unitAbbreviation", qualifiedByName = "mapUnitAbbreviation")
     @Mapping(source = "images", target = "images", qualifiedByName = "mapProductImages")
+    @Mapping(source = "supplier", target = "supplier", qualifiedByName = "mapSupplierSummary")
     ProductDetail toDetail(Product product);
 
     /**
      * Convierte un CreateProductRequest a entidad Product.
-     * Los campos id, createdAt, updatedAt, version, isActive, category y unit
+     * Los campos id, createdAt, updatedAt, version, isActive, category, unit y supplier
      * se gestionan en el servicio, no en el mapper.
-     * Ignora: category, unit, stock (inicializado en servicio).
+     * Ignora: category, unit, supplier, stock (inicializado en servicio).
      */
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "unit", ignore = true)
+    @Mapping(target = "supplier", ignore = true)
     @Mapping(target = "stock", ignore = true)
     Product toEntity(CreateProductRequest request);
 
@@ -86,11 +92,12 @@ public interface ProductMapper {
      * Actualiza parcialmente una entidad Product con los campos de UpdateProductRequest.
      * Los campos null en el request se ignoran, preservando el valor actual de la entidad.
      * Preserva siempre: id, sku, createdAt, updatedAt, version, isActive.
-     * Ignora: category, unit (se asignan en ProductService si cambian).
+     * Ignora: category, unit, supplier (se asignan en ProductService si cambian).
      */
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "unit", ignore = true)
+    @Mapping(target = "supplier", ignore = true)
     void updateEntity(UpdateProductRequest request, @MappingTarget Product product);
 
     /**
@@ -131,6 +138,21 @@ public interface ProductMapper {
     @Named("mapUnitAbbreviation")
     default String mapUnitAbbreviation(MeasurementUnit unit) {
         return unit != null ? unit.getAbbreviation() : null;
+    }
+
+    /**
+     * Helper para mapear Supplier a SupplierSummaryDto.
+     */
+    @Named("mapSupplierSummary")
+    default SupplierSummaryDto mapSupplierSummary(Supplier supplier) {
+        if (supplier == null) {
+            return null;
+        }
+        return SupplierSummaryDto.builder()
+                .id(supplier.getId())
+                .name(supplier.getName())
+                .nit(supplier.getNit())
+                .build();
     }
 
     /**

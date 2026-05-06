@@ -10,6 +10,8 @@ import com.afperdomo.bodegatech.module.product.mapper.ProductMapper;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
 import com.afperdomo.bodegatech.module.category.entity.Category;
 import com.afperdomo.bodegatech.module.category.repository.CategoryRepository;
+import com.afperdomo.bodegatech.module.supplier.entity.Supplier;
+import com.afperdomo.bodegatech.module.supplier.repository.SupplierRepository;
 import com.afperdomo.bodegatech.module.unit.entity.MeasurementUnit;
 import com.afperdomo.bodegatech.module.unit.repository.MeasurementUnitRepository;
 import com.afperdomo.bodegatech.common.exception.BusinessException;
@@ -36,6 +38,7 @@ public class ProductService {
     private final SkuGenerator skuGenerator;
     private final CategoryRepository categoryRepository;
     private final MeasurementUnitRepository measurementUnitRepository;
+    private final SupplierRepository supplierRepository;
 
     @Transactional(readOnly = true)
     public Page<ProductSummaryDto> findAllProducts(Pageable pageable, Boolean isActive) {
@@ -70,6 +73,20 @@ public class ProductService {
         MeasurementUnit unit = measurementUnitRepository.findByIdActive(request.getUnitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Unidad de Medida", request.getUnitId()));
 
+        // Validar y obtener proveedor si se proporciona (debe estar activo)
+        Supplier supplier = null;
+        if (request.getSupplierId() != null) {
+            supplier = supplierRepository.findByIdAndIsActiveTrue(request.getSupplierId())
+                    .orElseThrow(() -> {
+                        Supplier notFound = supplierRepository.findById(request.getSupplierId()).orElse(null);
+                        if (notFound == null) {
+                            return new ResourceNotFoundException("Proveedor", request.getSupplierId());
+                        } else {
+                            return new BusinessException("El proveedor no está activo");
+                        }
+                    });
+        }
+
         // Validar relación minStock <= maxStock (validación cruzada, no expresable en Bean Validation)
         if (request.getMinStock() != null && request.getMaxStock() != null &&
                 request.getMinStock().compareTo(request.getMaxStock()) > 0) {
@@ -95,6 +112,7 @@ public class ProductService {
         product.setSku(generatedSku);
         product.setCategory(category);
         product.setUnit(unit);
+        product.setSupplier(supplier);
         product.setIsActive(true);
         
         // Stock inicial siempre es 0 al crear (se gestiona vía Movimientos)
@@ -124,6 +142,23 @@ public class ProductService {
         if (request.getUnitId() != null && !request.getUnitId().equals(product.getUnit().getId())) {
             newUnit = measurementUnitRepository.findByIdActive(request.getUnitId())
                     .orElseThrow(() -> new ResourceNotFoundException("Unidad de Medida", request.getUnitId()));
+        }
+
+        // Si el proveedor cambió, validar que exista y esté activo
+        Supplier newSupplier = product.getSupplier();
+        if (request.getSupplierId() != null) {
+            UUID currentSupplierId = product.getSupplier() != null ? product.getSupplier().getId() : null;
+            if (!request.getSupplierId().equals(currentSupplierId)) {
+                newSupplier = supplierRepository.findByIdAndIsActiveTrue(request.getSupplierId())
+                        .orElseThrow(() -> {
+                            Supplier notFound = supplierRepository.findById(request.getSupplierId()).orElse(null);
+                            if (notFound == null) {
+                                return new ResourceNotFoundException("Proveedor", request.getSupplierId());
+                            } else {
+                                return new BusinessException("El proveedor no está activo");
+                            }
+                        });
+            }
         }
 
         // Validar relación minStock vs maxStock (validación cruzada, usar valores existentes si no se actualizan)
@@ -166,6 +201,11 @@ public class ProductService {
         // Asignar la nueva unidad si cambió
         if (request.getUnitId() != null) {
             product.setUnit(newUnit);
+        }
+
+        // Asignar el nuevo proveedor si cambió o se proporciona supplierId (puede ser null)
+        if (request.getSupplierId() != null) {
+            product.setSupplier(newSupplier);
         }
 
         // Actualizar isActive si se proporciona

@@ -1,5 +1,6 @@
 package com.afperdomo.bodegatech.module.product.dto.response;
 
+import com.afperdomo.bodegatech.module.supplier.dto.response.SupplierSummaryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -63,6 +64,9 @@ public class ProductDto {
 
     @Schema(description = "Abreviación de la unidad de medida", example = "kg")
     private String unitAbbreviation;
+
+    @Schema(description = "Proveedor principal del producto (opcional)", nullable = true)
+    private SupplierSummaryDto supplier;
 
     @Schema(description = "Código de barras del producto (opcional)", example = "7501234567890")
     private String barcode;

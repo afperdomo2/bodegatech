@@ -65,6 +65,9 @@ public class CreateProductRequest {
     @Schema(description = "ID de la unidad de medida base para este producto", example = "550e8400-e29b-41d4-a716-446655440000")
     private UUID unitId;
 
+    @Schema(description = "ID del proveedor principal (opcional)", example = "550e8400-e29b-41d4-a716-446655440001", nullable = true)
+    private UUID supplierId;
+
     @Schema(description = "Código de barras (opcional, máx 100 caracteres)", example = "7501234567890", nullable = true)
     private String barcode;
 }
