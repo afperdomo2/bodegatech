@@ -179,7 +179,7 @@ interface ImageUploadItem {
                   }
 
                   <!-- Action Overlay: Normal state (on hover) -->
-                  @if (item.status === 'success' && item.imageId && !isItemPendingDelete(item.previewUrl)) {
+                  @if (item.status === 'success' && item.imageId && !isItemPendingDelete(item.previewUrl) && deletingImageUrl() !== item.previewUrl) {
                     <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 backdrop-blur-sm">
                       <div class="flex gap-2">
                         <!-- Mark as Main Button (only if not already main) -->
@@ -212,7 +212,7 @@ interface ImageUploadItem {
                   }
 
                   <!-- Delete Confirmation Overlay -->
-                  @if (isItemPendingDelete(item.previewUrl)) {
+                  @if (isItemPendingDelete(item.previewUrl) && deletingImageUrl() !== item.previewUrl) {
                     <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm gap-3">
                       <p class="text-xs font-semibold text-white text-center px-2">
                         ¿Eliminar esta imagen?
@@ -239,6 +239,16 @@ interface ImageUploadItem {
                           </svg>
                         </button>
                       </div>
+                    </div>
+                  }
+
+                  <!-- Loading Overlay (while deleting) -->
+                  @if (deletingImageUrl() === item.previewUrl) {
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm gap-2">
+                      <div class="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                      <p class="text-xs font-medium text-white">
+                        Eliminando...
+                      </p>
                     </div>
                   }
                 </div>
@@ -277,6 +287,7 @@ export class ProductImagesModalComponent {
   isLoadingExistingImages = signal(false);
   mainImageUrl = signal<string | null>(null); // URL de la imagen principal del producto
   itemPendingDelete = signal<string | null>(null); // previewUrl del item siendo eliminado
+  deletingImageUrl = signal<string | null>(null); // previewUrl del item siendo eliminado (HTTP en curso)
   previewItem = signal<ImageUploadItem | null>(null); // item en vista previa
 
   // Computed
@@ -626,6 +637,7 @@ export class ProductImagesModalComponent {
 
     // Si la imagen ya fue confirmada en BD (tiene imageId), eliminarla también del backend
     if (item.imageId) {
+      this.deletingImageUrl.set(item.previewUrl);
       this.imageService.deleteImage(productId, item.imageId).subscribe({
         next: () => {
           this.uploadItems.update((items) =>
@@ -634,6 +646,7 @@ export class ProductImagesModalComponent {
           URL.revokeObjectURL(item.previewUrl);
           this.toast.success(`Imagen eliminada`);
           this.itemPendingDelete.set(null);
+          this.deletingImageUrl.set(null);
         },
         error: (error) => {
           const msg =
@@ -641,6 +654,7 @@ export class ProductImagesModalComponent {
               ? error.error?.detail || error.message
               : 'Error al eliminar imagen';
           this.toast.error(msg);
+          this.deletingImageUrl.set(null);
         },
       });
     } else {

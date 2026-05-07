@@ -86,11 +86,6 @@ public class Product extends BaseEntity {
     @Builder.Default
     private Boolean isActive = true;
 
-    /**
-     * Relación 1-N con ProductImage.
-     * Las imágenes están ordenadas por creación (más recientes primero).
-     * orphanRemoval = true: elimina imágenes huérfanas al borrar el producto.
-     */
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProductImage> images = new ArrayList<>();
