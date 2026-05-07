@@ -51,14 +51,13 @@ public interface ProductMapper {
      * Convierte una entidad Product a ProductSummaryDto (respuesta resumida).
      * Mapea relaciones Category y MeasurementUnit usando métodos helpers.
      * Utilizado en listados paginados (GET /api/products).
-     * NOTA: costPrice, minStock, maxStock, stock, barcode NO se incluyen.
+     * NOTA: costPrice, minStock, maxStock, stock, barcode, supplier NO se incluyen.
      */
     @Mapping(source = "category", target = "categoryId", qualifiedByName = "mapCategoryId")
     @Mapping(source = "category", target = "categoryName", qualifiedByName = "mapCategoryName")
     @Mapping(source = "unit", target = "unitId", qualifiedByName = "mapUnitId")
     @Mapping(source = "unit", target = "unitName", qualifiedByName = "mapUnitName")
     @Mapping(source = "unit", target = "unitAbbreviation", qualifiedByName = "mapUnitAbbreviation")
-    @Mapping(source = "supplier", target = "supplier", qualifiedByName = "mapSupplierSummary")
     ProductSummaryDto toSummaryDto(Product product);
 
     /**

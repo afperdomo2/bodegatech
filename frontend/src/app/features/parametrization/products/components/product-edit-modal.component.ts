@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ProductFormComponent } from './product-form.component';
 import type { CategorySummaryDto } from '../../../../core/models/responses/category.responses';
 import type { MeasurementUnitSummaryDto } from '../../../../core/models/responses/unit.responses';
+import type { SupplierSummaryDto } from '../../../../core/models/responses/supplier.responses';
 import type { ProductDetail } from '../../../../core/models/responses/product.responses';
 import type { UpdateProductRequest } from '../../../../core/models/requests/product.requests';
 
@@ -65,6 +66,7 @@ import type { UpdateProductRequest } from '../../../../core/models/requests/prod
             [formValues]="formValues()"
             [categories]="categories()"
             [units]="units()"
+            [suppliers]="suppliers()"
             [fieldErrors]="fieldErrors()"
             [isLoadingDeps]="isLoadingDeps()"
             [detailedProduct]="detailedProduct()"
@@ -94,6 +96,7 @@ export class ProductEditModalComponent {
 
   categories = input<CategorySummaryDto[]>([]);
   units = input<MeasurementUnitSummaryDto[]>([]);
+  suppliers = input<SupplierSummaryDto[]>([]);
   fieldErrors = input<Record<string, string>>({});
   generalError = input<string | null>(null);
   isLoadingDeps = input(false);
@@ -109,6 +112,7 @@ export class ProductEditModalComponent {
     costPrice: number | null;
     categoryId: string;
     unitId: string;
+    supplierId: string | null;
     minStock: number | null;
     maxStock: number | null;
     sku?: string;
@@ -121,6 +125,7 @@ export class ProductEditModalComponent {
     costPrice: null,
     categoryId: '',
     unitId: '',
+    supplierId: null,
     minStock: null,
     maxStock: null,
     barcode: null,
@@ -134,6 +139,7 @@ export class ProductEditModalComponent {
     costPrice: null as number | null,
     categoryId: '',
     unitId: '',
+    supplierId: null as string | null,
     minStock: null as number | null,
     maxStock: null as number | null,
     sku: '',
@@ -191,6 +197,7 @@ export class ProductEditModalComponent {
       costPrice: values.costPrice ?? undefined,
       categoryId: values.categoryId,
       unitId: values.unitId,
+      supplierId: values.supplierId ?? undefined,
       minStock: values.minStock ?? undefined,
       maxStock: values.maxStock ?? undefined,
       barcode: values.barcode || undefined,
@@ -198,10 +205,10 @@ export class ProductEditModalComponent {
     };
   }
 
-  /**
-   * Cargar el formulario con datos del producto en edición.
-   * Llamado por el padre al abrir el modal después de cargar el detalle.
-   */
+   /**
+    * Cargar el formulario con datos del producto en edición.
+    * Llamado por el padre al abrir el modal después de cargar el detalle.
+    */
   loadProductData(product: ProductDetail): void {
     this.formValues.set({
       name: product.name,
@@ -210,6 +217,7 @@ export class ProductEditModalComponent {
       costPrice: product.costPrice,
       categoryId: product.categoryId,
       unitId: product.unitId,
+      supplierId: product.supplier?.id ?? null,
       minStock: product.minStock,
       maxStock: product.maxStock,
       sku: product.sku,
@@ -222,6 +230,7 @@ export class ProductEditModalComponent {
       costPrice: product.costPrice,
       categoryId: product.categoryId,
       unitId: product.unitId,
+      supplierId: product.supplier?.id ?? null,
       minStock: product.minStock,
       maxStock: product.maxStock,
       sku: product.sku,
@@ -242,6 +251,7 @@ export class ProductEditModalComponent {
       costPrice: null,
       categoryId: '',
       unitId: '',
+      supplierId: null,
       minStock: null,
       maxStock: null,
       barcode: null,
@@ -253,6 +263,7 @@ export class ProductEditModalComponent {
       costPrice: null,
       categoryId: '',
       unitId: '',
+      supplierId: null,
       minStock: null,
       maxStock: null,
       sku: '',

@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { ToggleSwitchComponent } from '../../../../core/components/toggle-switch.component';
 import type { CategorySummaryDto } from '../../../../core/models/responses/category.responses';
 import type { MeasurementUnitSummaryDto } from '../../../../core/models/responses/unit.responses';
+import type { SupplierSummaryDto } from '../../../../core/models/responses/supplier.responses';
 import type { ProductDetail } from '../../../../core/models/responses/product.responses';
 
 /**
@@ -269,6 +270,27 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
         </div>
       </div>
 
+      <!-- Proveedor Sugerido -->
+      <div>
+        <label class="block text-sm font-medium text-on-surface mb-1">Proveedor sugerido</label>
+        @if (isLoadingDeps()) {
+          <div class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface-variant text-sm">
+            Cargando...
+          </div>
+        } @else {
+          <select
+            [(ngModel)]="supplierIdLocal"
+            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
+                   focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+          >
+            <option [value]="null">-- Sin proveedor --</option>
+            @for (supplier of suppliers(); track supplier.id) {
+              <option [value]="supplier.id">{{ supplier.name }}</option>
+            }
+          </select>
+        }
+      </div>
+
        <!-- SKU & Barcode -->
        <div class="grid grid-cols-2 gap-4">
          <!-- SKU (solo en edición) -->
@@ -342,6 +364,7 @@ export class ProductFormComponent {
     costPrice: number | null;
     categoryId: string;
     unitId: string;
+    supplierId: string | null;
     minStock: number | null;
     maxStock: number | null;
     sku: string;
@@ -350,6 +373,7 @@ export class ProductFormComponent {
 
   categories = input<CategorySummaryDto[]>([]);
   units = input<MeasurementUnitSummaryDto[]>([]);
+  suppliers = input<SupplierSummaryDto[]>([]);
   fieldErrors = input<Record<string, string>>({});
   isLoadingDeps = input(false);
   detailedProduct = input<ProductDetail | null>();
@@ -366,6 +390,7 @@ export class ProductFormComponent {
     unitId: string;
     minStock: number | null;
     maxStock: number | null;
+    supplierId: string | null;
     sku?: string;
     barcode: string | null;
     isActive?: boolean;
@@ -378,6 +403,7 @@ export class ProductFormComponent {
   protected costPriceLocal = signal<number | null>(null);
   protected categoryIdLocal = signal('');
   protected unitIdLocal = signal('');
+  protected supplierIdLocal = signal<string | null>(null);
   protected minStockLocal = signal<number | null>(null);
   protected maxStockLocal = signal<number | null>(null);
   protected skuLocal = signal('');
@@ -495,6 +521,7 @@ export class ProductFormComponent {
             this.costPriceLocal.set(values.costPrice);
             this.categoryIdLocal.set(values.categoryId);
             this.unitIdLocal.set(values.unitId);
+            this.supplierIdLocal.set(values.supplierId ?? null);
             this.minStockLocal.set(values.minStock);
             this.maxStockLocal.set(values.maxStock);
             this.skuLocal.set(values.sku);
@@ -520,6 +547,7 @@ export class ProductFormComponent {
       this.costPriceLocal();
       this.categoryIdLocal();
       this.unitIdLocal();
+      this.supplierIdLocal();
       this.minStockLocal();
       this.maxStockLocal();
       this.skuLocal();
@@ -553,6 +581,7 @@ export class ProductFormComponent {
       costPrice: this.costPriceLocal(),
       categoryId: this.categoryIdLocal(),
       unitId: this.unitIdLocal(),
+      supplierId: this.supplierIdLocal(),
       minStock: this.minStockLocal(),
       maxStock: this.maxStockLocal(),
       barcode: this.barcodeLocal(),

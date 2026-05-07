@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ProductFormComponent } from './product-form.component';
 import type { CategorySummaryDto } from '../../../../core/models/responses/category.responses';
 import type { MeasurementUnitSummaryDto } from '../../../../core/models/responses/unit.responses';
+import type { SupplierSummaryDto } from '../../../../core/models/responses/supplier.responses';
 import type { CreateProductRequest } from '../../../../core/models/requests/product.requests';
 
 /**
@@ -55,6 +56,7 @@ import type { CreateProductRequest } from '../../../../core/models/requests/prod
            [formValues]="formValues()"
            [categories]="categories()"
            [units]="units()"
+           [suppliers]="suppliers()"
            [fieldErrors]="fieldErrors()"
            [isLoadingDeps]="isLoadingDeps()"
            [isEditMode]="false"
@@ -82,6 +84,7 @@ export class ProductCreateModalComponent {
 
   categories = input<CategorySummaryDto[]>([]);
   units = input<MeasurementUnitSummaryDto[]>([]);
+  suppliers = input<SupplierSummaryDto[]>([]);
   fieldErrors = input<Record<string, string>>({});
   generalError = input<string | null>(null);
   isLoadingDeps = input(false);
@@ -95,6 +98,7 @@ export class ProductCreateModalComponent {
     costPrice: number | null;
     categoryId: string;
     unitId: string;
+    supplierId: string | null;
     minStock: number | null;
     maxStock: number | null;
     sku?: string;
@@ -107,6 +111,7 @@ export class ProductCreateModalComponent {
     costPrice: null,
     categoryId: '',
     unitId: '',
+    supplierId: null,
     minStock: null,
     maxStock: null,
     barcode: null,
@@ -120,6 +125,7 @@ export class ProductCreateModalComponent {
     costPrice: null as number | null,
     categoryId: '',
     unitId: '',
+    supplierId: null as string | null,
     minStock: null as number | null,
     maxStock: null as number | null,
     sku: '',
@@ -177,6 +183,7 @@ export class ProductCreateModalComponent {
       costPrice: values.costPrice ?? undefined,
       categoryId: values.categoryId,
       unitId: values.unitId,
+      supplierId: values.supplierId ?? undefined,
       minStock: values.minStock ?? undefined,
       maxStock: values.maxStock ?? undefined,
       barcode: values.barcode || undefined,
@@ -196,6 +203,7 @@ export class ProductCreateModalComponent {
       costPrice: null,
       categoryId: '',
       unitId: '',
+      supplierId: null,
       minStock: null,
       maxStock: null,
       barcode: null,

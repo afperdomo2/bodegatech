@@ -2,12 +2,14 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { ProductService } from '../../../../core/services/product.service';
 import { CategoryService } from '../../../../core/services/category.service';
 import { UnitService } from '../../../../core/services/unit.service';
+import { SupplierService } from '../../../../core/services/supplier.service';
 import type {
   ProductSummaryDto,
   ProductDetail,
 } from '../../../../core/models/responses/product.responses';
 import type { CategorySummaryDto } from '../../../../core/models/responses/category.responses';
 import type { MeasurementUnitSummaryDto } from '../../../../core/models/responses/unit.responses';
+import type { SupplierSummaryDto } from '../../../../core/models/responses/supplier.responses';
 import type {
   CreateProductRequest,
   UpdateProductRequest,
@@ -31,6 +33,7 @@ export class ProductStateService {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
   private unitService = inject(UnitService);
+  private supplierService = inject(SupplierService);
 
   // ========== ESTADO PRIVADO (WRITABLE SIGNALS) ==========
 
@@ -51,6 +54,7 @@ export class ProductStateService {
 
   private _categories = signal<CategorySummaryDto[]>([]);
   private _units = signal<MeasurementUnitSummaryDto[]>([]);
+  private _suppliers = signal<SupplierSummaryDto[]>([]);
   private _isLoadingFormDeps = signal(false);
 
   private _isActiveFilter = signal<boolean | null>(null);
@@ -74,6 +78,7 @@ export class ProductStateService {
 
   readonly categories = this._categories.asReadonly();
   readonly units = this._units.asReadonly();
+  readonly suppliers = this._suppliers.asReadonly();
   readonly isLoadingFormDeps = this._isLoadingFormDeps.asReadonly();
 
   readonly isActiveFilter = this._isActiveFilter.asReadonly();
@@ -117,9 +122,9 @@ export class ProductStateService {
   }
 
   /**
-   * Cargar las listas de apoyo (categorías y unidades) para los formularios.
+   * Cargar las listas de apoyo (categorías, unidades y proveedores) para los formularios.
    * Se llama lazy al abrir un modal de crear/editar.
-   * Usa forkJoin para cargar ambas en paralelo.
+   * Usa forkJoin para cargar todas en paralelo.
    */
   loadFormDependencies(): void {
     this._isLoadingFormDeps.set(true);
@@ -128,10 +133,12 @@ export class ProductStateService {
     forkJoin({
       categories: this.categoryService.getAll(0, 1000, true),
       units: this.unitService.getAll(0, 1000, true),
+      suppliers: this.supplierService.getAll(0, 1000, true),
     }).subscribe({
       next: (response) => {
         this._categories.set(response.categories.data.items);
         this._units.set(response.units.data.items);
+        this._suppliers.set(response.suppliers.data.items);
         this._generalError.set(null);
         this._isLoadingFormDeps.set(false);
       },

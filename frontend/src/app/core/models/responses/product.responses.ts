@@ -1,17 +1,10 @@
-/**
- * Imagen de un producto.
- */
 export interface ProductImageDto {
   id: string;
-  fileKey: string;        // clave en S3
-  url: string;            // URL pública
-  createdAt: string;      // ISO-8601 datetime
+  fileKey: string;
+  url: string;
+  createdAt: string;
 }
 
-/**
- * Datos básicos de un producto (POST/PATCH response).
- * NO incluye costPrice (información sensible).
- */
 export interface ProductDto {
   id: string;
   name: string;
@@ -28,22 +21,17 @@ export interface ProductDto {
   mainImageUrl: string | null;
   barcode: string | null;
   isActive: boolean;
-  createdAt: string; // ISO-8601 datetime
+  createdAt: string;
 }
 
-/**
- * Datos resumidos de un producto (para listados paginados).
- * Type alias de ProductDto — mismo conjunto de campos.
- */
+
 export type ProductSummaryDto = ProductDto;
 
-/**
- * Datos completos de un producto (GET /{id}).
- * Incluye costPrice, timestamps, version para control concurrente, e imágenes.
- */
+
 export interface ProductDetail extends ProductSummaryDto {
   costPrice: number;
-  updatedAt: string;                        // ISO-8601 datetime
-  version: number;                          // para optimistic locking
-  images: ProductImageDto[];                // imágenes del producto
+  updatedAt: string;
+  version: number;
+  images: ProductImageDto[];
+  supplier?: { id: string; name: string; nit: string };
 }
