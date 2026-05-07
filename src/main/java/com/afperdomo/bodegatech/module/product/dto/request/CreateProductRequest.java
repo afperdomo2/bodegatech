@@ -45,8 +45,9 @@ public class CreateProductRequest {
     @Schema(description = "Precio de venta del producto", example = "1500.0000")
     private BigDecimal salePrice;
 
-    @Min(value = 0, message = "El costo no puede ser negativo")
-    @Schema(description = "Costo del producto (opcional, default 0.0000)", example = "800.0000", nullable = true)
+    @NotNull(message = "El precio de costo es obligatorio")
+    @Min(value = 0, message = "El precio de costo debe ser mayor o igual a 0")
+    @Schema(description = "Costo del producto", example = "800.0000")
     private BigDecimal costPrice;
 
     @Min(value = 0, message = "Stock mínimo no puede ser negativo")
