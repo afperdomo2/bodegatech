@@ -1,4 +1,4 @@
-import { Component, input, output, signal, computed, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, input, output, signal, computed, ChangeDetectionStrategy, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { type UnitType, UNIT_TYPE_OPTIONS } from '../../../../core/constants/unit-type.constants';
@@ -11,53 +11,74 @@ import type { MeasurementUnitSummaryDto } from '../../../../core/models/response
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="space-y-4">
-      <!-- Nombre -->
-      <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Nombre *</label>
-        <input
-          type="text"
-          [(ngModel)]="formNameLocal"
-          (blur)="nameTouched.set(true)"
-          class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder:text-on-surface-variant text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-          placeholder="Ej: Kilogramo" />
-        @if (nameError()) {
-          <p class="text-xs text-error mt-1">{{ nameError() }}</p>
-        }
-      </div>
+       <!-- Nombre -->
+       <div>
+         <label class="block text-sm font-medium text-on-surface mb-1">
+           Nombre <span class="text-error font-semibold">*</span>
+         </label>
+         <input
+           type="text"
+           [(ngModel)]="formNameLocal"
+           (blur)="nameTouched.set(true)"
+           [class.border-error]="nameError()"
+           [class.focus:ring-error/20]="nameError()"
+           class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder:text-on-surface-variant text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+           placeholder="Ej: Kilogramo" />
+         @if (nameError()) {
+           <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+             <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+             {{ nameError() }}
+           </p>
+         }
+       </div>
 
-      <!-- Abreviación -->
-      <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Abreviación *</label>
-        <input
-          type="text"
-          [(ngModel)]="formAbbreviationLocal"
-          (blur)="abbreviationTouched.set(true)"
-          class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder:text-on-surface-variant text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-          placeholder="Ej: kg" />
-        @if (abbreviationError()) {
-          <p class="text-xs text-error mt-1">{{ abbreviationError() }}</p>
-        }
-      </div>
+       <!-- Abreviación -->
+       <div>
+         <label class="block text-sm font-medium text-on-surface mb-1">
+           Abreviación <span class="text-error font-semibold">*</span>
+         </label>
+         <input
+           type="text"
+           [(ngModel)]="formAbbreviationLocal"
+           (blur)="abbreviationTouched.set(true)"
+           [class.border-error]="abbreviationError()"
+           [class.focus:ring-error/20]="abbreviationError()"
+           class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder:text-on-surface-variant text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+           placeholder="Ej: kg" />
+         @if (abbreviationError()) {
+           <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+             <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+             {{ abbreviationError() }}
+           </p>
+         }
+       </div>
 
-      <!-- Tipo -->
-      @if (!isEditMode()) {
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-1">Tipo *</label>
-          <select
-            [(ngModel)]="formTypeLocal"
-            (change)="handleTypeChange()"
-            (blur)="typeTouched.set(true)"
-            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
-            <option [value]="null">Seleccionar tipo...</option>
-            @for (option of unitTypeOptions; track option.value) {
-              <option [value]="option.value">{{ option.label }}</option>
-            }
-          </select>
-          @if (typeError()) {
-            <p class="text-xs text-error mt-1">{{ typeError() }}</p>
-          }
-        </div>
-      }
+       <!-- Tipo -->
+       @if (!isEditMode()) {
+         <div>
+           <label class="block text-sm font-medium text-on-surface mb-1">
+             Tipo <span class="text-error font-semibold">*</span>
+           </label>
+           <select
+             [(ngModel)]="formTypeLocal"
+             (change)="handleTypeChange()"
+             (blur)="typeTouched.set(true)"
+             [class.border-error]="typeError()"
+             [class.focus:ring-error/20]="typeError()"
+             class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+             <option [value]="null">Seleccionar tipo...</option>
+             @for (option of unitTypeOptions; track option.value) {
+               <option [value]="option.value">{{ option.label }}</option>
+             }
+           </select>
+           @if (typeError()) {
+             <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+               <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+               {{ typeError() }}
+             </p>
+           }
+         </div>
+       }
 
       <!-- Es unidad base -->
       @if (!isEditMode()) {
@@ -74,48 +95,62 @@ import type { MeasurementUnitSummaryDto } from '../../../../core/models/response
         </div>
       }
 
-      <!-- Conditional: Unidad Base (only in CREATE mode when NOT base unit) -->
-      @if (!formIsBaseUnitLocal() && !isEditMode()) {
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-1">Unidad Base *</label>
-          <div class="relative">
-            <select
-              [(ngModel)]="formBaseUnitIdLocal"
-              (blur)="baseUnitIdTouched.set(true)"
-              class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
-              <option [value]="null">Seleccionar unidad base...</option>
-              @for (unit of baseUnitsForType(); track unit.id) {
-                <option [value]="unit.id">{{ unit.name }}</option>
-              }
-            </select>
-            @if (isLoadingBaseUnits()) {
-              <span class="absolute right-3 top-1/2 -translate-y-1/2">
-                <span class="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
-              </span>
-            }
-          </div>
-          @if (baseUnitIdError()) {
-            <p class="text-xs text-error mt-1">{{ baseUnitIdError() }}</p>
-          }
-        </div>
-      }
+       <!-- Conditional: Unidad Base (only in CREATE mode when NOT base unit) -->
+       @if (!formIsBaseUnitLocal() && !isEditMode()) {
+         <div>
+           <label class="block text-sm font-medium text-on-surface mb-1">
+             Unidad Base <span class="text-error font-semibold">*</span>
+           </label>
+           <div class="relative">
+             <select
+               [(ngModel)]="formBaseUnitIdLocal"
+               (blur)="baseUnitIdTouched.set(true)"
+               [class.border-error]="baseUnitIdError()"
+               [class.focus:ring-error/20]="baseUnitIdError()"
+               class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+               <option [value]="null">Seleccionar unidad base...</option>
+               @for (unit of baseUnitsForType(); track unit.id) {
+                 <option [value]="unit.id">{{ unit.name }}</option>
+               }
+             </select>
+             @if (isLoadingBaseUnits()) {
+               <span class="absolute right-3 top-1/2 -translate-y-1/2">
+                 <span class="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+               </span>
+             }
+           </div>
+           @if (baseUnitIdError()) {
+             <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+               <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+               {{ baseUnitIdError() }}
+             </p>
+           }
+         </div>
+       }
 
-      <!-- Factor de Conversión (only when NOT base unit) -->
-      @if (!formIsBaseUnitLocal()) {
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-1">Factor de Conversión *</label>
-          <input
-            type="number"
-            step="0.0000000001"
-            [(ngModel)]="formConversionFactorLocal"
-            (blur)="conversionFactorTouched.set(true)"
-            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder:text-on-surface-variant text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-            placeholder="Ej: 1000" />
-          @if (conversionFactorError()) {
-            <p class="text-xs text-error mt-1">{{ conversionFactorError() }}</p>
-          }
-        </div>
-      }
+       <!-- Factor de Conversión (only when NOT base unit) -->
+       @if (!formIsBaseUnitLocal()) {
+         <div>
+           <label class="block text-sm font-medium text-on-surface mb-1">
+             Factor de Conversión <span class="text-error font-semibold">*</span>
+           </label>
+           <input
+             type="number"
+             step="0.0000000001"
+             [(ngModel)]="formConversionFactorLocal"
+             (blur)="conversionFactorTouched.set(true)"
+             [class.border-error]="conversionFactorError()"
+             [class.focus:ring-error/20]="conversionFactorError()"
+             class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface placeholder:text-on-surface-variant text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+             placeholder="Ej: 1000" />
+           @if (conversionFactorError()) {
+             <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+               <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+               {{ conversionFactorError() }}
+             </p>
+           }
+         </div>
+       }
     </div>
   `,
   styles: [`
@@ -136,10 +171,19 @@ export class UnitFormComponent {
   baseUnitsForType = input<MeasurementUnitSummaryDto[]>([]);
   isLoadingBaseUnits = input<boolean>(false);
   fieldErrors = input<Record<string, string>>({});
+  submitTrigger = input<number>(0);
 
   // Outputs
   typeChange = output<UnitType | null>();
   isBaseUnitChange = output<boolean>();
+  formChange = output<{
+    name: string;
+    abbreviation: string;
+    type: UnitType | null;
+    isBaseUnit: boolean;
+    baseUnitId: string | null;
+    conversionFactor: string;
+  }>();
 
   // Protected for template
   unitTypeOptions = UNIT_TYPE_OPTIONS;
@@ -221,15 +265,45 @@ export class UnitFormComponent {
   });
 
   constructor() {
-    // Sync inputs to local signals for editing
+    // Sync non-type fields to local signals (for edit mode only, to avoid clearing during create)
     effect(() => {
-      this.formNameLocal.set(this.formName());
-      this.formAbbreviationLocal.set(this.formAbbreviation());
-      this.formTypeLocal.set(this.formType());
-      this.formIsBaseUnitLocal.set(this.formIsBaseUnit());
-      this.formBaseUnitIdLocal.set(this.formBaseUnitId());
-      this.formConversionFactorLocal.set(this.formConversionFactor());
+      if (this.isEditMode()) {
+        untracked(() => {
+          this.formNameLocal.set(this.formName());
+          this.formAbbreviationLocal.set(this.formAbbreviation());
+          this.formIsBaseUnitLocal.set(this.formIsBaseUnit());
+          this.formBaseUnitIdLocal.set(this.formBaseUnitId());
+          this.formConversionFactorLocal.set(this.formConversionFactor());
+        });
+      }
     });
+
+    // Sync type independently (so changes don't clear other fields)
+    effect(() => {
+      this.formTypeLocal.set(this.formType());
+    });
+
+    // Emit formChange on every local signal change
+    effect(() => {
+      this.formNameLocal();
+      this.formAbbreviationLocal();
+      this.formTypeLocal();
+      this.formIsBaseUnitLocal();
+      this.formBaseUnitIdLocal();
+      this.formConversionFactorLocal();
+      this.formChange.emit(this.getFormValues());
+    });
+
+    // Handle submitTrigger: call markAllTouched only on explicit submit (skip initial)
+    effect(
+      () => {
+        const trigger = this.submitTrigger();
+        if (trigger > 0) {
+          this.markAllTouched();
+        }
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   handleTypeChange(): void {

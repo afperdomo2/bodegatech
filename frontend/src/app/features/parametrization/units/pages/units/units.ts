@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import type { OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, effect, inject, signal, ViewChild } from '@angular/core';
 import type { MeasurementUnitDto } from '../../../../../core/models/responses/unit.responses';
-import type { CreateMeasurementUnitRequest, UpdateMeasurementUnitRequest } from '../../../../../core/models/requests/unit.requests';
 import { getUnitTypeLabel, type UnitType } from '../../../../../core/constants/unit-type.constants';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 import { BtCellDirective } from '../../../../../shared/components/data-table/data-table-cell.directive';
@@ -151,6 +150,7 @@ export class UnitsComponent implements OnInit {
   openCreateModal(): void {
     this.resetFormSignals();
     this.state.clearErrors();
+    this.createModalComponent.reset();
     this.modalService.open({
       title: 'Nueva Unidad de Medida',
       template: this.createModalComponent.templateRef,
@@ -161,34 +161,17 @@ export class UnitsComponent implements OnInit {
   }
 
   confirmCreateUnit(): false | void {
-    this.createModalComponent.form.markAllTouched();
-
-    if (this.createModalComponent.form.hasErrors()) {
-      return false;
-    }
-
+    const formRequest = this.createModalComponent.triggerSubmit();
+    if (!formRequest) return false;
     this.pendingAction.set('create');
-    const formValues = this.createModalComponent.form.getFormValues();
-    const request: CreateMeasurementUnitRequest = {
-      name: formValues.name,
-      abbreviation: formValues.abbreviation,
-      type: formValues.type!,
-      isBaseUnit: formValues.isBaseUnit,
-      baseUnitId: formValues.isBaseUnit ? undefined : formValues.baseUnitId || undefined,
-      conversionFactor: formValues.isBaseUnit
-        ? undefined
-        : formValues.conversionFactor
-          ? parseFloat(formValues.conversionFactor)
-          : undefined,
-    };
-
-    this.state.createUnit(request);
+    this.state.createUnit(formRequest);
   }
 
   openEditModal(unit: MeasurementUnitDto): void {
     this.selectedUnit.set(unit);
     this.state.loadUnitById(unit.id);
     this.state.clearErrors();
+    this.editModalComponent.reset();
 
     // Si es unidad base, cargar sus unidades derivadas
     if (unit.isBaseUnit) {
@@ -206,26 +189,10 @@ export class UnitsComponent implements OnInit {
   }
 
   confirmEditUnit(): false | void {
-    this.editModalComponent.form.markAllTouched();
-
-    if (this.editModalComponent.form.hasErrors() || !this.selectedUnit()) {
-      return false;
-    }
-
+    const formRequest = this.editModalComponent.triggerSubmit();
+    if (!formRequest || !this.selectedUnit()) return false;
     this.pendingAction.set('edit');
-    const formValues = this.editModalComponent.form.getFormValues();
-    const request: UpdateMeasurementUnitRequest = {
-      name: formValues.name,
-      abbreviation: formValues.abbreviation,
-      conversionFactor: formValues.isBaseUnit
-        ? undefined
-        : formValues.conversionFactor
-          ? parseFloat(formValues.conversionFactor)
-          : undefined,
-      isActive: this.editModalComponent.getIsActive(),
-    };
-
-    this.state.updateUnit(this.selectedUnit()!.id, request);
+    this.state.updateUnit(this.selectedUnit()!.id, formRequest);
   }
 
   openDeleteModal(unit: MeasurementUnitDto): void {

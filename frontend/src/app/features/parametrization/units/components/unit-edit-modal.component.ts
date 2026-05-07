@@ -5,6 +5,7 @@ import { UnitRelatedTableComponent } from './unit-related-table.component';
 import { ToggleSwitchComponent } from '../../../../core/components/toggle-switch.component';
 import { type UnitType } from '../../../../core/constants/unit-type.constants';
 import type { MeasurementUnitSummaryDto, MeasurementUnitDetail, MeasurementUnitRelatedDto } from '../../../../core/models/responses/unit.responses';
+import type { UpdateMeasurementUnitRequest } from '../../../../core/models/requests/unit.requests';
 
 @Component({
   selector: 'bt-unit-edit-modal',
@@ -30,21 +31,23 @@ import type { MeasurementUnitSummaryDto, MeasurementUnitDetail, MeasurementUnitR
             </div>
           }
 
-          <!-- Form (editable fields only) -->
-          <bt-unit-form
-            #formComponent
-            [formName]="formName()"
-            [formAbbreviation]="formAbbreviation()"
-            [formType]="formType()"
-            [formIsBaseUnit]="formIsBaseUnit()"
-            [formBaseUnitId]="formBaseUnitId()"
-            [formConversionFactor]="formConversionFactor()"
-            [isEditMode]="true"
-            [baseUnitsForType]="baseUnitsForType()"
-            [isLoadingBaseUnits]="isLoadingBaseUnits()"
-            [fieldErrors]="fieldErrors()"
-            (typeChange)="typeChange.emit($event)"
-            (isBaseUnitChange)="isBaseUnitChange.emit($event)" />
+           <!-- Form (editable fields only) -->
+           <bt-unit-form
+             #formComponent
+             [formName]="formName()"
+             [formAbbreviation]="formAbbreviation()"
+             [formType]="formType()"
+             [formIsBaseUnit]="formIsBaseUnit()"
+             [formBaseUnitId]="formBaseUnitId()"
+             [formConversionFactor]="formConversionFactor()"
+             [isEditMode]="true"
+             [baseUnitsForType]="baseUnitsForType()"
+             [isLoadingBaseUnits]="isLoadingBaseUnits()"
+             [fieldErrors]="fieldErrors()"
+             [submitTrigger]="submitCount()"
+             (typeChange)="typeChange.emit($event)"
+             (isBaseUnitChange)="isBaseUnitChange.emit($event)"
+             (formChange)="currentValues.set($event)" />
 
            <!-- Read-only: Tipo (not editable) -->
            <div>
@@ -111,7 +114,6 @@ import type { MeasurementUnitSummaryDto, MeasurementUnitDetail, MeasurementUnitR
 })
 export class UnitEditModalComponent {
   @ViewChild('editModalTemplate') templateRef!: TemplateRef<unknown>;
-  @ViewChild('formComponent') form!: UnitFormComponent;
 
   // Inputs
   formName = input<string>('');
@@ -136,6 +138,15 @@ export class UnitEditModalComponent {
 
   // Local signals
   isActive = signal(true);
+  submitCount = signal(0);
+  currentValues = signal({
+    name: '',
+    abbreviation: '',
+    type: null as UnitType | null,
+    isBaseUnit: true,
+    baseUnitId: null as string | null,
+    conversionFactor: '',
+  });
 
   // Computed
   private unitTypeMap = computed(() => {
@@ -153,15 +164,58 @@ export class UnitEditModalComponent {
     return typeLabels[detail.type] || detail.type;
   });
 
+  hasErrors = computed(() => {
+    const vals = this.currentValues();
+    const fieldErrors = this.fieldErrors();
+
+    // Check name
+    if (fieldErrors['name']) return true;
+    const name = vals.name.trim();
+    if (!name || name.length < 2 || name.length > 100) return true;
+
+    // Check abbreviation
+    if (fieldErrors['abbreviation']) return true;
+    const abbr = vals.abbreviation.trim();
+    if (!abbr || abbr.length < 1 || abbr.length > 20) return true;
+
+    // Check conversionFactor (only if not base unit)
+    if (fieldErrors['conversionFactor']) return true;
+    if (!vals.isBaseUnit) {
+      if (!vals.conversionFactor) return true;
+      const factor = parseFloat(vals.conversionFactor);
+      if (isNaN(factor) || factor <= 0) return true;
+    }
+
+    return false;
+  });
+
   getTypeLabel(): string {
     return this.unitTypeMap();
   }
 
-  /**
-   * Obtener valor isActive actual.
-   */
-  getIsActive(): boolean {
-    return this.isActive();
+  triggerSubmit(): false | UpdateMeasurementUnitRequest {
+    this.submitCount.update(c => c + 1);
+    if (this.hasErrors()) return false;
+    return {
+      name: this.currentValues().name,
+      abbreviation: this.currentValues().abbreviation,
+      conversionFactor: this.currentValues().isBaseUnit
+        ? undefined
+        : parseFloat(this.currentValues().conversionFactor),
+      isActive: this.isActive(),
+    };
+  }
+
+  reset(): void {
+    this.submitCount.set(0);
+    this.currentValues.set({
+      name: '',
+      abbreviation: '',
+      type: null,
+      isBaseUnit: true,
+      baseUnitId: null,
+      conversionFactor: '',
+    });
   }
 
   constructor() {
