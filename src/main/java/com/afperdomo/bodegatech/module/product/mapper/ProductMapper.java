@@ -85,7 +85,6 @@ public interface ProductMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "unit", ignore = true)
     @Mapping(target = "supplier", ignore = true)
-    @Mapping(target = "stock", ignore = true)
     Product toEntity(CreateProductRequest request);
 
     /**

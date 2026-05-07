@@ -40,9 +40,6 @@ public class ProductDetail {
     @Schema(description = "Costo del producto (información sensible)", example = "800.0000")
     private BigDecimal costPrice;
 
-    @Schema(description = "Stock actual del producto", example = "25.0000")
-    private BigDecimal stock;
-
     @Schema(description = "Stock mínimo recomendado", example = "10.0000")
     private BigDecimal minStock;
 

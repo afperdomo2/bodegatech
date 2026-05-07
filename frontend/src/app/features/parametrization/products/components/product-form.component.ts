@@ -18,7 +18,7 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
  *
  * Funcionalidades:
  * - Modo crear: todos los campos editables
- * - Modo editar: SKU y stock como read-only
+ * - Modo editar: SKU como read-only
  * - Signals locales sincronizadas desde inputs via effect()
  * - API pública: getFormValues(), markAllTouched(), hasErrors (computed), formatters
  * - No maneja la lógica de estado, solo expone validaciones y valores
@@ -283,22 +283,7 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
          </div>
        </div>
 
-      <!-- Stock actual (solo lectura en edición) -->
       @if (isEditMode()) {
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-1">Stock Actual (lectura)</label>
-          <input
-            type="number"
-            [value]="currentStock()"
-            readonly
-            class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface text-sm
-                   cursor-not-allowed opacity-75"
-          />
-          <p class="text-xs text-on-surface-variant mt-1">
-            El stock se gestiona a través de movimientos de inventario
-          </p>
-        </div>
-
         <!-- Toggle isActive (solo en edición) -->
         <div class="pt-2">
           <bt-toggle-switch
@@ -345,9 +330,6 @@ export class ProductFormComponent {
   sku = signal('');
   barcode = signal<string | null>(null);
   isActive = signal(true);
-
-  // Computed
-  currentStock = computed(() => this.detailedProduct()?.stock ?? 0);
 
   // Touched fields para validación
   private touchedFields = signal<Set<string>>(new Set());

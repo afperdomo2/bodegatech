@@ -24,7 +24,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Slf4j
@@ -114,9 +113,6 @@ public class ProductService {
         product.setUnit(unit);
         product.setSupplier(supplier);
         product.setIsActive(true);
-        
-        // Stock inicial siempre es 0 al crear (se gestiona vía Movimientos)
-        product.setStock(BigDecimal.ZERO);
 
         Product savedProduct = productRepository.save(product);
         log.info("Producto creado exitosamente con ID: {} y SKU: {}", savedProduct.getId(), generatedSku);

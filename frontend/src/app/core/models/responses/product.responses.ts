@@ -17,7 +17,6 @@ export interface ProductDto {
   name: string;
   description: string | null;
   salePrice: number;
-  stock: number;
   minStock: number;
   maxStock: number | null;
   sku: string;
