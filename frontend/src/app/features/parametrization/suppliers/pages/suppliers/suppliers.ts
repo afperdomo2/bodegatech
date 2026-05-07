@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, effect, inject, signal, ViewChild }
 import { CommonModule } from '@angular/common';
 import type { OnInit } from '@angular/core';
 import type { SupplierDto } from '../../../../../core/models/responses/supplier.responses';
-import type { CreateSupplierRequest, UpdateSupplierRequest } from '../../../../../core/models/requests/supplier.requests';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 import { BtCellDirective } from '../../../../../shared/components/data-table/data-table-cell.directive';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
@@ -93,6 +92,7 @@ export class SuppliersComponent implements OnInit {
         this._editPending.set(false);
         if (!this.editModalComponent) return;
 
+        this.editModalComponent.reset();
         this.editModalComponent.loadSupplierData(detail);
 
         this.modalService.open({
@@ -114,7 +114,8 @@ export class SuppliersComponent implements OnInit {
 
   openCreateModal(): void {
     if (!this.createModalComponent) return;
-    this.createModalComponent.resetForm();
+    this.state.clearErrors();
+    this.createModalComponent.reset();
 
     this.modalService.open({
       title: 'Crear Proveedor',
@@ -125,19 +126,12 @@ export class SuppliersComponent implements OnInit {
     });
   }
 
-  confirmCreateSupplier(): void {
+  confirmCreateSupplier(): false | void {
     if (!this.createModalComponent) return;
-
-    if (this.createModalComponent.hasErrors()) {
-      this.toastService.error('Por favor, corrija los errores en el formulario');
-      return;
-    }
-
-    this.createModalComponent.markAllTouched();
-
-    const formValues = this.createModalComponent.getFormValues() as CreateSupplierRequest;
+    const formRequest = this.createModalComponent.triggerSubmit();
+    if (!formRequest) return false;
     this.pendingAction.set('create');
-    this.state.createSupplier(formValues);
+    this.state.createSupplier(formRequest);
   }
 
   // ========== EDIT ==========
@@ -148,19 +142,12 @@ export class SuppliersComponent implements OnInit {
     this.state.loadSupplierById(supplier.id);
   }
 
-  confirmEditSupplier(supplierId: string): void {
+  confirmEditSupplier(supplierId: string): false | void {
     if (!this.editModalComponent) return;
-
-    if (this.editModalComponent.hasErrors()) {
-      this.toastService.error('Por favor, corrija los errores en el formulario');
-      return;
-    }
-
-    this.editModalComponent.markAllTouched();
-
-    const formValues = this.editModalComponent.getFormValues() as UpdateSupplierRequest;
+    const formRequest = this.editModalComponent.triggerSubmit();
+    if (!formRequest) return false;
     this.pendingAction.set('edit');
-    this.state.updateSupplier(supplierId, formValues);
+    this.state.updateSupplier(supplierId, formRequest);
   }
 
   // ========== DELETE ==========
