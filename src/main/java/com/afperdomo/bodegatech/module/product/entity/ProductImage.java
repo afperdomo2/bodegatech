@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,9 @@ import java.util.UUID;
 /**
  * Entidad ProductImage.
  * Representa una imagen asociada a un producto.
+ * 
+ * Implementa Persistable<UUID> para permitir asignar el ID manualmente
+ * (como imageId del presigned) sin que JPA intente hacer UPDATE.
  * 
  * Schema esperado:
  * CREATE TABLE product_images (
@@ -35,10 +39,9 @@ import java.util.UUID;
         @Index(name = "idx_product_images_product_id", columnList = "product_id"),
         @Index(name = "idx_product_images_product_id_created_at", columnList = "product_id, created_at")
 })
-public class ProductImage {
+public class ProductImage implements Persistable<UUID> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,4 +59,24 @@ public class ProductImage {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        this.isNew = false;
+    }
 }

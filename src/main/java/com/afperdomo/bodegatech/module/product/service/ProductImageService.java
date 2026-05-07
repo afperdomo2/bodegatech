@@ -3,6 +3,8 @@ package com.afperdomo.bodegatech.module.product.service;
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
 import com.afperdomo.bodegatech.common.util.S3PresignedUrlGenerator;
 import com.afperdomo.bodegatech.config.AwsProperties;
+import com.afperdomo.bodegatech.module.product.dto.ConfirmImageItem;
+import com.afperdomo.bodegatech.module.product.dto.ConfirmImagesRequest;
 import com.afperdomo.bodegatech.module.product.dto.PresignedUrlDto;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductImageDto;
 import com.afperdomo.bodegatech.module.product.entity.Product;
@@ -54,21 +56,25 @@ public class ProductImageService {
 
     /**
      * Confirma que el cliente ha subido las imágenes a S3 y las registra en la BD.
+     * Ahora recibe un ConfirmImagesRequest con items que incluyen imageId e fileKey.
      *
      * @param productId ID del producto
-     * @param fileKeys Lista de fileKeys que el cliente confirma haber subido
+     * @param request DTO con lista de items (fileKey + imageId) a confirmar
      * @return Lista de ProductImageDto registradas en la BD
      */
-    public List<ProductImageDto> confirmImages(UUID productId, List<String> fileKeys) {
-        log.info("Confirmando {} imágenes para producto {}", fileKeys.size(), productId);
+    public List<ProductImageDto> confirmImages(UUID productId, ConfirmImagesRequest request) {
+        log.info("Confirmando {} imágenes para producto {}", request.getItems().size(), productId);
 
         // Validar que el producto existe
         Product product = productRepository.findByIdActive(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", productId));
 
-        // Crear y guardar registros ProductImage para cada fileKey confirmado
-        return fileKeys.stream()
-                .map(fileKey -> {
+        // Crear y guardar registros ProductImage para cada item confirmado
+        return request.getItems().stream()
+                .map(item -> {
+                    String fileKey = item.getFileKey();
+                    UUID imageId = item.getImageId();
+
                     // Verificar que no haya duplicado
                     if (productImageRepository.existsByProductIdAndFileKey(productId, fileKey)) {
                         log.warn("FileKey {} ya existe para producto {}, omitiendo", fileKey, productId);
@@ -78,15 +84,16 @@ public class ProductImageService {
                     // Construir URL pública a partir del fileKey
                     String publicUrl = constructPublicUrl(fileKey);
 
-                    // Crear y guardar ProductImage
+                    // Crear y guardar ProductImage usando el imageId recibido del cliente
                     ProductImage productImage = ProductImage.builder()
+                            .id(imageId)  // Usar el imageId generado en el presigned
                             .product(product)
                             .fileKey(fileKey)
                             .url(publicUrl)
                             .build();
 
                     ProductImage saved = productImageRepository.save(productImage);
-                    log.debug("Imagen confirmada para producto {}: fileKey={}", productId, fileKey);
+                    log.debug("Imagen confirmada para producto {}: imageId={}, fileKey={}", productId, imageId, fileKey);
 
                     return toProductImageDto(saved);
                 })

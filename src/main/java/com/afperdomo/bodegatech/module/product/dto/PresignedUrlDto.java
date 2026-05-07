@@ -6,10 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 /**
  * DTO de respuesta con URLs pre-firmadas de S3 para carga de imágenes.
  * El cliente usará uploadUrl para hacer PUT con el binario del archivo.
- * El fileKey se devuelve para que el cliente lo use luego en confirmación.
+ * El fileKey y el imageId se devuelven para que el cliente los use luego en confirmación.
  */
 @Data
 @Builder
@@ -18,10 +20,13 @@ import lombok.NoArgsConstructor;
 @Schema(description = "URL pre-firmada de S3 para carga de imagen")
 public class PresignedUrlDto {
 
+    @Schema(description = "ID de la imagen (UUID generado por el backend)", example = "123e4567-e89b-12d3-a456-426614174000")
+    private UUID imageId;
+
     @Schema(description = "Nombre original del archivo", example = "foto1.jpg")
     private String fileName;
 
-    @Schema(description = "Clave del archivo en S3 (para confirmar luego)", example = "products/123e4567-e89b-12d3-a456-426614174000/foto1.jpg")
+    @Schema(description = "Clave del archivo en S3 (para confirmar luego)", example = "products/550e8400/img-123e4567-e89b-12d3-a456-426614174000-original.jpg")
     private String fileKey;
 
     @Schema(description = "URL pre-firmada temporal para hacer PUT (válida 15 minutos)", example = "https://bucket.s3.amazonaws.com/...?X-Amz-Signature=...")

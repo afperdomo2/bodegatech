@@ -465,8 +465,8 @@ export class ProductImagesModalComponent {
               } else if (event.type === HttpEventType.Response) {
                 // S3 upload exitoso → confirmar en BD
                 // AWS S3 devuelve 200 OK sin body — HttpEventType.Response se emite al completar
-                if (presignedData.fileKey) {
-                  this.confirmUploadInBackend(itemPreviewUrl, presignedData.fileKey);
+                if (presignedData.fileKey && presignedData.imageId) {
+                  this.confirmUploadInBackend(itemPreviewUrl, presignedData.imageId, presignedData.fileKey);
                 }
               }
             },
@@ -494,11 +494,12 @@ export class ProductImagesModalComponent {
    */
   private confirmUploadInBackend(
     itemPreviewUrl: string,
+    imageId: string,
     fileKey: string
   ): void {
     const productId = this.productId();
 
-    this.imageService.confirmImages(productId, [fileKey]).subscribe({
+    this.imageService.confirmImages(productId, [{ imageId, fileKey }]).subscribe({
       next: (response) => {
         const imageDto = response.data[0];
         if (imageDto) {

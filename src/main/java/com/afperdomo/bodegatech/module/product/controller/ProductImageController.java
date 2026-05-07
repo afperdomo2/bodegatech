@@ -66,7 +66,7 @@ public class ProductImageController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Lista de fileKeys confirmados", required = true)
             @Valid @RequestBody ConfirmImagesRequest request) {
 
-        List<ProductImageDto> confirmedImages = productImageService.confirmImages(productId, request.getFileKeys());
+        List<ProductImageDto> confirmedImages = productImageService.confirmImages(productId, request);
         return ResponseEntity.ok(ApiResponse.success("Imágenes confirmadas exitosamente", confirmedImages));
     }
 

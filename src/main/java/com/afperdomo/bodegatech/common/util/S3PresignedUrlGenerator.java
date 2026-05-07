@@ -10,6 +10,8 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
+import org.springframework.util.StringUtils;
+
 import java.time.Duration;
 import java.util.UUID;
 
@@ -24,8 +26,19 @@ public class S3PresignedUrlGenerator {
     public PresignedUrlDto generatePresignedUrl(UUID productId, String fileName) {
         log.debug("Generando URL pre-firmada para producto {} - archivo {}", productId, fileName);
 
-        // Construir fileKey con UUID para evitar colisiones: "products/{productId}/{uuid}_{fileName}"
-        String fileKey = String.format("products/%s/%s_%s", productId, UUID.randomUUID(), fileName);
+        // 1. Generar UUID para la imagen
+        UUID imageId = UUID.randomUUID();
+
+        // 2. Extraer la extensión original (ej: .png, .jpg)
+        String extension = StringUtils.getFilenameExtension(fileName);
+        if (extension == null) {
+            extension = "png"; // Fallback seguro
+        }
+        extension = extension.toLowerCase();
+
+        // 3. Construir el fileKey ESTANDARIZADO
+        // Formato: products/{prodId}/img-{imgId}-original.{ext}
+        String fileKey = String.format("products/%s/img-%s-original.%s", productId, imageId, extension);
 
         // Obtener expiración desde configuración (default: 15 minutos)
         Integer expirationMinutes = awsProperties.getS3().getPresignedUrlExpirationMinutes();
@@ -46,9 +59,10 @@ public class S3PresignedUrlGenerator {
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
         String uploadUrl = presignedRequest.url().toString();
 
-        log.debug("URL pre-firmada generada exitosamente. FileKey: {}, Expiración: {} minutos", fileKey, expirationMinutes);
+        log.debug("URL pre-firmada generada exitosamente. FileKey: {}, ImageId: {}, Expiración: {} minutos", fileKey, imageId, expirationMinutes);
 
         return PresignedUrlDto.builder()
+                .imageId(imageId)
                 .fileName(fileName)
                 .fileKey(fileKey)
                 .uploadUrl(uploadUrl)
