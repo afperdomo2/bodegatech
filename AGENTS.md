@@ -54,7 +54,33 @@ pnpm ng generate service core/services/{service}
   leer `docs/api-conventions.md` antes de crear o modificar cualquier endpoint o DTO.
 
 - **Build de producción, variables de entorno, Testcontainers:**
-  leer `docs/deployment.md` antes de tocar configuración de build, Docker o CI.
+   leer `docs/deployment.md` antes de tocar configuración de build, Docker o CI.
+
+## Skills obligatorias por área — Frontend
+
+⚠️ **CARGA AUTOMÁTICA:** Al trabajar en CUALQUIER tarea frontend (bugs, refactoring, features, componentes), cargar **SIEMPRE** la(s) skill(s) correspondiente(s) ANTES de escribir código.
+
+**Usa esta tabla como guía rápida. Ver `docs/frontend.md` para la tabla completa y descripción detallada.**
+
+| Contexto / Keywords | Skills a cargar |
+|---|---|
+| `signal()`, `effect()`, `computed()`, `linkedSignal()`, `untracked()`, state reactivo | `angular-signals` |
+| Componentes nuevos, `input()`, `output()`, `OnPush`, `ChangeDetectionStrategy` | `angular-component` |
+| Formularios modales, `ngModel`, `submitTrigger`, validación, campos touched | `angular-forms` |
+| HTTP, `resource()`, `httpResource()`, llamadas API, interceptores | `angular-http` |
+| Routing, guards, lazy loading, parámetros de ruta | `angular-routing` |
+| Servicios, `inject()`, injection tokens, DI, providers | `angular-di` |
+| Directivas custom, attribute directives, structural directives | `angular-directives` |
+| Tests unitarios, Vitest, Jasmine, TestBed, mocking | `angular-testing` |
+| SSR, hydration, prerendering, browser-only APIs | `angular-ssr` |
+| Angular CLI, build, optimización, code generation | `angular-tooling` |
+| UI, layouts, diseño visual, Tailwind CSS v4, componentes visuales | `frontend-design` |
+
+**Cuando en duda:**
+- Bug de signals/effects → carga `angular-signals`
+- Bug de modal/form/validación → carga `angular-forms`
+- Bug de componente → carga `angular-component`
+- Nueva página visual → carga `frontend-design` + `angular-developer`
 
 ## Trampas frecuentes (resumen ejecutivo)
 

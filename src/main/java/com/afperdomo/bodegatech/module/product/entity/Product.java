@@ -45,10 +45,10 @@ public class Product extends BaseEntity {
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal salePrice;
 
-    @Min(0)
+    @NotNull
+    @Positive
     @Column(nullable = false, precision = 19, scale = 4)
-    @Builder.Default
-    private BigDecimal costPrice = BigDecimal.ZERO;
+    private BigDecimal costPrice;
 
     @Min(0)
     @Column(nullable = false, precision = 19, scale = 4)

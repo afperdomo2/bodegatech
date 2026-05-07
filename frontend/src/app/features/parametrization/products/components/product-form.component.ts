@@ -129,13 +129,17 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-1">Precio de Costo</label>
+          <label class="block text-sm font-medium text-on-surface mb-1">
+            Precio de Costo <span class="text-error font-semibold">*</span>
+          </label>
           <input
             type="number"
             [(ngModel)]="costPriceLocal"
+            (blur)="costPriceTouched.set(true)"
             placeholder="0.00"
             min="0"
             step="0.01"
+            required
             class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
                    placeholder:text-on-surface-variant text-sm
                    focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
@@ -334,11 +338,11 @@ export class ProductFormComponent {
   formValues = input<{
     name: string;
     description: string | null;
-    salePrice: number;
+    salePrice: number | null;
     costPrice: number | null;
     categoryId: string;
     unitId: string;
-    minStock: number;
+    minStock: number | null;
     maxStock: number | null;
     sku: string;
     barcode: string | null;
@@ -356,11 +360,11 @@ export class ProductFormComponent {
   formChange = output<{
     name: string;
     description: string | null;
-    salePrice: number;
+    salePrice: number | null;
     costPrice: number | null;
     categoryId: string;
     unitId: string;
-    minStock: number;
+    minStock: number | null;
     maxStock: number | null;
     sku?: string;
     barcode: string | null;
@@ -370,11 +374,11 @@ export class ProductFormComponent {
   // Local writable signals (para ngModel)
   protected nameLocal = signal('');
   protected descriptionLocal = signal<string | null>(null);
-  protected salePriceLocal = signal(0);
+  protected salePriceLocal = signal<number | null>(null);
   protected costPriceLocal = signal<number | null>(null);
   protected categoryIdLocal = signal('');
   protected unitIdLocal = signal('');
-  protected minStockLocal = signal(0);
+  protected minStockLocal = signal<number | null>(null);
   protected maxStockLocal = signal<number | null>(null);
   protected skuLocal = signal('');
   protected barcodeLocal = signal<string | null>(null);
@@ -383,6 +387,7 @@ export class ProductFormComponent {
   // Touch signals
   protected nameTouched = signal(false);
   protected salePriceTouched = signal(false);
+  protected costPriceTouched = signal(false);
   protected categoryIdTouched = signal(false);
   protected unitIdTouched = signal(false);
 
@@ -411,15 +416,18 @@ export class ProductFormComponent {
     if (fieldError) return fieldError;
     if (!this.salePriceTouched() && this.submitTrigger() === 0) return null;
     const price = this.salePriceLocal();
-    if (price === null || price === undefined) return 'El precio de venta es requerido';
-    if (price < 0) return 'El precio no puede ser negativo';
-    if (price === 0) return 'El precio debe ser mayor a 0';
+    if (price === null) return 'El precio de venta es requerido';
+    if (price <= 0) return 'El precio debe ser mayor a 0';
     return null;
   });
 
   protected costPriceError = computed(() => {
     const fieldError = this.fieldErrors()['costPrice'];
     if (fieldError) return fieldError;
+    if (!this.costPriceTouched() && this.submitTrigger() === 0) return null;
+    const price = this.costPriceLocal();
+    if (price === null) return 'El precio de costo es requerido';
+    if (price <= 0) return 'El precio debe ser mayor a 0';
     return null;
   });
 
@@ -468,6 +476,7 @@ export class ProductFormComponent {
     return !!(
       this.nameError() ||
       this.salePriceError() ||
+      this.costPriceError() ||
       this.categoryIdError() ||
       this.unitIdError()
     );
@@ -557,6 +566,7 @@ export class ProductFormComponent {
   private markAllTouched(): void {
     this.nameTouched.set(true);
     this.salePriceTouched.set(true);
+    this.costPriceTouched.set(true);
     this.categoryIdTouched.set(true);
     this.unitIdTouched.set(true);
   }

@@ -50,34 +50,32 @@ import type { CreateProductRequest } from '../../../../core/models/requests/prod
           </div>
         }
 
-        <!-- Product Form (dumb component) -->
-        <bt-product-form
-          #formComponent
-          [formValues]="formValues()"
-          [categories]="categories()"
-          [units]="units()"
-          [fieldErrors]="fieldErrors()"
-          [isLoadingDeps]="isLoadingDeps()"
-          [isEditMode]="false"
-          [submitTrigger]="submitCount()"
-          (formChange)="currentValues.set($event)"
-        />
+         <!-- Product Form (dumb component) -->
+         <bt-product-form
+           [formValues]="formValues()"
+           [categories]="categories()"
+           [units]="units()"
+           [fieldErrors]="fieldErrors()"
+           [isLoadingDeps]="isLoadingDeps()"
+           [isEditMode]="false"
+           [submitTrigger]="submitCount()"
+           (formChange)="currentValues.set($event)"
+         />
       </div>
     </ng-template>
   `,
 })
 export class ProductCreateModalComponent {
   @ViewChild('createModalTemplate') createModalTemplate!: TemplateRef<unknown>;
-  @ViewChild('formComponent') formComponent?: ProductFormComponent;
 
   // Inputs
   name = input('');
   description = input<string | null>(null);
-  salePrice = input(0);
+  salePrice = input<number | null>(null);
   costPrice = input<number | null>(null);
   categoryId = input('');
   unitId = input('');
-  minStock = input(0);
+  minStock = input<number | null>(null);
   maxStock = input<number | null>(null);
   sku = input('');
   barcode = input<string | null>(null);
@@ -93,11 +91,11 @@ export class ProductCreateModalComponent {
   currentValues = signal<{
     name: string;
     description: string | null;
-    salePrice: number;
+    salePrice: number | null;
     costPrice: number | null;
     categoryId: string;
     unitId: string;
-    minStock: number;
+    minStock: number | null;
     maxStock: number | null;
     sku?: string;
     barcode: string | null;
@@ -105,11 +103,11 @@ export class ProductCreateModalComponent {
   }>({
     name: '',
     description: null,
-    salePrice: 0,
+    salePrice: null,
     costPrice: null,
     categoryId: '',
     unitId: '',
-    minStock: 0,
+    minStock: null,
     maxStock: null,
     barcode: null,
   });
@@ -118,20 +116,50 @@ export class ProductCreateModalComponent {
   formValues = signal({
     name: '',
     description: null as string | null,
-    salePrice: 0,
+    salePrice: null as number | null,
     costPrice: null as number | null,
     categoryId: '',
     unitId: '',
-    minStock: 0,
+    minStock: null as number | null,
     maxStock: null as number | null,
     sku: '',
     barcode: null as string | null,
   });
 
-  // Computed: chequear si hay errores
+  // Computed: chequear si hay errores validando currentValues directamente
   hasErrors = computed(() => {
-    if (!this.formComponent) return false;
-    return this.formComponent.hasErrors();
+    const fieldErrors = this.fieldErrors();
+    const values = this.currentValues();
+    const trigger = this.submitCount();
+
+    // Validar backend errors primero
+    if (
+      fieldErrors['name'] ||
+      fieldErrors['salePrice'] ||
+      fieldErrors['costPrice'] ||
+      fieldErrors['categoryId'] ||
+      fieldErrors['unitId']
+    ) {
+      return true;
+    }
+
+    // Si no ha habido submit aún, no mostrar errores de validación
+    if (trigger === 0) return false;
+
+    // Validaciones locales
+    const name = values.name.trim();
+    if (!name || name.length < 2) return true;
+
+    const salePrice = values.salePrice;
+    if (salePrice === null || salePrice <= 0) return true;
+
+    const costPrice = values.costPrice;
+    if (costPrice === null || costPrice <= 0) return true;
+
+    if (!values.categoryId) return true;
+    if (!values.unitId) return true;
+
+    return false;
   });
 
   /**
@@ -145,11 +173,11 @@ export class ProductCreateModalComponent {
     return {
       name: values.name,
       description: values.description || undefined,
-      salePrice: values.salePrice,
+      salePrice: values.salePrice!,
       costPrice: values.costPrice ?? undefined,
       categoryId: values.categoryId,
       unitId: values.unitId,
-      minStock: values.minStock,
+      minStock: values.minStock ?? undefined,
       maxStock: values.maxStock ?? undefined,
       barcode: values.barcode || undefined,
     };
@@ -164,11 +192,11 @@ export class ProductCreateModalComponent {
     this.currentValues.set({
       name: '',
       description: null,
-      salePrice: 0,
+      salePrice: null,
       costPrice: null,
       categoryId: '',
       unitId: '',
-      minStock: 0,
+      minStock: null,
       maxStock: null,
       barcode: null,
     });
