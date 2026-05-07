@@ -4,7 +4,9 @@ import {
   computed,
   effect,
   input,
+  output,
   signal,
+  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -20,7 +22,10 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
  * - Modo crear: todos los campos editables
  * - Modo editar: SKU como read-only
  * - Signals locales sincronizadas desde inputs via effect()
- * - API pública: getFormValues(), markAllTouched(), hasErrors (computed), formatters
+ * - Validación reactiva con touched fields y errores locales
+ * - submitTrigger: input que activa validación sin mostrar errores al render inicial
+ * - formChange: output que emite cambios del formulario al padre
+ * - API pública: getFormValues(), triggerSubmit(), hasErrors (computed)
  * - No maneja la lógica de estado, solo expone validaciones y valores
  *
  * Inputs:
@@ -31,13 +36,14 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
  * - isLoadingDeps: spinner mientras se cargan dependencias (categorías, unidades)
  * - detailedProduct: producto completo con costPrice, stock (para modo edición)
  * - isEditMode: boolean que determina si están read-only los campos SKU y stock
+ * - submitTrigger: contador que se incrementa cuando el padre llama triggerSubmit()
  *
  * Outputs:
- * - (ninguno actualmente, pero podría agregar)
+ * - formChange: emite cambios del formulario { name, description, salePrice, ... }
  *
  * Validaciones:
- * - Individuales en inputs (min, max, required)
- * - Cruzadas en el padre (StateService) — no aquí
+ * - Locales por campo: required, length, número > 0
+ * - Backend: errores específicos del servidor (duplicados, etc.)
  */
 @Component({
   selector: 'bt-product-form',
@@ -49,23 +55,26 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
       <!-- Nombre -->
       <div>
         <label class="block text-sm font-medium text-on-surface mb-1">
-          Nombre <span class="text-error">*</span>
+          Nombre <span class="text-error font-semibold">*</span>
         </label>
         <input
           type="text"
-          [(ngModel)]="name"
-          (change)="onFieldChange('name')"
+          [(ngModel)]="nameLocal"
+          (blur)="nameTouched.set(true)"
           placeholder="Ej: Arroz Integral"
           maxlength="100"
           required
           class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
                  placeholder:text-on-surface-variant text-sm
                  focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-          [class.border-error]="hasFieldError('name')"
-          [class.focus:ring-error/20]="hasFieldError('name')"
+          [class.border-error]="nameError()"
+          [class.focus:ring-error/20]="nameError()"
         />
-        @if (hasFieldError('name')) {
-          <p class="text-xs text-error mt-1">{{ fieldErrors()['name'] }}</p>
+        @if (nameError()) {
+          <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+            <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+            {{ nameError() }}
+          </p>
         }
       </div>
 
@@ -73,29 +82,34 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
       <div>
         <label class="block text-sm font-medium text-on-surface mb-1">Descripción</label>
         <textarea
-          [(ngModel)]="description"
-          (change)="onFieldChange('description')"
+          [(ngModel)]="descriptionLocal"
           placeholder="Descripción adicional (opcional)"
           rows="3"
           maxlength="500"
           class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
                  placeholder:text-on-surface-variant text-sm
                  focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors resize-none"
-          [class.border-error]="hasFieldError('description')"
-          [class.focus:ring-error/20]="hasFieldError('description')"
+          [class.border-error]="descriptionError()"
+          [class.focus:ring-error/20]="descriptionError()"
         ></textarea>
+        @if (descriptionError()) {
+          <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+            <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+            {{ descriptionError() }}
+          </p>
+        }
       </div>
 
       <!-- Precio de Venta & Precio de Costo -->
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-on-surface mb-1">
-            Precio de Venta <span class="text-error">*</span>
+            Precio de Venta <span class="text-error font-semibold">*</span>
           </label>
           <input
             type="number"
-            [(ngModel)]="salePrice"
-            (change)="onFieldChange('salePrice')"
+            [(ngModel)]="salePriceLocal"
+            (blur)="salePriceTouched.set(true)"
             placeholder="0.00"
             min="0"
             step="0.01"
@@ -103,11 +117,14 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
                    placeholder:text-on-surface-variant text-sm
                    focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-            [class.border-error]="hasFieldError('salePrice')"
-            [class.focus:ring-error/20]="hasFieldError('salePrice')"
+            [class.border-error]="salePriceError()"
+            [class.focus:ring-error/20]="salePriceError()"
           />
-          @if (hasFieldError('salePrice')) {
-            <p class="text-xs text-error mt-1">{{ fieldErrors()['salePrice'] }}</p>
+          @if (salePriceError()) {
+            <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+              <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+              {{ salePriceError() }}
+            </p>
           }
         </div>
 
@@ -115,19 +132,21 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
           <label class="block text-sm font-medium text-on-surface mb-1">Precio de Costo</label>
           <input
             type="number"
-            [(ngModel)]="costPrice"
-            (change)="onFieldChange('costPrice')"
+            [(ngModel)]="costPriceLocal"
             placeholder="0.00"
             min="0"
             step="0.01"
             class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
                    placeholder:text-on-surface-variant text-sm
                    focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-            [class.border-error]="hasFieldError('costPrice')"
-            [class.focus:ring-error/20]="hasFieldError('costPrice')"
+            [class.border-error]="costPriceError()"
+            [class.focus:ring-error/20]="costPriceError()"
           />
-          @if (hasFieldError('costPrice')) {
-            <p class="text-xs text-error mt-1">{{ fieldErrors()['costPrice'] }}</p>
+          @if (costPriceError()) {
+            <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+              <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+              {{ costPriceError() }}
+            </p>
           }
         </div>
       </div>
@@ -136,7 +155,7 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-on-surface mb-1">
-            Categoría <span class="text-error">*</span>
+            Categoría <span class="text-error font-semibold">*</span>
           </label>
           @if (isLoadingDeps()) {
             <div class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface-variant text-sm">
@@ -144,13 +163,13 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             </div>
           } @else {
             <select
-              [(ngModel)]="categoryId"
-              (change)="onFieldChange('categoryId')"
+              [(ngModel)]="categoryIdLocal"
+              (blur)="categoryIdTouched.set(true)"
               required
               class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
                      focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-              [class.border-error]="hasFieldError('categoryId')"
-              [class.focus:ring-error/20]="hasFieldError('categoryId')"
+              [class.border-error]="categoryIdError()"
+              [class.focus:ring-error/20]="categoryIdError()"
             >
               <option value="">-- Seleccionar --</option>
               @for (cat of categories(); track cat.id) {
@@ -158,14 +177,17 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
               }
             </select>
           }
-          @if (hasFieldError('categoryId')) {
-            <p class="text-xs text-error mt-1">{{ fieldErrors()['categoryId'] }}</p>
+          @if (categoryIdError()) {
+            <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+              <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+              {{ categoryIdError() }}
+            </p>
           }
         </div>
 
         <div>
           <label class="block text-sm font-medium text-on-surface mb-1">
-            Unidad de Medida <span class="text-error">*</span>
+            Unidad de Medida <span class="text-error font-semibold">*</span>
           </label>
           @if (isLoadingDeps()) {
             <div class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container text-on-surface-variant text-sm">
@@ -173,13 +195,13 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
             </div>
           } @else {
             <select
-              [(ngModel)]="unitId"
-              (change)="onFieldChange('unitId')"
+              [(ngModel)]="unitIdLocal"
+              (blur)="unitIdTouched.set(true)"
               required
               class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
                      focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-              [class.border-error]="hasFieldError('unitId')"
-              [class.focus:ring-error/20]="hasFieldError('unitId')"
+              [class.border-error]="unitIdError()"
+              [class.focus:ring-error/20]="unitIdError()"
             >
               <option value="">-- Seleccionar --</option>
               @for (unit of units(); track unit.id) {
@@ -187,8 +209,11 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
               }
             </select>
           }
-          @if (hasFieldError('unitId')) {
-            <p class="text-xs text-error mt-1">{{ fieldErrors()['unitId'] }}</p>
+          @if (unitIdError()) {
+            <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+              <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+              {{ unitIdError() }}
+            </p>
           }
         </div>
       </div>
@@ -199,19 +224,21 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
           <label class="block text-sm font-medium text-on-surface mb-1">Stock Mínimo</label>
           <input
             type="number"
-            [(ngModel)]="minStock"
-            (change)="onFieldChange('minStock')"
+            [(ngModel)]="minStockLocal"
             placeholder="0"
             min="0"
             step="1"
             class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
                    placeholder:text-on-surface-variant text-sm
                    focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-            [class.border-error]="hasFieldError('minStock')"
-            [class.focus:ring-error/20]="hasFieldError('minStock')"
+            [class.border-error]="minStockError()"
+            [class.focus:ring-error/20]="minStockError()"
           />
-          @if (hasFieldError('minStock')) {
-            <p class="text-xs text-error mt-1">{{ fieldErrors()['minStock'] }}</p>
+          @if (minStockError()) {
+            <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+              <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+              {{ minStockError() }}
+            </p>
           }
         </div>
 
@@ -219,19 +246,21 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
           <label class="block text-sm font-medium text-on-surface mb-1">Stock Máximo</label>
           <input
             type="number"
-            [(ngModel)]="maxStock"
-            (change)="onFieldChange('maxStock')"
+            [(ngModel)]="maxStockLocal"
             placeholder="0"
             min="0"
             step="1"
             class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
                    placeholder:text-on-surface-variant text-sm
                    focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-            [class.border-error]="hasFieldError('maxStock')"
-            [class.focus:ring-error/20]="hasFieldError('maxStock')"
+            [class.border-error]="maxStockError()"
+            [class.focus:ring-error/20]="maxStockError()"
           />
-          @if (hasFieldError('maxStock')) {
-            <p class="text-xs text-error mt-1">{{ fieldErrors()['maxStock'] }}</p>
+          @if (maxStockError()) {
+            <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+              <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+              {{ maxStockError() }}
+            </p>
           }
         </div>
       </div>
@@ -246,8 +275,7 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
              </label>
              <input
                type="text"
-               [(ngModel)]="sku"
-               (change)="onFieldChange('sku')"
+               [(ngModel)]="skuLocal"
                readonly
                placeholder="Ej: ARZ-INT-001"
                maxlength="50"
@@ -256,8 +284,11 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
                       focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors
                       cursor-not-allowed opacity-75"
              />
-             @if (hasFieldError('sku')) {
-               <p class="text-xs text-error mt-1">{{ fieldErrors()['sku'] }}</p>
+             @if (skuError()) {
+               <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+                 <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+                 {{ skuError() }}
+               </p>
              }
            </div>
          }
@@ -267,18 +298,20 @@ import type { ProductDetail } from '../../../../core/models/responses/product.re
            <label class="block text-sm font-medium text-on-surface mb-1">Código de Barras</label>
            <input
              type="text"
-             [(ngModel)]="barcode"
-             (change)="onFieldChange('barcode')"
+             [(ngModel)]="barcodeLocal"
              placeholder="Ej: 7896014250014"
              maxlength="50"
              class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface
                     placeholder:text-on-surface-variant text-sm
                     focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-             [class.border-error]="hasFieldError('barcode')"
-             [class.focus:ring-error/20]="hasFieldError('barcode')"
+             [class.border-error]="barcodeError()"
+             [class.focus:ring-error/20]="barcodeError()"
            />
-           @if (hasFieldError('barcode')) {
-             <p class="text-xs text-error mt-1">{{ fieldErrors()['barcode'] }}</p>
+           @if (barcodeError()) {
+             <p class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1">
+               <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+               {{ barcodeError() }}
+             </p>
            }
          </div>
        </div>
@@ -317,48 +350,184 @@ export class ProductFormComponent {
   isLoadingDeps = input(false);
   detailedProduct = input<ProductDetail | null>();
   isEditMode = input(false);
+  submitTrigger = input<number>(0);
 
-  // Signals locales
-  name = signal('');
-  description = signal<string | null>(null);
-  salePrice = signal(0);
-  costPrice = signal<number | null>(null);
-  categoryId = signal('');
-  unitId = signal('');
-  minStock = signal(0);
-  maxStock = signal<number | null>(null);
-  sku = signal('');
-  barcode = signal<string | null>(null);
-  isActive = signal(true);
+  // Outputs
+  formChange = output<{
+    name: string;
+    description: string | null;
+    salePrice: number;
+    costPrice: number | null;
+    categoryId: string;
+    unitId: string;
+    minStock: number;
+    maxStock: number | null;
+    sku?: string;
+    barcode: string | null;
+    isActive?: boolean;
+  }>();
 
-  // Touched fields para validación
-  private touchedFields = signal<Set<string>>(new Set());
+  // Local writable signals (para ngModel)
+  protected nameLocal = signal('');
+  protected descriptionLocal = signal<string | null>(null);
+  protected salePriceLocal = signal(0);
+  protected costPriceLocal = signal<number | null>(null);
+  protected categoryIdLocal = signal('');
+  protected unitIdLocal = signal('');
+  protected minStockLocal = signal(0);
+  protected maxStockLocal = signal<number | null>(null);
+  protected skuLocal = signal('');
+  protected barcodeLocal = signal<string | null>(null);
+  protected isActive = signal(true);
+
+  // Touch signals
+  protected nameTouched = signal(false);
+  protected salePriceTouched = signal(false);
+  protected categoryIdTouched = signal(false);
+  protected unitIdTouched = signal(false);
+
+  // Computed errors locales (solo campos obligatorios)
+  protected nameError = computed(() => {
+    const fieldError = this.fieldErrors()['name'];
+    if (fieldError) return fieldError;
+    if (!this.nameTouched() && this.submitTrigger() === 0) return null;
+    const name = this.nameLocal().trim();
+    if (!name) return 'El nombre es requerido';
+    if (name.length < 2) return 'El nombre debe tener al menos 2 caracteres';
+    if (name.length > 100) return 'El nombre no puede exceder 100 caracteres';
+    return null;
+  });
+
+  protected descriptionError = computed(() => {
+    const fieldError = this.fieldErrors()['description'];
+    if (fieldError) return fieldError;
+    const desc = this.descriptionLocal();
+    if (desc && desc.length > 500) return 'La descripción no puede exceder 500 caracteres';
+    return null;
+  });
+
+  protected salePriceError = computed(() => {
+    const fieldError = this.fieldErrors()['salePrice'];
+    if (fieldError) return fieldError;
+    if (!this.salePriceTouched() && this.submitTrigger() === 0) return null;
+    const price = this.salePriceLocal();
+    if (price === null || price === undefined) return 'El precio de venta es requerido';
+    if (price < 0) return 'El precio no puede ser negativo';
+    if (price === 0) return 'El precio debe ser mayor a 0';
+    return null;
+  });
+
+  protected costPriceError = computed(() => {
+    const fieldError = this.fieldErrors()['costPrice'];
+    if (fieldError) return fieldError;
+    return null;
+  });
+
+  protected categoryIdError = computed(() => {
+    const fieldError = this.fieldErrors()['categoryId'];
+    if (fieldError) return fieldError;
+    if (!this.categoryIdTouched() && this.submitTrigger() === 0) return null;
+    if (!this.categoryIdLocal()) return 'La categoría es requerida';
+    return null;
+  });
+
+  protected unitIdError = computed(() => {
+    const fieldError = this.fieldErrors()['unitId'];
+    if (fieldError) return fieldError;
+    if (!this.unitIdTouched() && this.submitTrigger() === 0) return null;
+    if (!this.unitIdLocal()) return 'La unidad de medida es requerida';
+    return null;
+  });
+
+  protected minStockError = computed(() => {
+    const fieldError = this.fieldErrors()['minStock'];
+    if (fieldError) return fieldError;
+    return null;
+  });
+
+  protected maxStockError = computed(() => {
+    const fieldError = this.fieldErrors()['maxStock'];
+    if (fieldError) return fieldError;
+    return null;
+  });
+
+  protected skuError = computed(() => {
+    const fieldError = this.fieldErrors()['sku'];
+    if (fieldError) return fieldError;
+    return null;
+  });
+
+  protected barcodeError = computed(() => {
+    const fieldError = this.fieldErrors()['barcode'];
+    if (fieldError) return fieldError;
+    return null;
+  });
+
+  // Computed para validar si el formulario tiene errores
+  hasErrors = computed(() => {
+    return !!(
+      this.nameError() ||
+      this.salePriceError() ||
+      this.categoryIdError() ||
+      this.unitIdError()
+    );
+  });
 
   constructor() {
-    // Sincronizar formValues → signals locales
+    // Sincronizar formValues → signals locales (solo en modo edición para evitar limpiar campos en creación)
     effect(() => {
-      const values = this.formValues();
-      if (values) {
-        this.name.set(values.name);
-        this.description.set(values.description);
-        this.salePrice.set(values.salePrice);
-        this.costPrice.set(values.costPrice);
-        this.categoryId.set(values.categoryId);
-        this.unitId.set(values.unitId);
-        this.minStock.set(values.minStock);
-        this.maxStock.set(values.maxStock);
-        this.sku.set(values.sku);
-        this.barcode.set(values.barcode);
+      if (this.isEditMode()) {
+        untracked(() => {
+          const values = this.formValues();
+          if (values) {
+            this.nameLocal.set(values.name);
+            this.descriptionLocal.set(values.description);
+            this.salePriceLocal.set(values.salePrice);
+            this.costPriceLocal.set(values.costPrice);
+            this.categoryIdLocal.set(values.categoryId);
+            this.unitIdLocal.set(values.unitId);
+            this.minStockLocal.set(values.minStock);
+            this.maxStockLocal.set(values.maxStock);
+            this.skuLocal.set(values.sku);
+            this.barcodeLocal.set(values.barcode);
+          }
+        });
       }
     });
 
-    // Sincronizar isActive desde detailedProduct (edición)
+    // Sincronizar isActive desde detailedProduct (solo en modo edición)
     effect(() => {
       const product = this.detailedProduct();
       if (product && this.isEditMode()) {
         this.isActive.set(product.isActive);
       }
     });
+
+    // Emitir formChange en cada cambio de signals locales
+    effect(() => {
+      this.nameLocal();
+      this.descriptionLocal();
+      this.salePriceLocal();
+      this.costPriceLocal();
+      this.categoryIdLocal();
+      this.unitIdLocal();
+      this.minStockLocal();
+      this.maxStockLocal();
+      this.skuLocal();
+      this.barcodeLocal();
+      this.formChange.emit(this.getFormValues());
+    });
+
+    // Handle submitTrigger: marcar todos los campos como touched al submit (solo si trigger > 0)
+    effect(
+      () => {
+        const trigger = this.submitTrigger();
+        if (trigger > 0) {
+          this.markAllTouched();
+        }
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   // Métodos públicos (API)
@@ -369,57 +538,27 @@ export class ProductFormComponent {
    */
   getFormValues() {
     return {
-      name: this.name(),
-      description: this.description() || undefined,
-      salePrice: this.salePrice(),
-      costPrice: this.costPrice() ?? undefined,
-      categoryId: this.categoryId(),
-      unitId: this.unitId(),
-      minStock: this.minStock(),
-      maxStock: this.maxStock() ?? undefined,
-      barcode: this.barcode() || undefined,
-      ...(this.isEditMode() && { sku: this.sku(), isActive: this.isActive() }),
+      name: this.nameLocal(),
+      description: this.descriptionLocal(),
+      salePrice: this.salePriceLocal(),
+      costPrice: this.costPriceLocal(),
+      categoryId: this.categoryIdLocal(),
+      unitId: this.unitIdLocal(),
+      minStock: this.minStockLocal(),
+      maxStock: this.maxStockLocal(),
+      barcode: this.barcodeLocal(),
+      ...(this.isEditMode() && { sku: this.skuLocal(), isActive: this.isActive() }),
     };
   }
 
   /**
    * Marcar todos los campos como "touched" para mostrar errores de validación.
    */
-  markAllTouched(): void {
-    const allFields = [
-      'name',
-      'description',
-      'salePrice',
-      'costPrice',
-      'categoryId',
-      'unitId',
-      'minStock',
-      'maxStock',
-      'sku',
-      'barcode',
-    ];
-    this.touchedFields.set(new Set(allFields));
-  }
-
-  /**
-   * Computed que retorna true si el formulario tiene errores de validación.
-   */
-  hasErrors = computed(() => {
-    const errors = this.fieldErrors();
-    return Object.keys(errors).length > 0;
-  });
-
-  /**
-   * Revisar si un campo específico tiene error de backend.
-   */
-  hasFieldError(fieldName: string): boolean {
-    return fieldName in this.fieldErrors();
-  }
-
-  /**
-   * Al cambiar un campo, agregarlo a touched.
-   */
-  onFieldChange(fieldName: string): void {
-    this.touchedFields.update(set => new Set([...set, fieldName]));
+  private markAllTouched(): void {
+    this.nameTouched.set(true);
+    this.salePriceTouched.set(true);
+    this.categoryIdTouched.set(true);
+    this.unitIdTouched.set(true);
   }
 }
+

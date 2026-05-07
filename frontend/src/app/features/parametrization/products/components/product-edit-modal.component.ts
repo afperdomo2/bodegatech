@@ -2,11 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   ViewChild,
+  computed,
   input,
   signal,
+  type TemplateRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import type { TemplateRef } from '@angular/core';
 import { ProductFormComponent } from './product-form.component';
 import type { CategorySummaryDto } from '../../../../core/models/responses/category.responses';
 import type { MeasurementUnitSummaryDto } from '../../../../core/models/responses/unit.responses';
@@ -20,7 +21,8 @@ import type { UpdateProductRequest } from '../../../../core/models/requests/prod
  * - Expone @ViewChild('editModalTemplate') para que el padre lo abra
  * - Contiene ProductFormComponent interna (modo edit)
  * - Modo edición: SKU y stock como read-only
- * - No maneja estado, solo expone métodos y templates
+ * - Valida y maneja submitCount con patrón reactivo
+ * - No maneja estado de negocio, solo state local de validación
  * - El padre inyecta detalle del producto, categorías, unidades
  *
  * Inputs:
@@ -33,9 +35,9 @@ import type { UpdateProductRequest } from '../../../../core/models/requests/prod
  * - detailedProduct: ProductDetail con costPrice, stock, version
  *
  * API Pública:
- * - getFormValues() → UpdateProductRequest
- * - markAllTouched()
- * - hasErrors()
+ * - triggerSubmit() → valida y retorna UpdateProductRequest o false
+ * - reset() → reinicia submitCount y currentValues
+ * - loadProductData() → carga datos del producto en edición
  */
 @Component({
   selector: 'bt-product-edit-modal',
@@ -53,7 +55,7 @@ import type { UpdateProductRequest } from '../../../../core/models/requests/prod
         } @else {
           <!-- General Error Alert -->
           @if (generalError()) {
-            <div class="rounded bg-error/20 p-3 text-sm text-error">
+            <div class="px-4 py-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error">
               {{ generalError() }}
             </div>
           }
@@ -68,6 +70,8 @@ import type { UpdateProductRequest } from '../../../../core/models/requests/prod
             [isLoadingDeps]="isLoadingDeps()"
             [detailedProduct]="detailedProduct()"
             [isEditMode]="true"
+            [submitTrigger]="submitCount()"
+            (formChange)="currentValues.set($event)"
           />
         }
       </div>
@@ -98,7 +102,33 @@ export class ProductEditModalComponent {
   isLoadingDetail = input(false);
   detailedProduct = input<ProductDetail | null>(null);
 
-  // Computed form values para pasar al ProductFormComponent
+  // Reactive state
+  submitCount = signal(0);
+  currentValues = signal<{
+    name: string;
+    description: string | null;
+    salePrice: number;
+    costPrice: number | null;
+    categoryId: string;
+    unitId: string;
+    minStock: number;
+    maxStock: number | null;
+    sku?: string;
+    barcode: string | null;
+    isActive?: boolean;
+  }>({
+    name: '',
+    description: null,
+    salePrice: 0,
+    costPrice: null,
+    categoryId: '',
+    unitId: '',
+    minStock: 0,
+    maxStock: null,
+    barcode: null,
+  });
+
+  // Form values para pasar al ProductFormComponent
   formValues = signal({
     name: '',
     description: null as string | null,
@@ -112,34 +142,32 @@ export class ProductEditModalComponent {
     barcode: null as string | null,
   });
 
-  /**
-   * Obtener valores del formulario como UpdateProductRequest.
-   * Solo incluye campos que difieren de los valores iniciales.
-   * Llamado por el padre al confirmar actualizar.
-   */
-  getFormValues(): UpdateProductRequest {
-    if (!this.formComponent) {
-      throw new Error('FormComponent no está disponible');
-    }
-    // En una implementación más sofisticada, podrías comparar con valores iniciales
-    // y solo retornar campos que cambiaron. Por ahora, retornar todos.
-    return this.formComponent.getFormValues() as UpdateProductRequest;
-  }
-
-  /**
-   * Marcar todos los campos como "touched" en el formulario.
-   */
-  markAllTouched(): void {
-    if (!this.formComponent) return;
-    this.formComponent.markAllTouched();
-  }
-
-  /**
-   * Revisar si el formulario tiene errores.
-   */
-  hasErrors(): boolean {
+  // Computed: chequear si hay errores
+  hasErrors = computed(() => {
     if (!this.formComponent) return false;
     return this.formComponent.hasErrors();
+  });
+
+  /**
+   * Trigger del submit: incrementa submitCount, valida, y retorna datos o false.
+   * Llamado por el padre (ProductsComponent) al hacer clic en confirmar.
+   */
+  triggerSubmit(): false | UpdateProductRequest {
+    this.submitCount.update(c => c + 1);
+    if (this.hasErrors()) return false;
+    const values = this.currentValues();
+    return {
+      name: values.name,
+      description: values.description || undefined,
+      salePrice: values.salePrice,
+      costPrice: values.costPrice ?? undefined,
+      categoryId: values.categoryId,
+      unitId: values.unitId,
+      minStock: values.minStock,
+      maxStock: values.maxStock ?? undefined,
+      barcode: values.barcode || undefined,
+      isActive: this.detailedProduct()?.isActive ?? true,
+    };
   }
 
   /**
@@ -158,6 +186,49 @@ export class ProductEditModalComponent {
       maxStock: product.maxStock,
       sku: product.sku,
       barcode: product.barcode,
+    });
+    this.currentValues.set({
+      name: product.name,
+      description: product.description,
+      salePrice: product.salePrice,
+      costPrice: product.costPrice,
+      categoryId: product.categoryId,
+      unitId: product.unitId,
+      minStock: product.minStock,
+      maxStock: product.maxStock,
+      sku: product.sku,
+      barcode: product.barcode,
+    });
+  }
+
+  /**
+   * Reiniciar el modal a estado por defecto.
+   * Llamado por el padre al cerrar o abrir nueva modal.
+   */
+  reset(): void {
+    this.submitCount.set(0);
+    this.currentValues.set({
+      name: '',
+      description: null,
+      salePrice: 0,
+      costPrice: null,
+      categoryId: '',
+      unitId: '',
+      minStock: 0,
+      maxStock: null,
+      barcode: null,
+    });
+    this.formValues.set({
+      name: '',
+      description: null,
+      salePrice: 0,
+      costPrice: null,
+      categoryId: '',
+      unitId: '',
+      minStock: 0,
+      maxStock: null,
+      sku: '',
+      barcode: null,
     });
   }
 }

@@ -3,7 +3,6 @@ import type { OnInit, OnDestroy } from '@angular/core';
 import { ChangeDetectionStrategy, Component, effect, inject, signal, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 import type { ProductSummaryDto } from '../../../../../core/models/responses/product.responses';
-import type { CreateProductRequest, UpdateProductRequest } from '../../../../../core/models/requests/product.requests';
 import { DataTable, type DataTableColumn } from '../../../../../shared/components/data-table/data-table';
 import { BtCellDirective } from '../../../../../shared/components/data-table/data-table-cell.directive';
 import { PageHeader } from '../../../../../shared/components/page-header/page-header';
@@ -100,13 +99,16 @@ export class ProductsComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Effect: abre el modal de edición cuando el detalle llega
+     // Effect: abre el modal de edición cuando el detalle llega
     effect(() => {
       const detail = this.state.selectedDetail();
       const isLoading = this.state.isLoadingDetail();
       if (this._editPending() && detail && !isLoading) {
         this._editPending.set(false);
         if (!this.editModalComponent) return;
+
+        // Reiniciar estado del modal antes de cargar nuevos datos
+        this.editModalComponent.reset();
 
         // Cargar datos en el formulario
         this.editModalComponent.loadProductData(detail);
@@ -139,7 +141,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.state.loadFormDependencies();
 
     if (!this.createModalComponent) return;
-    this.createModalComponent.resetForm();
+    this.createModalComponent.reset();
 
     this.modalService.open({
       title: 'Crear Producto',
@@ -150,21 +152,14 @@ export class ProductsComponent implements OnInit, OnDestroy {
     });
   }
 
-  confirmCreateProduct(): void {
+  confirmCreateProduct(): false | void {
     if (!this.createModalComponent) return;
 
-    // Validar que no haya errores en el formulario
-    if (this.createModalComponent.hasErrors()) {
-      this.toastService.error('Por favor, corrija los errores en el formulario');
-      return;
-    }
+    const formRequest = this.createModalComponent.triggerSubmit();
+    if (!formRequest) return false;
 
-    // Marcar todos los campos como touched para mostrar errores si los hay
-    this.createModalComponent.markAllTouched();
-
-    const formValues = this.createModalComponent.getFormValues() as CreateProductRequest;
     this.pendingAction.set('create');
-    this.state.createProduct(formValues);
+    this.state.createProduct(formRequest);
   }
 
   // ========== EDIT ==========
@@ -176,20 +171,14 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.state.loadProductById(product.id);
   }
 
-  confirmEditProduct(productId: string): void {
+  confirmEditProduct(productId: string): false | void {
     if (!this.editModalComponent) return;
 
-    // Validar que no haya errores
-    if (this.editModalComponent.hasErrors()) {
-      this.toastService.error('Por favor, corrija los errores en el formulario');
-      return;
-    }
+    const formRequest = this.editModalComponent.triggerSubmit();
+    if (!formRequest) return false;
 
-    this.editModalComponent.markAllTouched();
-
-    const formValues = this.editModalComponent.getFormValues() as UpdateProductRequest;
     this.pendingAction.set('edit');
-    this.state.updateProduct(productId, formValues);
+    this.state.updateProduct(productId, formRequest);
   }
 
   // ========== DELETE ==========

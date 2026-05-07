@@ -2,11 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   ViewChild,
+  computed,
   input,
   signal,
+  type TemplateRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import type { TemplateRef } from '@angular/core';
 import { ProductFormComponent } from './product-form.component';
 import type { CategorySummaryDto } from '../../../../core/models/responses/category.responses';
 import type { MeasurementUnitSummaryDto } from '../../../../core/models/responses/unit.responses';
@@ -18,19 +19,20 @@ import type { CreateProductRequest } from '../../../../core/models/requests/prod
  * Funcionalidades:
  * - Expone @ViewChild('createModalTemplate') para que el padre lo abra
  * - Contiene ProductFormComponent interna (modo create)
- * - No maneja estado, solo expone métodos y templates
+ * - Valida y maneja submitCount con patrón reactivo
+ * - No maneja estado de negocio, solo state local de validación
  * - El padre inyecta categoryService.categorias, unitService.unidades, etc.
  *
  * Inputs:
- * - name, description, salePrice, etc.: valores iniciales del formulario
+ * - name, description, salePrice, etc.: valores iniciales del formulario (NO se usan en create)
  * - categories, units: listas de apoyo
  * - fieldErrors: errores del backend por campo
  * - generalError: mensaje de error general
  * - isLoadingDeps: mientras se cargan categorías y unidades
  *
  * API Pública:
- * - getFormValues() → CreateProductRequest sin transformar
- * - markAllTouched() → validar todos los campos
+ * - triggerSubmit() → valida y retorna CreateProductRequest o false
+ * - reset() → reinicia submitCount y currentValues
  * - Acceso a templateRef via @ViewChild
  */
 @Component({
@@ -43,7 +45,7 @@ import type { CreateProductRequest } from '../../../../core/models/requests/prod
       <div class="space-y-4">
         <!-- General Error Alert -->
         @if (generalError()) {
-          <div class="rounded bg-error/20 p-3 text-sm text-error">
+          <div class="px-4 py-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error">
             {{ generalError() }}
           </div>
         }
@@ -57,6 +59,8 @@ import type { CreateProductRequest } from '../../../../core/models/requests/prod
           [fieldErrors]="fieldErrors()"
           [isLoadingDeps]="isLoadingDeps()"
           [isEditMode]="false"
+          [submitTrigger]="submitCount()"
+          (formChange)="currentValues.set($event)"
         />
       </div>
     </ng-template>
@@ -84,7 +88,33 @@ export class ProductCreateModalComponent {
   generalError = input<string | null>(null);
   isLoadingDeps = input(false);
 
-  // Computed form values para pasar al ProductFormComponent
+  // Reactive state
+  submitCount = signal(0);
+  currentValues = signal<{
+    name: string;
+    description: string | null;
+    salePrice: number;
+    costPrice: number | null;
+    categoryId: string;
+    unitId: string;
+    minStock: number;
+    maxStock: number | null;
+    sku?: string;
+    barcode: string | null;
+    isActive?: boolean;
+  }>({
+    name: '',
+    description: null,
+    salePrice: 0,
+    costPrice: null,
+    categoryId: '',
+    unitId: '',
+    minStock: 0,
+    maxStock: null,
+    barcode: null,
+  });
+
+  // Form values para pasar al ProductFormComponent (siempre valores por defecto en create)
   formValues = signal({
     name: '',
     description: null as string | null,
@@ -98,39 +128,40 @@ export class ProductCreateModalComponent {
     barcode: null as string | null,
   });
 
-  /**
-   * Obtener valores del formulario como CreateProductRequest.
-   * Llamado por el padre (ProductsComponent) al confirmar crear.
-   */
-  getFormValues(): CreateProductRequest {
-    if (!this.formComponent) {
-      throw new Error('FormComponent no está disponible');
-    }
-    return this.formComponent.getFormValues() as CreateProductRequest;
-  }
-
-  /**
-   * Marcar todos los campos como "touched" en el formulario.
-   */
-  markAllTouched(): void {
-    if (!this.formComponent) return;
-    this.formComponent.markAllTouched();
-  }
-
-  /**
-   * Revisar si el formulario tiene errores.
-   */
-  hasErrors(): boolean {
+  // Computed: chequear si hay errores
+  hasErrors = computed(() => {
     if (!this.formComponent) return false;
     return this.formComponent.hasErrors();
+  });
+
+  /**
+   * Trigger del submit: incrementa submitCount, valida, y retorna datos o false.
+   * Llamado por el padre (ProductsComponent) al hacer clic en confirmar.
+   */
+  triggerSubmit(): false | CreateProductRequest {
+    this.submitCount.update(c => c + 1);
+    if (this.hasErrors()) return false;
+    const values = this.currentValues();
+    return {
+      name: values.name,
+      description: values.description || undefined,
+      salePrice: values.salePrice,
+      costPrice: values.costPrice ?? undefined,
+      categoryId: values.categoryId,
+      unitId: values.unitId,
+      minStock: values.minStock,
+      maxStock: values.maxStock ?? undefined,
+      barcode: values.barcode || undefined,
+    };
   }
 
   /**
-   * Reiniciar el formulario a valores por defecto.
-   * Llamado al cerrar el modal (para limpiar antes de abrir nuevamente).
+   * Reiniciar el modal a estado por defecto.
+   * Llamado por el padre al abrir la modal (para limpiar antes de abrir nuevamente).
    */
-  resetForm(): void {
-    this.formValues.set({
+  reset(): void {
+    this.submitCount.set(0);
+    this.currentValues.set({
       name: '',
       description: null,
       salePrice: 0,
@@ -139,7 +170,6 @@ export class ProductCreateModalComponent {
       unitId: '',
       minStock: 0,
       maxStock: null,
-      sku: '',
       barcode: null,
     });
   }
