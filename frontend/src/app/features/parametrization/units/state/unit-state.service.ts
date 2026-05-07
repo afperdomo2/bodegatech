@@ -11,7 +11,6 @@ import type {
 } from '../../../../core/models/responses/unit.responses';
 import type { AppError } from '../../../../core/models/api.models';
 import type { UnitType } from '../../../../core/constants/unit-type.constants';
-import { catchError, of } from 'rxjs';
 
 /**
  * Servicio de estado reactivo para unidades de medida.
@@ -94,21 +93,20 @@ export class UnitStateService {
     this._generalError.set(null);
     this._isActiveFilter.set(isActive);
 
-    this.unitService.getAll(page, pageSize, isActive).pipe(
-      catchError((error: AppError) => {
-        this._generalError.set(error.message);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
+    this.unitService.getAll(page, pageSize, isActive).subscribe({
+      next: (response) => {
         this._units.set(response.data.items);
         this._currentPage.set(response.data.currentPage);
         this._pageSize.set(response.data.pageSize);
         this._totalElements.set(response.data.totalElements);
         this._totalPages.set(response.data.totalPages);
         this._generalError.set(null);
-      }
-      this._isLoading.set(false);
+        this._isLoading.set(false);
+      },
+      error: (error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoading.set(false);
+      },
     });
   }
 
@@ -116,16 +114,15 @@ export class UnitStateService {
     this._isLoadingBaseUnits.set(true);
     this._generalError.set(null);
 
-    this.unitService.getBaseUnitsOfType(type).pipe(
-      catchError((error: AppError) => {
-        this._generalError.set(error.message);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
+    this.unitService.getBaseUnitsOfType(type).subscribe({
+      next: (response) => {
         this._baseUnitsForType.set(response.data.items);
-      }
-      this._isLoadingBaseUnits.set(false);
+        this._isLoadingBaseUnits.set(false);
+      },
+      error: (error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoadingBaseUnits.set(false);
+      },
     });
   }
 
@@ -133,29 +130,21 @@ export class UnitStateService {
     this._fieldErrors.set({});
     this._generalError.set(null);
 
-    this.unitService.create(request).pipe(
-      catchError((error: AppError) => {
-        if (error.status === 400 && error.fieldErrors) {
-          // Errores de validación por campo
-          this._fieldErrors.set(error.fieldErrors);
-        } else {
-          // Otros errores (409, 500, etc.)
-          this._generalError.set(error.message);
-        }
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
-        // Éxito: agregar nueva unidad al inicio de la lista
-        // Convertir MeasurementUnitDto a MeasurementUnitSummaryDto (compatible porque extiende)
+    this.unitService.create(request).subscribe({
+      next: (response) => {
         this._units.update(units => [response.data as MeasurementUnitSummaryDto, ...units]);
         this._generalError.set(null);
         this._fieldErrors.set({});
-        // Recalcular total elementos
         this._totalElements.update(t => t + 1);
-        // Incrementar contador de éxito
         this._operationSuccess.update(val => val + 1);
-      }
+      },
+      error: (error: AppError) => {
+        if (error.status === 400 && error.fieldErrors) {
+          this._fieldErrors.set(error.fieldErrors);
+        } else {
+          this._generalError.set(error.message);
+        }
+      },
     });
   }
 
@@ -163,27 +152,22 @@ export class UnitStateService {
     this._fieldErrors.set({});
     this._generalError.set(null);
 
-    this.unitService.update(id, request).pipe(
-      catchError((error: AppError) => {
-        if (error.status === 400 && error.fieldErrors) {
-          this._fieldErrors.set(error.fieldErrors);
-        } else {
-          this._generalError.set(error.message);
-        }
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
-        // Éxito: actualizar la unidad en la lista
-        // Convertir MeasurementUnitDto a MeasurementUnitSummaryDto
+    this.unitService.update(id, request).subscribe({
+      next: (response) => {
         this._units.update(units =>
           units.map(unit => unit.id === id ? (response.data as MeasurementUnitSummaryDto) : unit)
         );
         this._generalError.set(null);
         this._fieldErrors.set({});
-        // Incrementar contador de éxito
         this._operationSuccess.update(val => val + 1);
-      }
+      },
+      error: (error: AppError) => {
+        if (error.status === 400 && error.fieldErrors) {
+          this._fieldErrors.set(error.fieldErrors);
+        } else {
+          this._generalError.set(error.message);
+        }
+      },
     });
   }
 
@@ -191,19 +175,18 @@ export class UnitStateService {
     this._isDeleting.set(true);
     this._generalError.set(null);
 
-    this.unitService.delete(id).pipe(
-      catchError((error: AppError) => {
+    this.unitService.delete(id).subscribe({
+      next: () => {
+        this._units.update(units => units.filter(unit => unit.id !== id));
+        this._totalElements.update(t => Math.max(0, t - 1));
+        this._generalError.set(null);
+        this._isDeleting.set(false);
+        this._operationSuccess.update(val => val + 1);
+      },
+      error: (error: AppError) => {
         this._generalError.set(error.message);
-        return of(null);
-      })
-    ).subscribe(() => {
-      // Éxito (204): remover unidad de la lista
-      this._units.update(units => units.filter(unit => unit.id !== id));
-      this._totalElements.update(t => Math.max(0, t - 1));
-      this._generalError.set(null);
-      this._isDeleting.set(false);
-      // Incrementar contador de éxito
-      this._operationSuccess.update(val => val + 1);
+        this._isDeleting.set(false);
+      },
     });
   }
 
@@ -211,17 +194,16 @@ export class UnitStateService {
     this._isLoadingDetail.set(true);
     this._generalError.set(null);
 
-    this.unitService.getById(id).pipe(
-      catchError((error: AppError) => {
-        this._generalError.set(error.message);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
+    this.unitService.getById(id).subscribe({
+      next: (response) => {
         this._selectedDetail.set(response.data);
         this._generalError.set(null);
-      }
-      this._isLoadingDetail.set(false);
+        this._isLoadingDetail.set(false);
+      },
+      error: (error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoadingDetail.set(false);
+      },
     });
   }
 
@@ -236,17 +218,16 @@ export class UnitStateService {
     this._isLoadingRelated.set(true);
     this._generalError.set(null);
 
-    this.unitService.getRelated(baseUnitId).pipe(
-      catchError((error: AppError) => {
-        this._generalError.set(error.message);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
+    this.unitService.getRelated(baseUnitId).subscribe({
+      next: (response) => {
         this._relatedUnits.set(response.data);
         this._generalError.set(null);
-      }
-      this._isLoadingRelated.set(false);
+        this._isLoadingRelated.set(false);
+      },
+      error: (error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoadingRelated.set(false);
+      },
     });
   }
 }

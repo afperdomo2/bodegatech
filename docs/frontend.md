@@ -136,6 +136,14 @@ readonly operationSuccess = this._operationSuccess.asReadonly();
 Al completarse una operación exitosa: `this._operationSuccess.update(v => v + 1)`.  
 Los componentes reaccionan con `effect(() => { if (this.state.operationSuccess() > 0) ... })`.
 
+### Manejo de HTTP en state services
+
+**Siempre usar `subscribe({ next, error })`** — nunca `pipe(catchError(...)).subscribe()`.
+
+El patrón incorrecto hace que el callback se ejecute también en errores (porque `catchError` retorna `of(null)`), disparando `operationSuccess` y mutando estado aunque la operación haya fallado.
+
+Para errores 400 con validación de campos: chequear `error.status === 400 && error.fieldErrors` en el bloque `error:`.
+
 ## Modal de edición — datos frescos
 
 Al abrir una modal de edición, NO usar datos del listado (stale). Siempre llamar `state.loadById(id)` que hace `GET /api/{recurso}/{id}` y popula `selectedDetail`.

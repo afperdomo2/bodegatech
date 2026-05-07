@@ -13,7 +13,7 @@ import type {
   UpdateProductRequest,
 } from '../../../../core/models/requests/product.requests';
 import type { AppError } from '../../../../core/models/api.models';
-import { catchError, of, forkJoin } from 'rxjs';
+import { forkJoin } from 'rxjs';
 
 /**
  * Servicio de estado reactivo para productos.
@@ -99,21 +99,20 @@ export class ProductStateService {
     this._generalError.set(null);
     this._isActiveFilter.set(isActive);
 
-    this.productService.getAll(page, pageSize, isActive).pipe(
-      catchError((error: AppError) => {
-        this._generalError.set(error.message);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
+    this.productService.getAll(page, pageSize, isActive).subscribe({
+      next: (response) => {
         this._products.set(response.data.items);
         this._currentPage.set(response.data.currentPage);
         this._pageSize.set(response.data.pageSize);
         this._totalElements.set(response.data.totalElements);
         this._totalPages.set(response.data.totalPages);
         this._generalError.set(null);
-      }
-      this._isLoading.set(false);
+        this._isLoading.set(false);
+      },
+      error: (error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoading.set(false);
+      },
     });
   }
 
@@ -127,20 +126,19 @@ export class ProductStateService {
     this._generalError.set(null);
 
     forkJoin({
-      categories: this.categoryService.getAll(0, 1000, true), // Solo categorías activas
-      units: this.unitService.getAll(0, 1000, true), // Solo unidades activas
-    }).pipe(
-      catchError((error: AppError) => {
-        this._generalError.set(error.message);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
+      categories: this.categoryService.getAll(0, 1000, true),
+      units: this.unitService.getAll(0, 1000, true),
+    }).subscribe({
+      next: (response) => {
         this._categories.set(response.categories.data.items);
         this._units.set(response.units.data.items);
         this._generalError.set(null);
-      }
-      this._isLoadingFormDeps.set(false);
+        this._isLoadingFormDeps.set(false);
+      },
+      error: (error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoadingFormDeps.set(false);
+      },
     });
   }
 
@@ -152,26 +150,21 @@ export class ProductStateService {
     this._fieldErrors.set({});
     this._generalError.set(null);
 
-    this.productService.create(request).pipe(
-      catchError((error: AppError) => {
-        if (error.status === 400 && error.fieldErrors) {
-          // Errores de validación por campo
-          this._fieldErrors.set(error.fieldErrors);
-        } else {
-          // Otros errores (409, 500, etc.)
-          this._generalError.set(error.message);
-        }
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
-        // Éxito: agregar nuevo producto al inicio de la lista
+    this.productService.create(request).subscribe({
+      next: (response) => {
         this._products.update(products => [(response.data as ProductSummaryDto), ...products]);
         this._generalError.set(null);
         this._fieldErrors.set({});
         this._totalElements.update(t => t + 1);
         this._operationSuccess.update(val => val + 1);
-      }
+      },
+      error: (error: AppError) => {
+        if (error.status === 400 && error.fieldErrors) {
+          this._fieldErrors.set(error.fieldErrors);
+        } else {
+          this._generalError.set(error.message);
+        }
+      },
     });
   }
 
@@ -182,25 +175,22 @@ export class ProductStateService {
     this._fieldErrors.set({});
     this._generalError.set(null);
 
-    this.productService.update(id, request).pipe(
-      catchError((error: AppError) => {
-        if (error.status === 400 && error.fieldErrors) {
-          this._fieldErrors.set(error.fieldErrors);
-        } else {
-          this._generalError.set(error.message);
-        }
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
-        // Éxito: actualizar el producto en la lista
+    this.productService.update(id, request).subscribe({
+      next: (response) => {
         this._products.update(products =>
           products.map(prod => prod.id === id ? (response.data as ProductSummaryDto) : prod)
         );
         this._generalError.set(null);
         this._fieldErrors.set({});
         this._operationSuccess.update(val => val + 1);
-      }
+      },
+      error: (error: AppError) => {
+        if (error.status === 400 && error.fieldErrors) {
+          this._fieldErrors.set(error.fieldErrors);
+        } else {
+          this._generalError.set(error.message);
+        }
+      },
     });
   }
 
@@ -233,20 +223,18 @@ export class ProductStateService {
   loadProductById(id: string): void {
     this._isLoadingDetail.set(true);
     this._generalError.set(null);
-    this._selectedDetail.set(null); // Limpiar el detalle anterior
+    this._selectedDetail.set(null);
 
-    this.productService.getById(id).pipe(
-      catchError((error: AppError) => {
-        this._generalError.set(error.message);
-        this._isLoadingDetail.set(false);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
+    this.productService.getById(id).subscribe({
+      next: (response) => {
         this._selectedDetail.set(response.data);
         this._generalError.set(null);
-      }
-      this._isLoadingDetail.set(false);
+        this._isLoadingDetail.set(false);
+      },
+      error: (error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoadingDetail.set(false);
+      },
     });
   }
 

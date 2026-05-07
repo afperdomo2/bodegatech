@@ -6,7 +6,6 @@ import type {
 } from '../../../../core/models/requests/category.requests';
 import type { CategorySummaryDto, CategoryDetail } from '../../../../core/models/responses/category.responses';
 import type { AppError } from '../../../../core/models/api.models';
-import { catchError, of } from 'rxjs';
 
 /**
  * Servicio de estado reactivo para categorías.
@@ -96,21 +95,20 @@ export class CategoryStateService {
     this._generalError.set(null);
     this._isActiveFilter.set(isActive);
 
-    this.categoryService.getAll(page, pageSize, isActive).pipe(
-      catchError((error: AppError) => {
-        this._generalError.set(error.message);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
+    this.categoryService.getAll(page, pageSize, isActive).subscribe({
+      next: (response) => {
         this._categories.set(response.data.items);
         this._currentPage.set(response.data.currentPage);
         this._pageSize.set(response.data.pageSize);
         this._totalElements.set(response.data.totalElements);
         this._totalPages.set(response.data.totalPages);
         this._generalError.set(null);
-      }
-      this._isLoading.set(false);
+        this._isLoading.set(false);
+      },
+      error: (error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoading.set(false);
+      },
     });
   }
 
@@ -122,29 +120,21 @@ export class CategoryStateService {
     this._fieldErrors.set({});
     this._generalError.set(null);
 
-    this.categoryService.create(request).pipe(
-      catchError((error: AppError) => {
-        if (error.status === 400 && error.fieldErrors) {
-          // Errores de validación por campo
-          this._fieldErrors.set(error.fieldErrors);
-        } else {
-          // Otros errores (409, 500, etc.)
-          this._generalError.set(error.message);
-        }
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
-        // Éxito: agregar nueva categoría al inicio de la lista
-        // Convertir CategoryDto a CategorySummaryDto (compatible porque extiende)
+    this.categoryService.create(request).subscribe({
+      next: (response) => {
         this._categories.update(cats => [(response.data as CategorySummaryDto), ...cats]);
         this._generalError.set(null);
         this._fieldErrors.set({});
-        // Recalcular total elementos
         this._totalElements.update(t => t + 1);
-        // Incrementar contador de éxito
         this._operationSuccess.update(val => val + 1);
-      }
+      },
+      error: (error: AppError) => {
+        if (error.status === 400 && error.fieldErrors) {
+          this._fieldErrors.set(error.fieldErrors);
+        } else {
+          this._generalError.set(error.message);
+        }
+      },
     });
   }
 
@@ -155,27 +145,22 @@ export class CategoryStateService {
     this._fieldErrors.set({});
     this._generalError.set(null);
 
-    this.categoryService.update(id, request).pipe(
-      catchError((error: AppError) => {
-        if (error.status === 400 && error.fieldErrors) {
-          this._fieldErrors.set(error.fieldErrors);
-        } else {
-          this._generalError.set(error.message);
-        }
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
-        // Éxito: actualizar la categoría en la lista
-        // Convertir CategoryDto a CategorySummaryDto
+    this.categoryService.update(id, request).subscribe({
+      next: (response) => {
         this._categories.update(cats =>
           cats.map(cat => cat.id === id ? (response.data as CategorySummaryDto) : cat)
         );
         this._generalError.set(null);
         this._fieldErrors.set({});
-        // Incrementar contador de éxito
         this._operationSuccess.update(val => val + 1);
-      }
+      },
+      error: (error: AppError) => {
+        if (error.status === 400 && error.fieldErrors) {
+          this._fieldErrors.set(error.fieldErrors);
+        } else {
+          this._generalError.set(error.message);
+        }
+      },
     });
   }
 
@@ -187,19 +172,18 @@ export class CategoryStateService {
     this._isDeleting.set(true);
     this._generalError.set(null);
 
-    this.categoryService.delete(id).pipe(
-      catchError((error: AppError) => {
+    this.categoryService.delete(id).subscribe({
+      next: () => {
+        this._categories.update(cats => cats.filter(cat => cat.id !== id));
+        this._totalElements.update(t => Math.max(0, t - 1));
+        this._generalError.set(null);
+        this._isDeleting.set(false);
+        this._operationSuccess.update(val => val + 1);
+      },
+      error: (error: AppError) => {
         this._generalError.set(error.message);
-        return of(null);
-      })
-    ).subscribe(() => {
-      // Éxito (204): remover categoría de la lista
-      this._categories.update(cats => cats.filter(cat => cat.id !== id));
-      this._totalElements.update(t => Math.max(0, t - 1));
-      this._generalError.set(null);
-      this._isDeleting.set(false);
-      // Incrementar contador de éxito
-      this._operationSuccess.update(val => val + 1);
+        this._isDeleting.set(false);
+      },
     });
   }
 
@@ -220,18 +204,16 @@ export class CategoryStateService {
     this._isLoadingDetail.set(true);
     this._generalError.set(null);
 
-    this.categoryService.getById(id).pipe(
-      catchError((error: AppError) => {
-        this._generalError.set(error.message);
-        this._isLoadingDetail.set(false);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
+    this.categoryService.getById(id).subscribe({
+      next: (response) => {
         this._selectedDetail.set(response.data);
         this._generalError.set(null);
-      }
-      this._isLoadingDetail.set(false);
+        this._isLoadingDetail.set(false);
+      },
+      error: (error: AppError) => {
+        this._generalError.set(error.message);
+        this._isLoadingDetail.set(false);
+      },
     });
   }
 }
