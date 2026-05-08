@@ -161,11 +161,11 @@ resource "aws_lambda_function" "image_processor" {
 
   environment {
     variables = {
-      API_URL         = var.backend_api_url
-      API_KEY         = var.internal_api_key
-      S3_BUCKET       = aws_s3_bucket.s3_uploads.id
-      NODE_ENV        = var.environment
-      WEBP_QUALITY    = var.webp_quality
+      API_URL      = var.backend_api_url
+      API_KEY      = var.internal_api_key
+      S3_BUCKET    = aws_s3_bucket.s3_uploads.id
+      NODE_ENV     = var.environment
+      WEBP_QUALITY = var.webp_quality
     }
   }
 
@@ -190,10 +190,10 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
 }
 
 # Metric Filter: Imágenes procesadas exitosamente
-resource "aws_logs_metric_filter" "image_processing_success" {
+resource "aws_cloudwatch_log_metric_filter" "image_processing_success" {
   name           = "${var.project_name}-${var.environment}-image-processing-success"
   log_group_name = aws_cloudwatch_log_group.lambda_logs.name
-  filter_pattern = "[timestamp, request_id, level = \"log\", msg = *\"Imagen*procesada exitosamente\"*]"
+  pattern        = "[timestamp, request_id, level = \"log\", msg = *\"Imagen*procesada exitosamente\"*]"
 
   metric_transformation {
     name      = "ImageProcessingSuccess"
@@ -203,10 +203,10 @@ resource "aws_logs_metric_filter" "image_processing_success" {
 }
 
 # Metric Filter: Errores de procesamiento
-resource "aws_logs_metric_filter" "image_processing_error" {
+resource "aws_cloudwatch_log_metric_filter" "image_processing_error" {
   name           = "${var.project_name}-${var.environment}-image-processing-error"
   log_group_name = aws_cloudwatch_log_group.lambda_logs.name
-  filter_pattern = "[timestamp, request_id, level = \"ERROR\", ...]"
+  pattern        = "[timestamp, request_id, level = \"ERROR\", ...]"
 
   metric_transformation {
     name      = "ImageProcessingError"

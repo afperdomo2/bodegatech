@@ -77,4 +77,6 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+terraform/lambda_function_payload.zip
+
 # End of https://www.toptal.com/developers/gitignore/api/terraform

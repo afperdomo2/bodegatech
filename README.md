@@ -669,6 +669,9 @@ terraform plan -out plan.out
 # Aplicar cambios
 terraform apply
 
+# Aplicar cambios de un plan almacenado
+terraform apply "plan.out"
+
 # Destruir recursos
 terraform destroy -var="environment=dev"
 ```
