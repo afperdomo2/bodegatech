@@ -68,8 +68,9 @@ resource "aws_sqs_queue" "image_processing_dlq" {
 # Cola principal de procesamiento
 resource "aws_sqs_queue" "image_processing_queue" {
   name                      = "${var.org_name}-${var.project_name}-${var.environment}-product-images-processing-queue"
-  message_retention_seconds = 86400 # 1 día de vida por si algo falla
-  receive_wait_time_seconds = 10    # Long polling para ahorrar costos
+  message_retention_seconds = 86400        # 1 día de vida por si algo falla
+  receive_wait_time_seconds = 10           # Long polling para ahorrar costos
+  visibility_timeout_seconds = 360         # 6x Lambda timeout (60s), requerido por AWS
   tags                      = local.common_tags
 
   redrive_policy = jsonencode({
@@ -193,7 +194,7 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
 resource "aws_cloudwatch_log_metric_filter" "image_processing_success" {
   name           = "${var.project_name}-${var.environment}-image-processing-success"
   log_group_name = aws_cloudwatch_log_group.lambda_logs.name
-  pattern        = "[timestamp, request_id, level = \"log\", msg = *\"Imagen*procesada exitosamente\"*]"
+  pattern        = "IMAGE_PROCESSED"
 
   metric_transformation {
     name      = "ImageProcessingSuccess"
@@ -206,7 +207,7 @@ resource "aws_cloudwatch_log_metric_filter" "image_processing_success" {
 resource "aws_cloudwatch_log_metric_filter" "image_processing_error" {
   name           = "${var.project_name}-${var.environment}-image-processing-error"
   log_group_name = aws_cloudwatch_log_group.lambda_logs.name
-  pattern        = "[timestamp, request_id, level = \"ERROR\", ...]"
+  pattern        = "ERROR"
 
   metric_transformation {
     name      = "ImageProcessingError"

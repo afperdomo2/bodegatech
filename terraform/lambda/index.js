@@ -116,7 +116,7 @@ export const handler = async (event) => {
        try {
          // TODO: Pendiente crear endpoint para implementar
          // await notifyBackend(imageId, results);
-         console.log(`✅ Imagen ${imageId} procesada exitosamente`);
+         console.log(`✅ [IMAGE_PROCESSED] imageId=${imageId}`);
          successCount++;
        } catch (backendError) {
          throw {
