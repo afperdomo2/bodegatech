@@ -112,18 +112,31 @@ export class ProductImageService {
     );
   }
 
-  /**
-   * Establecer una imagen como la principal del producto.
-   * PATCH /api/products/{productId}/images/{imageId}/set-main
-   *
-   * @param productId ID del producto
-   * @param imageId ID de la imagen a establecer como principal
-   * @returns Observable void (204 No Content)
-   */
-  setMainImage(productId: string, imageId: string) {
-    return this.api.patch<void>(
-      `/products/${productId}/images/${imageId}/set-main`,
-      {}
-    );
-  }
+   /**
+    * Establecer una imagen como la principal del producto.
+    * PATCH /api/products/{productId}/images/{imageId}/set-main
+    *
+    * @param productId ID del producto
+    * @param imageId ID de la imagen a establecer como principal
+    * @returns Observable void (204 No Content)
+    */
+   setMainImage(productId: string, imageId: string) {
+     return this.api.patch<void>(
+       `/products/${productId}/images/${imageId}/set-main`,
+       {}
+     );
+   }
+
+   /**
+    * Obtener todas las imágenes de un producto.
+    * GET /api/products/{productId}/images
+    *
+    * @param productId ID del producto
+    * @returns Observable con array de ProductImageDto
+    */
+   getProductImages(productId: string) {
+     return this.api.get<ApiResponse<ProductImageDto[]>>(
+       `/products/${productId}/images`
+     );
+   }
 }

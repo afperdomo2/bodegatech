@@ -37,7 +37,8 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "product_images", indexes = {
         @Index(name = "idx_product_images_product_id", columnList = "product_id"),
-        @Index(name = "idx_product_images_product_id_created_at", columnList = "product_id, created_at")
+        @Index(name = "idx_product_images_product_id_created_at", columnList = "product_id, created_at"),
+        @Index(name = "idx_product_images_status", columnList = "status")
 })
 public class ProductImage implements Persistable<UUID> {
 
@@ -51,6 +52,21 @@ public class ProductImage implements Persistable<UUID> {
     @NotBlank
     @Column(name = "file_key", nullable = false, columnDefinition = "TEXT")
     private String fileKey;
+
+    @Column(name = "thumbnail_key", columnDefinition = "TEXT")
+    private String thumbnailKey;
+
+    @Column(name = "medium_key", columnDefinition = "TEXT")
+    private String mediumKey;
+
+    @Column(name = "is_main", nullable = false)
+    @Builder.Default
+    private Boolean isMain = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private ImageStatus status = ImageStatus.PROCESSING;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

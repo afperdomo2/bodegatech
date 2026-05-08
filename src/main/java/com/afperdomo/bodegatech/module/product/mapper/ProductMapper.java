@@ -164,25 +164,29 @@ public abstract class ProductMapper {
                 .build();
     }
 
-    /**
-     * Helper para convertir lista de ProductImage a lista de ProductImageDto.
-     * Usada en toDetail() para incluir las imágenes del producto.
-     * Construye la URL pública concatenando la base URL de S3 con el fileKey.
-     */
-    @Named("mapProductImages")
-    protected List<ProductImageDto> mapProductImages(List<ProductImage> images) {
-        if (images == null || images.isEmpty()) {
-            return List.of();
-        }
-        return images.stream()
-            .map(image -> ProductImageDto.builder()
-                .id(image.getId())
-                .fileKey(image.getFileKey())
-                .url(buildUrl(image.getFileKey()))
-                .createdAt(image.getCreatedAt())
-                .build())
-            .toList();
-    }
+     /**
+      * Helper para convertir lista de ProductImage a lista de ProductImageDto.
+      * Usada en toDetail() para incluir las imágenes del producto.
+      * Construye las URLs públicas desde los fileKeys.
+      */
+     @Named("mapProductImages")
+     protected List<ProductImageDto> mapProductImages(List<ProductImage> images) {
+         if (images == null || images.isEmpty()) {
+             return List.of();
+         }
+         return images.stream()
+             .map(image -> ProductImageDto.builder()
+                 .id(image.getId())
+                 .url(buildUrl(image.getFileKey()))
+                 .thumbnailUrl(image.getThumbnailKey() != null ?
+                         buildUrl(image.getThumbnailKey()) : null)
+                 .mediumUrl(image.getMediumKey() != null ?
+                         buildUrl(image.getMediumKey()) : null)
+                 .isMain(image.getIsMain())
+                 .createdAt(image.getCreatedAt())
+                 .build())
+             .toList();
+     }
 
     /**
      * Helper para construir URL pública desde un fileKey.

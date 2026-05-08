@@ -1,7 +1,9 @@
 export interface ProductImageDto {
   id: string;
-  fileKey: string;
   url: string;
+  thumbnailUrl?: string;
+  mediumUrl?: string;
+  isMain: boolean;
   createdAt: string;
 }
 

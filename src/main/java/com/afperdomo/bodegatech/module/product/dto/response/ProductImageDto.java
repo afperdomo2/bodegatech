@@ -9,10 +9,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * DTO para representar una imagen de producto en respuestas de API.
- * Incluye la URL pública y la clave de S3 de la imagen.
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -23,11 +19,17 @@ public class ProductImageDto {
     @Schema(description = "ID único de la imagen", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID id;
 
-    @Schema(description = "Clave (key) de la imagen en S3", example = "products/123e4567-e89b-12d3-a456-426614174000/foto1.jpg")
-    private String fileKey;
-
-    @Schema(description = "URL pública de la imagen", example = "https://bodegatech-uploads.s3.amazonaws.com/products/123e4567-e89b-12d3-a456-426614174000/foto1.jpg")
+    @Schema(description = "URL pública de la imagen original", example = "https://bodegatech-uploads.s3.amazonaws.com/products/123e4567-e89b-12d3-a456-426614174000/img-uuid-original.jpg")
     private String url;
+
+    @Schema(description = "URL pública de la imagen en versión thumbnail (si existe)")
+    private String thumbnailUrl;
+
+    @Schema(description = "URL pública de la imagen en versión medium (si existe)")
+    private String mediumUrl;
+
+    @Schema(description = "Indica si esta es la imagen principal del producto", example = "true")
+    private Boolean isMain;
 
     @Schema(description = "Fecha de creación de la imagen")
     private LocalDateTime createdAt;

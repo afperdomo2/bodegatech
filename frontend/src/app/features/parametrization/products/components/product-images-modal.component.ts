@@ -307,14 +307,13 @@ export class ProductImagesModalComponent {
         const images = response.data.images || [];
         const mainImageUrl = response.data.mainImageUrl || null;
         
-        const existingItems: ImageUploadItem[] = images.map((img: ProductImageDto) => ({
-          previewUrl: img.url,
-          status: 'success' as const,
-          imageId: img.id,
-          fileKey: img.fileKey,
-          uploadProgress: 100,
-          isExisting: true,
-        }));
+         const existingItems: ImageUploadItem[] = images.map((img: ProductImageDto) => ({
+           previewUrl: img.url,
+           status: 'success' as const,
+           imageId: img.id,
+           uploadProgress: 100,
+           isExisting: true,
+         }));
 
         this.mainImageUrl.set(mainImageUrl);
         this.uploadItems.set(existingItems);

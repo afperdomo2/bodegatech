@@ -98,25 +98,23 @@ public class ProductImageService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Establece una imagen como la imagen principal del producto.
-     * Actualiza product.mainImageKey con la fileKey de la imagen.
-     *
-     * @param productId ID del producto propietario de la imagen
-     * @param imageId ID de la imagen a establecer como principal
-     */
-    public void setMainImage(UUID productId, UUID imageId) {
-        log.info("Estableciendo imagen {} como principal del producto {}", imageId, productId);
+     public void setMainImage(UUID productId, UUID imageId) {
+         log.info("Estableciendo imagen {} como principal del producto {}", imageId, productId);
 
-        ProductImage productImage = productImageRepository.findByIdAndProductId(imageId, productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Imagen de producto", imageId));
+         ProductImage productImage = productImageRepository.findByIdAndProductId(imageId, productId)
+                 .orElseThrow(() -> new ResourceNotFoundException("Imagen de producto", imageId));
 
-        Product product = productImage.getProduct();
-        product.setMainImageKey(productImage.getFileKey());
-        productRepository.save(product);
+         productImageRepository.setAllImagesNotMain(productId, imageId);
 
-        log.info("Imagen {} establecida como principal del producto {}", imageId, productId);
-    }
+         productImage.setIsMain(true);
+         productImageRepository.save(productImage);
+
+         Product product = productImage.getProduct();
+         product.setMainImageKey(productImage.getFileKey());
+         productRepository.save(product);
+
+         log.info("Imagen {} establecida como principal del producto {}", imageId, productId);
+     }
 
     /**
      * Elimina una imagen de un producto.
@@ -171,17 +169,35 @@ public class ProductImageService {
     }
 
     /**
-     * Helper privado para convertir ProductImage a ProductImageDto.
-     * Construye la URL pública concatenando la base URL de S3 con el fileKey.
+     * Obtiene todas las imágenes de un producto.
      *
-     * @param productImage Entidad ProductImage
-     * @return DTO con id, fileKey, url, createdAt
+     * @param productId ID del producto
+     * @return Lista de ProductImageDto
+     */
+    public List<ProductImageDto> getProductImages(UUID productId) {
+        log.info("Obteniendo imágenes del producto {}", productId);
+
+        productRepository.findByIdActive(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto", productId));
+
+        return productImageRepository.findByProductIdOrderByCreatedAtAsc(productId).stream()
+                .map(this::toProductImageDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Helper privado para convertir ProductImage a ProductImageDto.
+     * Construye las URLs públicas desde los fileKeys.
      */
     private ProductImageDto toProductImageDto(ProductImage productImage) {
         return ProductImageDto.builder()
                 .id(productImage.getId())
-                .fileKey(productImage.getFileKey())
                 .url(constructPublicUrl(productImage.getFileKey()))
+                .thumbnailUrl(productImage.getThumbnailKey() != null ?
+                        constructPublicUrl(productImage.getThumbnailKey()) : null)
+                .mediumUrl(productImage.getMediumKey() != null ?
+                        constructPublicUrl(productImage.getMediumKey()) : null)
+                .isMain(productImage.getIsMain())
                 .createdAt(productImage.getCreatedAt())
                 .build();
     }

@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -102,5 +103,20 @@ public class ProductImageController {
 
         productImageService.setMainImage(productId, imageId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    @Operation(summary = "Obtener imágenes de un producto", description = "Retorna la lista de imágenes asociadas a un producto")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de imágenes obtenida exitosamente"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    public ResponseEntity<ApiResponse<List<ProductImageDto>>> getProductImages(
+            @Parameter(description = "ID único del producto")
+            @PathVariable UUID productId) {
+
+        List<ProductImageDto> images = productImageService.getProductImages(productId);
+        return ResponseEntity.ok(ApiResponse.success("Imágenes obtenidas exitosamente", images));
     }
 }
