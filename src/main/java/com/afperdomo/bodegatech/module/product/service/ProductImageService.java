@@ -81,15 +81,12 @@ public class ProductImageService {
                         return null;
                     }
 
-                    // Construir URL pública a partir del fileKey
-                    String publicUrl = constructPublicUrl(fileKey);
-
                     // Crear y guardar ProductImage usando el imageId recibido del cliente
+                    // Sin almacenar la URL, solo el fileKey
                     ProductImage productImage = ProductImage.builder()
                             .id(imageId)  // Usar el imageId generado en el presigned
                             .product(product)
                             .fileKey(fileKey)
-                            .url(publicUrl)
                             .build();
 
                     ProductImage saved = productImageRepository.save(productImage);
@@ -103,7 +100,7 @@ public class ProductImageService {
 
     /**
      * Establece una imagen como la imagen principal del producto.
-     * Actualiza product.mainImageUrl con la URL de la imagen.
+     * Actualiza product.mainImageKey con la fileKey de la imagen.
      *
      * @param productId ID del producto propietario de la imagen
      * @param imageId ID de la imagen a establecer como principal
@@ -115,7 +112,7 @@ public class ProductImageService {
                 .orElseThrow(() -> new ResourceNotFoundException("Imagen de producto", imageId));
 
         Product product = productImage.getProduct();
-        product.setMainImageUrl(productImage.getUrl());
+        product.setMainImageKey(productImage.getFileKey());
         productRepository.save(product);
 
         log.info("Imagen {} establecida como principal del producto {}", imageId, productId);
@@ -124,7 +121,7 @@ public class ProductImageService {
     /**
      * Elimina una imagen de un producto.
      * Elimina el objeto de S3 y el registro de la BD.
-     * Si la imagen es la principal, limpia mainImageUrl en el producto.
+     * Si la imagen es la principal, limpia mainImageKey en el producto.
      *
      * @param productId ID del producto propietario de la imagen
      * @param imageId ID de la imagen a eliminar
@@ -137,9 +134,9 @@ public class ProductImageService {
 
         Product product = productImage.getProduct();
 
-        // Si esta imagen es la principal, limpiar mainImageUrl
-        if (product.getMainImageUrl() != null && product.getMainImageUrl().equals(productImage.getUrl())) {
-            product.setMainImageUrl(null);
+        // Si esta imagen es la principal, limpiar mainImageKey
+        if (product.getMainImageKey() != null && product.getMainImageKey().equals(productImage.getFileKey())) {
+            product.setMainImageKey(null);
             productRepository.save(product);
             log.info("Imagen principal del producto {} limpiada", productId);
         }
@@ -175,6 +172,7 @@ public class ProductImageService {
 
     /**
      * Helper privado para convertir ProductImage a ProductImageDto.
+     * Construye la URL pública concatenando la base URL de S3 con el fileKey.
      *
      * @param productImage Entidad ProductImage
      * @return DTO con id, fileKey, url, createdAt
@@ -183,7 +181,7 @@ public class ProductImageService {
         return ProductImageDto.builder()
                 .id(productImage.getId())
                 .fileKey(productImage.getFileKey())
-                .url(productImage.getUrl())
+                .url(constructPublicUrl(productImage.getFileKey()))
                 .createdAt(productImage.getCreatedAt())
                 .build();
     }

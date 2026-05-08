@@ -1,5 +1,6 @@
 package com.afperdomo.bodegatech.module.product.mapper;
 
+import com.afperdomo.bodegatech.config.AwsProperties;
 import com.afperdomo.bodegatech.module.product.dto.request.CreateProductRequest;
 import com.afperdomo.bodegatech.module.product.dto.request.UpdateProductRequest;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductDto;
@@ -19,6 +20,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,9 +31,15 @@ import java.util.UUID;
  * 
  * <p>Nota: Las relaciones @ManyToOne con Category y MeasurementUnit se mapean
  * usando métodos helpers para extraer id, name y abbreviation.
+ * 
+ * <p>Clase abstracta para acceder a AwsProperties y construir URLs públicas
+ * desde fileKey en tiempo de mapeo.
  */
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface ProductMapper {
+public abstract class ProductMapper {
+
+    @Autowired
+    protected AwsProperties awsProperties;
 
     /**
      * Convierte una entidad Product a ProductDto (respuesta básica).
@@ -45,7 +53,8 @@ public interface ProductMapper {
     @Mapping(source = "unit", target = "unitName", qualifiedByName = "mapUnitName")
     @Mapping(source = "unit", target = "unitAbbreviation", qualifiedByName = "mapUnitAbbreviation")
     @Mapping(source = "supplier", target = "supplier", qualifiedByName = "mapSupplierSummary")
-    ProductDto toDto(Product product);
+    @Mapping(source = "mainImageKey", target = "mainImageUrl", qualifiedByName = "mapMainImageUrl")
+    public abstract ProductDto toDto(Product product);
 
     /**
      * Convierte una entidad Product a ProductSummaryDto (respuesta resumida).
@@ -58,7 +67,8 @@ public interface ProductMapper {
     @Mapping(source = "unit", target = "unitId", qualifiedByName = "mapUnitId")
     @Mapping(source = "unit", target = "unitName", qualifiedByName = "mapUnitName")
     @Mapping(source = "unit", target = "unitAbbreviation", qualifiedByName = "mapUnitAbbreviation")
-    ProductSummaryDto toSummaryDto(Product product);
+    @Mapping(source = "mainImageKey", target = "mainImageUrl", qualifiedByName = "mapMainImageUrl")
+    public abstract ProductSummaryDto toSummaryDto(Product product);
 
     /**
      * Convierte una entidad Product a ProductDetail (respuesta completa).
@@ -73,7 +83,8 @@ public interface ProductMapper {
     @Mapping(source = "unit", target = "unitAbbreviation", qualifiedByName = "mapUnitAbbreviation")
     @Mapping(source = "images", target = "images", qualifiedByName = "mapProductImages")
     @Mapping(source = "supplier", target = "supplier", qualifiedByName = "mapSupplierSummary")
-    ProductDetail toDetail(Product product);
+    @Mapping(source = "mainImageKey", target = "mainImageUrl", qualifiedByName = "mapMainImageUrl")
+    public abstract ProductDetail toDetail(Product product);
 
     /**
      * Convierte un CreateProductRequest a entidad Product.
@@ -84,7 +95,7 @@ public interface ProductMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "unit", ignore = true)
     @Mapping(target = "supplier", ignore = true)
-    Product toEntity(CreateProductRequest request);
+    public abstract Product toEntity(CreateProductRequest request);
 
     /**
      * Actualiza parcialmente una entidad Product con los campos de UpdateProductRequest.
@@ -96,13 +107,13 @@ public interface ProductMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "unit", ignore = true)
     @Mapping(target = "supplier", ignore = true)
-    void updateEntity(UpdateProductRequest request, @MappingTarget Product product);
+    public abstract void updateEntity(UpdateProductRequest request, @MappingTarget Product product);
 
     /**
      * Helper para extraer el ID de la categoría.
      */
     @Named("mapCategoryId")
-    default UUID mapCategoryId(Category category) {
+    protected UUID mapCategoryId(Category category) {
         return category != null ? category.getId() : null;
     }
 
@@ -110,7 +121,7 @@ public interface ProductMapper {
      * Helper para extraer el nombre de la categoría.
      */
     @Named("mapCategoryName")
-    default String mapCategoryName(Category category) {
+    protected String mapCategoryName(Category category) {
         return category != null ? category.getName() : null;
     }
 
@@ -118,7 +129,7 @@ public interface ProductMapper {
      * Helper para extraer el ID de la unidad de medida.
      */
     @Named("mapUnitId")
-    default UUID mapUnitId(MeasurementUnit unit) {
+    protected UUID mapUnitId(MeasurementUnit unit) {
         return unit != null ? unit.getId() : null;
     }
 
@@ -126,7 +137,7 @@ public interface ProductMapper {
      * Helper para extraer el nombre de la unidad de medida.
      */
     @Named("mapUnitName")
-    default String mapUnitName(MeasurementUnit unit) {
+    protected String mapUnitName(MeasurementUnit unit) {
         return unit != null ? unit.getName() : null;
     }
 
@@ -134,7 +145,7 @@ public interface ProductMapper {
      * Helper para extraer la abreviación de la unidad de medida.
      */
     @Named("mapUnitAbbreviation")
-    default String mapUnitAbbreviation(MeasurementUnit unit) {
+    protected String mapUnitAbbreviation(MeasurementUnit unit) {
         return unit != null ? unit.getAbbreviation() : null;
     }
 
@@ -142,7 +153,7 @@ public interface ProductMapper {
      * Helper para mapear Supplier a SupplierSummaryDto.
      */
     @Named("mapSupplierSummary")
-    default SupplierSummaryDto mapSupplierSummary(Supplier supplier) {
+    protected SupplierSummaryDto mapSupplierSummary(Supplier supplier) {
         if (supplier == null) {
             return null;
         }
@@ -156,9 +167,10 @@ public interface ProductMapper {
     /**
      * Helper para convertir lista de ProductImage a lista de ProductImageDto.
      * Usada en toDetail() para incluir las imágenes del producto.
+     * Construye la URL pública concatenando la base URL de S3 con el fileKey.
      */
     @Named("mapProductImages")
-    default List<ProductImageDto> mapProductImages(List<ProductImage> images) {
+    protected List<ProductImageDto> mapProductImages(List<ProductImage> images) {
         if (images == null || images.isEmpty()) {
             return List.of();
         }
@@ -166,9 +178,31 @@ public interface ProductMapper {
             .map(image -> ProductImageDto.builder()
                 .id(image.getId())
                 .fileKey(image.getFileKey())
-                .url(image.getUrl())
+                .url(buildUrl(image.getFileKey()))
                 .createdAt(image.getCreatedAt())
                 .build())
             .toList();
+    }
+
+    /**
+     * Helper para construir URL pública desde un fileKey.
+     * Concatena la URL base de S3/CloudFront configurada con el fileKey.
+     */
+    @Named("mapMainImageUrl")
+    protected String mapMainImageUrl(String mainImageKey) {
+        if (mainImageKey == null) {
+            return null;
+        }
+        return buildUrl(mainImageKey);
+    }
+
+    /**
+     * Helper privado para construir URL pública desde un fileKey.
+     *
+     * @param fileKey Clave del archivo en S3 (ej: "products/123/uuid_imagen.jpg")
+     * @return URL pública del objeto en S3/CloudFront
+     */
+    private String buildUrl(String fileKey) {
+        return awsProperties.getS3().getPublicUrl() + "/" + fileKey;
     }
 }

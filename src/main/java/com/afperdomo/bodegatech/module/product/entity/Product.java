@@ -77,7 +77,7 @@ public class Product extends BaseEntity {
     private Supplier supplier;
 
     @Column(columnDefinition = "TEXT")
-    private String mainImageUrl;
+    private String mainImageKey;
 
     @Column(unique = true, length = 100)
     private String barcode;

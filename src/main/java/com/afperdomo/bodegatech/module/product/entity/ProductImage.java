@@ -52,10 +52,6 @@ public class ProductImage implements Persistable<UUID> {
     @Column(name = "file_key", nullable = false, columnDefinition = "TEXT")
     private String fileKey;
 
-    @NotBlank
-    @Column(name = "url", nullable = false, columnDefinition = "TEXT")
-    private String url;
-
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
