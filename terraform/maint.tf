@@ -50,10 +50,19 @@ resource "aws_s3_bucket_notification" "product_image_notification" {
     queue_arn     = aws_sqs_queue.image_processing_queue.arn
     events        = ["s3:ObjectCreated:*"]
     filter_prefix = "products/"
-    # Aceptar imágenes originales en formato PNG o JPG
-    # Nota: S3 notification permite solo UN filter_suffix
-    # Por lo tanto, validamos el formato en Lambda con regex
     filter_suffix = "-original.png"
+  }
+  queue {
+    queue_arn     = aws_sqs_queue.image_processing_queue.arn
+    events        = ["s3:ObjectCreated:*"]
+    filter_prefix = "products/"
+    filter_suffix = "-original.jpg"
+  }
+  queue {
+    queue_arn     = aws_sqs_queue.image_processing_queue.arn
+    events        = ["s3:ObjectCreated:*"]
+    filter_prefix = "products/"
+    filter_suffix = "-original.jpeg"
   }
 
   depends_on = [aws_sqs_queue_policy.allow_s3_events]
@@ -67,11 +76,11 @@ resource "aws_sqs_queue" "image_processing_dlq" {
 
 # Cola principal de procesamiento
 resource "aws_sqs_queue" "image_processing_queue" {
-  name                      = "${var.org_name}-${var.project_name}-${var.environment}-product-images-processing-queue"
-  message_retention_seconds = 86400        # 1 día de vida por si algo falla
-  receive_wait_time_seconds = 10           # Long polling para ahorrar costos
-  visibility_timeout_seconds = 360         # 6x Lambda timeout (60s), requerido por AWS
-  tags                      = local.common_tags
+  name                       = "${var.org_name}-${var.project_name}-${var.environment}-product-images-processing-queue"
+  message_retention_seconds  = 86400 # 1 día de vida por si algo falla
+  receive_wait_time_seconds  = 10    # Long polling para ahorrar costos
+  visibility_timeout_seconds = 360   # 6x Lambda timeout (60s), requerido por AWS
+  tags                       = local.common_tags
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.image_processing_dlq.arn
