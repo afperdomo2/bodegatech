@@ -142,11 +142,24 @@ resource "aws_iam_role_policy" "lambda_permissions" {
   })
 }
 
+# Instalar dependencias de Node.js antes de empaquetar
+resource "null_resource" "install_lambda_deps" {
+  triggers = {
+    package_json = filemd5("${path.module}/lambda/package.json")
+  }
+
+  provisioner "local-exec" {
+    command     = "npm install --os=linux --cpu=arm64 --libc=glibc --omit=dev"
+    working_dir = "${path.module}/lambda"
+  }
+}
+
 # Empaquetado automático del código (Terraform creará el .zip por ti)
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_dir  = "${path.module}/lambda" # Aquí viviría tu index.js y package.json
   output_path = "${path.module}/lambda_function_payload.zip"
+  depends_on  = [null_resource.install_lambda_deps]
 }
 
 resource "aws_lambda_function" "image_processor" {
