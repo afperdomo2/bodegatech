@@ -3,14 +3,9 @@ import {
   GetObjectCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
-import {
-  CloudWatchClient,
-  PutMetricDataCommand,
-} from "@aws-sdk/client-cloudwatch";
 import sharp from "sharp";
 
 const s3 = new S3Client();
-const cloudwatch = new CloudWatchClient();
 const { API_URL, API_KEY, WEBP_QUALITY = "80", AWS_LAMBDA_FUNCTION_NAME } = process.env;
 const WEBP_QUALITY_INT = parseInt(WEBP_QUALITY);
 
@@ -129,19 +124,12 @@ export const handler = async (event) => {
       errorCount++;
       const errorType = error.type || "UnknownError";
       const errorMsg = error.message || JSON.stringify(error);
-      console.error(`❌ [${errorType}] ${errorMsg}`);
+      console.error(`❌ [ERROR] [${errorType}] ${errorMsg}`);
 
       // Re-lanzar para que SQS lo mande a la DLQ si falla
       throw error;
     }
   }
-
-  // Registrar métricas en CloudWatch
-  await publishMetrics({
-    successCount,
-    errorCount,
-    processingTime: Date.now() - startTime,
-  });
 
   return {
     statusCode: 200,
@@ -173,7 +161,7 @@ function parseAndValidateSqsMessage(body) {
 
     return s3Event;
    } catch (parseError) {
-     console.error(`❌ Error parseando SQS message: ${parseError.message}`);
+     console.error(`❌ [ERROR] Error parseando SQS message: ${parseError.message}`);
      return null;
    }
 }
@@ -214,40 +202,3 @@ async function notifyBackend(imageId, data) {
    console.debug(`✅ Backend respondió exitosamente para imagen ${imageId}`);
 }
 
-/**
- * Publica métricas a CloudWatch.
- * @param {Object} metrics - Objeto con successCount, errorCount, processingTime
- */
-async function publishMetrics(metrics) {
-  try {
-    await cloudwatch.send(
-      new PutMetricDataCommand({
-        Namespace: "BodegaTech/ImageProcessing",
-        MetricData: [
-          {
-            MetricName: "ProcessedImagesSuccess",
-            Value: metrics.successCount,
-            Unit: "Count",
-            Timestamp: new Date(),
-          },
-          {
-            MetricName: "ProcessedImagesError",
-            Value: metrics.errorCount,
-            Unit: "Count",
-            Timestamp: new Date(),
-          },
-          {
-            MetricName: "ProcessingDurationMs",
-            Value: metrics.processingTime,
-            Unit: "Milliseconds",
-            Timestamp: new Date(),
-          },
-        ],
-      }),
-    );
-    console.debug("📊 Métricas publicadas a CloudWatch");
-  } catch (metricsError) {
-    console.warn(`⚠️ Error publicando métricas: ${metricsError.message}`);
-    // No re-lanzar; las métricas son informativas, no críticas
-  }
-}
