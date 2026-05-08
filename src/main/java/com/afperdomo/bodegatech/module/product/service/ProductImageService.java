@@ -6,9 +6,11 @@ import com.afperdomo.bodegatech.config.AwsProperties;
 import com.afperdomo.bodegatech.module.product.dto.ConfirmImageItem;
 import com.afperdomo.bodegatech.module.product.dto.ConfirmImagesRequest;
 import com.afperdomo.bodegatech.module.product.dto.PresignedUrlDto;
+import com.afperdomo.bodegatech.module.product.dto.ProcessedImageRequest;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductImageDto;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.entity.ProductImage;
+import com.afperdomo.bodegatech.module.product.entity.ImageStatus;
 import com.afperdomo.bodegatech.module.product.repository.ProductImageRepository;
 import com.afperdomo.bodegatech.module.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -201,4 +203,27 @@ public class ProductImageService {
                 .createdAt(productImage.getCreatedAt())
                 .build();
     }
+
+    /**
+     * Marca una imagen como procesada con las variantes generadas por Lambda.
+     * Actualiza thumbnailKey, mediumKey y cambia el status a READY.
+     *
+     * @param imageId ID de la imagen a actualizar
+     * @param request DTO con thumbnailKey y mediumKey generados por Sharp
+     */
+    public void markAsProcessed(UUID imageId, ProcessedImageRequest request) {
+        log.info("Marcando imagen {} como procesada", imageId);
+
+        ProductImage productImage = productImageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Imagen de producto", imageId));
+
+        productImage.setThumbnailKey(request.getThumbnailKey());
+        productImage.setMediumKey(request.getMediumKey());
+        productImage.setStatus(ImageStatus.READY);
+
+        productImageRepository.save(productImage);
+
+        log.info("Imagen {} marcada como READY. thumbnailKey={}, mediumKey={}", imageId, request.getThumbnailKey(), request.getMediumKey());
+    }
 }
+

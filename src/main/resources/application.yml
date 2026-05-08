@@ -49,6 +49,7 @@ app:
     allowed-headers: ${CORS_ALLOWED_HEADERS:*}
     allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
     max-age: ${CORS_MAX_AGE:3600}
+  api-key: ${API_KEY}
   aws:
     region: ${AWS_REGION:us-east-1}
     access-key-id: ${AWS_ACCESS_KEY_ID:}

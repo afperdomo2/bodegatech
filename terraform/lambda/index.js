@@ -109,8 +109,7 @@ export const handler = async (event) => {
 
        // 5. Notificar al Backend de Spring Boot
        try {
-         // TODO: Pendiente crear endpoint para implementar
-         // await notifyBackend(imageId, results);
+         await notifyBackend(imageId, results);
          console.log(`✅ [IMAGE_PROCESSED] imageId=${imageId}`);
          successCount++;
        } catch (backendError) {
