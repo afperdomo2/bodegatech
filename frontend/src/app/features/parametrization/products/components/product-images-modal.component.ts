@@ -12,7 +12,6 @@ import { CommonModule } from '@angular/common';
 import type { TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { ProductImageService } from '../../../../core/services/product-image.service';
-import { ProductService } from '../../../../core/services/product.service';
 import { ToastService } from '../../../../shared/services/toast.service';
 import type { ProductImageDto } from '../../../../core/models/responses/product.responses';
 
@@ -29,6 +28,7 @@ interface ImageUploadItem {
   uploadProgress: number;           // 0-100
   fileKey?: string;                 // asignado tras generar presigned URL
   isExisting?: boolean;             // true si viene del backend
+  isMain?: boolean;                 // true si es la imagen principal (solo para existentes)
 }
 
 /**
@@ -140,9 +140,9 @@ interface ImageUploadItem {
               @for (item of uploadItems(); track item.previewUrl) {
                 <!-- Image Card Container -->
                 <div class="group relative aspect-square overflow-hidden rounded-xl border border-surface-dim/50 bg-surface-container shadow-sm transition-all hover:shadow-md"
-                  [class.ring-2]="item.imageId && item.previewUrl === mainImageUrl()"
-                  [class.ring-primary]="item.imageId && item.previewUrl === mainImageUrl()"
-                  [class.border-primary/50]="item.imageId && item.previewUrl === mainImageUrl()"
+                  [class.ring-2]="item.imageId && item.isMain"
+                  [class.ring-primary]="item.imageId && item.isMain"
+                  [class.border-primary/50]="item.imageId && item.isMain"
                 >
                   <!-- Image -->
                   <img
@@ -172,7 +172,7 @@ interface ImageUploadItem {
                   }
 
                   <!-- Main Image Badge (top-left) -->
-                  @if (item.imageId && item.previewUrl === mainImageUrl()) {
+                  @if (item.imageId && item.isMain) {
                     <div class="absolute top-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 shadow-md">
                       <span class="text-xs font-bold">★</span>
                     </div>
@@ -183,7 +183,7 @@ interface ImageUploadItem {
                     <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 backdrop-blur-sm">
                       <div class="flex gap-2">
                         <!-- Mark as Main Button (only if not already main) -->
-                        @if (item.previewUrl !== mainImageUrl()) {
+                        @if (!item.isMain) {
                           <button
                             type="button"
                             (click)="setAsMain(item)"
@@ -273,7 +273,6 @@ export class ProductImagesModalComponent {
   @ViewChild('imagesModalTemplate') imagesModalTemplate!: TemplateRef<unknown>;
 
   private imageService = inject(ProductImageService);
-  private productService = inject(ProductService);
   private toast = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -302,20 +301,21 @@ export class ProductImagesModalComponent {
     const id = productId ?? this.productId();
     this.isLoadingExistingImages.set(true);
 
-    this.productService.getById(id).subscribe({
+    this.imageService.getProductImages(id).subscribe({
       next: (response) => {
-        const images = response.data.images || [];
-        const mainImageUrl = response.data.mainImageUrl || null;
-        
-         const existingItems: ImageUploadItem[] = images.map((img: ProductImageDto) => ({
-           previewUrl: img.url,
-           status: 'success' as const,
-           imageId: img.id,
-           uploadProgress: 100,
-           isExisting: true,
-         }));
+        const images = response.data || [];
 
-        this.mainImageUrl.set(mainImageUrl);
+        const existingItems: ImageUploadItem[] = images.map((img: ProductImageDto) => ({
+          previewUrl: img.thumbnailUrl!,
+          status: 'success' as const,
+          imageId: img.id,
+          uploadProgress: 100,
+          isExisting: true,
+          isMain: img.isMain,
+        }));
+
+        const mainImageItem = existingItems.find((item) => item.isMain);
+        this.mainImageUrl.set(mainImageItem?.previewUrl ?? null);
         this.uploadItems.set(existingItems);
         this.isLoadingExistingImages.set(false);
       },
@@ -697,7 +697,9 @@ export class ProductImagesModalComponent {
     const productId = this.productId();
     this.imageService.setMainImage(productId, item.imageId).subscribe({
       next: () => {
-        this.mainImageUrl.set(item.previewUrl);
+        this.uploadItems.update((items) =>
+          items.map((i) => ({ ...i, isMain: i.previewUrl === item.previewUrl }))
+        );
         this.cdr.detectChanges();
       },
       error: (error) => {

@@ -1,5 +1,6 @@
 package com.afperdomo.bodegatech.module.product.service;
 
+import com.afperdomo.bodegatech.common.exception.BusinessException;
 import com.afperdomo.bodegatech.common.exception.ResourceNotFoundException;
 import com.afperdomo.bodegatech.common.util.S3PresignedUrlGenerator;
 import com.afperdomo.bodegatech.config.AwsProperties;
@@ -113,13 +114,17 @@ public class ProductImageService {
          ProductImage productImage = productImageRepository.findByIdAndProductId(imageId, productId)
                  .orElseThrow(() -> new ResourceNotFoundException("Imagen de producto", imageId));
 
+         if (productImage.getThumbnailKey() == null) {
+             throw new BusinessException("La imagen aún no ha sido procesada. Intenta nuevamente en unos segundos.");
+         }
+
          productImageRepository.setAllImagesNotMain(productId, imageId);
 
          productImage.setIsMain(true);
          productImageRepository.save(productImage);
 
          Product product = productImage.getProduct();
-         product.setMainImageKey(productImage.getFileKey());
+         product.setMainImageKey(productImage.getThumbnailKey());
          productRepository.save(product);
 
          log.info("Imagen {} establecida como principal del producto {}", imageId, productId);
@@ -219,7 +224,7 @@ public class ProductImageService {
 
         Product product = productImage.getProduct();
 
-        if (product.getMainImageKey() != null && product.getMainImageKey().equals(productImage.getFileKey())) {
+        if (product.getMainImageKey() != null && product.getMainImageKey().equals(productImage.getThumbnailKey())) {
             product.setMainImageKey(null);
             productRepository.save(product);
             log.info("Imagen principal del producto {} limpiada", productId);
