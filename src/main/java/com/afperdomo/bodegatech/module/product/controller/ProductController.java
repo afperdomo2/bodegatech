@@ -117,14 +117,14 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Desactivar producto", description = "Desactiva un producto (soft delete, no se elimina de la base de datos)")
+    @Operation(summary = "Eliminar producto", description = "Elimina permanentemente un producto, sus imágenes en S3 y registros en la base de datos (hard delete)")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Producto desactivado exitosamente"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Producto eliminado exitosamente"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Producto no encontrado"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
     public ResponseEntity<Void> deleteProduct(
-            @Parameter(description = "ID único del producto a desactivar")
+            @Parameter(description = "ID único del producto a eliminar")
             @PathVariable UUID id) {
 
         productService.deleteProduct(id);

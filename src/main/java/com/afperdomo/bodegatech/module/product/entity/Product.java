@@ -51,9 +51,8 @@ public class Product extends BaseEntity {
     private BigDecimal costPrice;
 
     @Min(0)
-    @Column(nullable = false, precision = 19, scale = 4)
-    @Builder.Default
-    private BigDecimal minStock = BigDecimal.ZERO;
+    @Column(precision = 19, scale = 4)
+    private BigDecimal minStock;
 
     @Min(0)
     @Column(precision = 19, scale = 4)

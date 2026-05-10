@@ -439,7 +439,7 @@ Configuración de infraestructura como código en `terraform/`.
 | `org_name` | `felipecorp` | Nombre de organización |
 | `project_name` | `bodegatech` | Nombre del proyecto |
 | `environment` | `dev` | Entorno (dev, staging, prod) |
-| `backend_api_url` | — | URL del backend para Lambda callback |
+| `backend_api_url` | — | URL del backend para Lambda callback (Usar `ngrok http 8080` en dev) |
 | `internal_api_key` | — | Clave secreta para autenticación Lambda |
 | `webp_quality` | `80` | Calidad de compresión WebP (1-100) |
 | `sns_topic_arn` | `""` | ARN del topic SNS para alarmas (opcional) |
@@ -449,17 +449,35 @@ Configuración de infraestructura como código en `terraform/`.
 ```bash
 cd terraform
 
+# Formatea el código con el estándar de HashiCorp. Estética y alineación de texto
+terraform fmt -recursive
+
 # Inicializar
 terraform init
+```
 
-# Plan de cambios
-terraform plan -var="environment=dev"
+Generar un plan especulativo de ejecución
 
-# Aplicar cambios
-terraform apply -var="environment=dev"
+```bash
+# Generar el plan y lo guarda con el nombre dado
+terraform plan -out plan.out
 
-# Destruir recursos
+# Plan de cambios con variables
+terraform plan -out plan.out -var="environment=dev"
+```
+
+Aplicar cambios
+```bash
+terraform apply "plan.out" -var="environment=dev"
+
+terraform apply "plan.out"
+```
+
+Destruir recursos
+```bash
 terraform destroy -var="environment=dev"
+
+terraform destroy
 ```
 
 > **Nota:** Credenciales AWS deben estar configuradas en el entorno (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).

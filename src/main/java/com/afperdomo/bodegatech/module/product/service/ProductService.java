@@ -39,6 +39,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final MeasurementUnitRepository measurementUnitRepository;
     private final SupplierRepository supplierRepository;
+    private final ProductImageService productImageService;
 
     @Transactional(readOnly = true)
     public Page<ProductSummaryDto> findAllProducts(Pageable pageable, Boolean isActive) {
@@ -223,6 +224,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
 
+        productImageService.deleteAllImagesFromS3(id);
         productRepository.delete(product);
 
         log.info("Producto eliminado exitosamente con ID: {}", id);

@@ -18,9 +18,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -119,6 +126,84 @@ public class ProductImageService {
      }
 
     /**
+     * Elimina todos los objetos de S3 belonging a un producto usando el prefijo products/{productId}/.
+     * Usa listObjectsV2 + deleteObjects en batch (S3 soporta hasta 1000 por request).
+     *
+     * @param productId ID del producto cuyas imágenes se eliminarán de S3
+     */
+    public void deleteAllImagesFromS3(UUID productId) {
+        String prefix = "products/" + productId + "/";
+        log.info("Eliminando todos los objetos de S3 con prefijo: {}", prefix);
+
+        try {
+            List<String> keysToDelete = new ArrayList<>();
+            String continuationToken = null;
+
+            do {
+                ListObjectsV2Request.Builder listBuilder = ListObjectsV2Request.builder()
+                        .bucket(awsProperties.getS3().getBucketName())
+                        .prefix(prefix);
+                if (continuationToken != null) {
+                    listBuilder.continuationToken(continuationToken);
+                }
+
+                ListObjectsV2Response response = s3Client.listObjectsV2(listBuilder.build());
+                response.contents().stream()
+                        .map(S3Object::key)
+                        .forEach(keysToDelete::add);
+                continuationToken = response.isTruncated() ? response.nextContinuationToken() : null;
+            } while (continuationToken != null);
+
+            if (keysToDelete.isEmpty()) {
+                log.debug("No se encontraron objetos en S3 con prefijo {}", prefix);
+                return;
+            }
+
+            List<software.amazon.awssdk.services.s3.model.ObjectIdentifier> objectIds = keysToDelete.stream()
+                    .map(key -> software.amazon.awssdk.services.s3.model.ObjectIdentifier.builder().key(key).build())
+                    .collect(Collectors.toList());
+
+            DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                    .bucket(awsProperties.getS3().getBucketName())
+                    .delete(Delete.builder().objects(objectIds).build())
+                    .build();
+
+            s3Client.deleteObjects(deleteRequest);
+            log.info("Eliminados {} objetos de S3 con prefijo {}", keysToDelete.size(), prefix);
+        } catch (Exception e) {
+            log.warn("Error al eliminar objetos de S3 con prefijo {}. Error: {}", prefix, e.getMessage());
+        }
+    }
+
+    /**
+     * Helper privado para eliminar múltiples keys de S3 en una sola llamada batch.
+     *
+     * @param keys Lista de keys a eliminar (valores no-nulos se incluyen)
+     */
+    private void deleteKeysFromS3(String... keys) {
+        List<software.amazon.awssdk.services.s3.model.ObjectIdentifier> objectIds = new ArrayList<>();
+        for (String key : keys) {
+            if (key != null && !key.isBlank()) {
+                objectIds.add(software.amazon.awssdk.services.s3.model.ObjectIdentifier.builder().key(key).build());
+            }
+        }
+        if (objectIds.isEmpty()) {
+            return;
+        }
+
+        try {
+            DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                    .bucket(awsProperties.getS3().getBucketName())
+                    .delete(Delete.builder().objects(objectIds).build())
+                    .build();
+            s3Client.deleteObjects(deleteRequest);
+            log.debug("Eliminados {} objetos de S3 en batch", objectIds.size());
+        } catch (Exception e) {
+            log.warn("Error al eliminar objetos de S3 en batch. Error: {}", e.getMessage());
+        }
+    }
+
+    /**
      * Elimina una imagen de un producto.
      * Elimina el objeto de S3 y el registro de la BD.
      * Si la imagen es la principal, limpia mainImageKey en el producto.
@@ -134,27 +219,18 @@ public class ProductImageService {
 
         Product product = productImage.getProduct();
 
-        // Si esta imagen es la principal, limpiar mainImageKey
         if (product.getMainImageKey() != null && product.getMainImageKey().equals(productImage.getFileKey())) {
             product.setMainImageKey(null);
             productRepository.save(product);
             log.info("Imagen principal del producto {} limpiada", productId);
         }
 
-        // Eliminar objeto de S3
-        try {
-            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
-                    .bucket(awsProperties.getS3().getBucketName())
-                    .key(productImage.getFileKey())
-                    .build();
+        deleteKeysFromS3(
+                productImage.getFileKey(),
+                productImage.getThumbnailKey(),
+                productImage.getMediumKey()
+        );
 
-            s3Client.deleteObject(deleteRequest);
-            log.debug("Objeto eliminado de S3. FileKey: {}", productImage.getFileKey());
-        } catch (Exception e) {
-            log.warn("Error al eliminar objeto de S3. FileKey: {}. Error: {}", productImage.getFileKey(), e.getMessage());
-        }
-
-        // Eliminar registro de la BD
         productImageRepository.delete(productImage);
         log.info("Imagen {} eliminada de la BD.", imageId);
     }
