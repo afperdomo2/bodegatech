@@ -7,6 +7,7 @@ import com.afperdomo.bodegatech.module.product.dto.response.ProductDto;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductSummaryDto;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductDetail;
 import com.afperdomo.bodegatech.module.product.dto.response.ProductImageDto;
+import com.afperdomo.bodegatech.module.product.entity.ImageStatus;
 import com.afperdomo.bodegatech.module.product.entity.Product;
 import com.afperdomo.bodegatech.module.product.entity.ProductImage;
 import com.afperdomo.bodegatech.module.category.entity.Category;
@@ -169,24 +170,25 @@ public abstract class ProductMapper {
       * Usada en toDetail() para incluir las imágenes del producto.
       * Construye las URLs públicas desde los fileKeys.
       */
-     @Named("mapProductImages")
-     protected List<ProductImageDto> mapProductImages(List<ProductImage> images) {
-         if (images == null || images.isEmpty()) {
-             return List.of();
-         }
-         return images.stream()
-             .map(image -> ProductImageDto.builder()
-                 .id(image.getId())
-                 .url(buildUrl(image.getFileKey()))
-                 .thumbnailUrl(image.getThumbnailKey() != null ?
-                         buildUrl(image.getThumbnailKey()) : null)
-                 .mediumUrl(image.getMediumKey() != null ?
-                         buildUrl(image.getMediumKey()) : null)
-                 .isMain(image.getIsMain())
-                 .createdAt(image.getCreatedAt())
-                 .build())
-             .toList();
-     }
+      @Named("mapProductImages")
+      protected List<ProductImageDto> mapProductImages(List<ProductImage> images) {
+          if (images == null || images.isEmpty()) {
+              return List.of();
+          }
+          return images.stream()
+              .filter(image -> image.getStatus() == ImageStatus.READY)
+              .map(image -> ProductImageDto.builder()
+                  .id(image.getId())
+                  .url(buildUrl(image.getFileKey()))
+                  .thumbnailUrl(image.getThumbnailKey() != null ?
+                          buildUrl(image.getThumbnailKey()) : null)
+                  .mediumUrl(image.getMediumKey() != null ?
+                          buildUrl(image.getMediumKey()) : null)
+                  .isMain(image.getIsMain())
+                  .createdAt(image.getCreatedAt())
+                  .build())
+              .toList();
+      }
 
     /**
      * Helper para construir URL pública desde un fileKey.

@@ -258,7 +258,7 @@ public class ProductImageService {
         productRepository.findByIdActive(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", productId));
 
-        return productImageRepository.findByProductIdOrderByCreatedAtAsc(productId).stream()
+        return productImageRepository.findByProductIdAndStatusOrderByCreatedAtAsc(productId, ImageStatus.READY).stream()
                 .map(this::toProductImageDto)
                 .collect(Collectors.toList());
     }

@@ -1,5 +1,6 @@
 package com.afperdomo.bodegatech.module.product.repository;
 
+import com.afperdomo.bodegatech.module.product.entity.ImageStatus;
 import com.afperdomo.bodegatech.module.product.entity.ProductImage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -16,6 +17,8 @@ import java.util.UUID;
 public interface ProductImageRepository extends JpaRepository<ProductImage, UUID> {
 
     List<ProductImage> findByProductIdOrderByCreatedAtAsc(UUID productId);
+
+    List<ProductImage> findByProductIdAndStatusOrderByCreatedAtAsc(UUID productId, ImageStatus status);
 
     boolean existsByProductIdAndFileKey(UUID productId, String fileKey);
 
