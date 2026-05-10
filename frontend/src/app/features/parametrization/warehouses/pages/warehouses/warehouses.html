@@ -1,0 +1,107 @@
+<div class="flex flex-col gap-6 p-6 md:p-8">
+  <!-- Page Header -->
+  <bt-page-header
+    [title]="'Bodegas'"
+    [subtitle]="'Gestión de bodegas del sistema'">
+    <div class="flex items-center gap-4">
+      <!-- Filter by isActive -->
+      <select
+        [value]="isActiveFilter()"
+        (change)="onIsActiveFilterChange($any($event.target).value)"
+        class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
+               focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
+        <option value="all">Todos</option>
+        <option value="active">Activos</option>
+        <option value="inactive">Inactivos</option>
+      </select>
+
+      <!-- Refrescar -->
+      <button
+        (click)="refreshWarehouses()"
+        class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-on-surface text-sm font-medium rounded-lg hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-lg">refresh</span>
+        Refrescar
+      </button>
+
+      <!-- Nueva Bodega -->
+      <button
+        (click)="openCreateModal()"
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors">
+        <span class="material-symbols-outlined text-lg">add</span>
+        Nueva Bodega
+      </button>
+    </div>
+  </bt-page-header>
+
+  <!-- Loading State -->
+  @if (state.isLoading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-on-surface-variant">Cargando bodegas...</p>
+      </div>
+    </div>
+  } @else {
+    <!-- Empty State -->
+    @if (state.isEmpty()) {
+      <div class="flex items-center justify-center py-12 bg-surface-container rounded-lg">
+        <div class="text-center">
+          <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4">warehouse</span>
+          <p class="text-on-surface-variant">No hay bodegas registradas</p>
+          <button
+            (click)="openCreateModal()"
+            class="mt-4 px-4 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors">
+            Crear la primera bodega
+          </button>
+        </div>
+      </div>
+    } @else {
+      <!-- Data Table -->
+      <bt-data-table
+        [columns]="tableColumns"
+        [data]="state.warehouses()"
+        [currentPage]="getCurrentPageForDataTable()"
+        [pageSize]="state.pageSize()"
+        [totalItems]="state.totalElements()"
+        [loading]="state.isLoading()"
+        (pageChange)="onPageChange($event)">
+        <ng-template btCell="actions" let-row="row">
+          <div class="flex items-center justify-center gap-2">
+            <div class="relative group/edit">
+              <button
+                (click)="onEditClick(row)"
+                class="p-2 hover:bg-surface-200 rounded-lg transition-colors text-surface-600 hover:text-surface-900"
+                aria-label="Editar">
+                <span class="material-symbols-outlined text-xl">edit</span>
+              </button>
+              <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-surface-900 text-white rounded opacity-0 group-hover/edit:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                Editar
+              </span>
+            </div>
+            <div class="relative group/delete">
+              <button
+                (click)="onDeleteClick(row)"
+                class="p-2 hover:bg-error/10 rounded-lg transition-colors text-error hover:text-error/90"
+                aria-label="Eliminar">
+                <span class="material-symbols-outlined text-xl">delete</span>
+              </button>
+              <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-surface-900 text-white rounded opacity-0 group-hover/delete:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                Eliminar
+              </span>
+            </div>
+          </div>
+        </ng-template>
+      </bt-data-table>
+    }
+  }
+</div>
+
+<!-- Modal Components -->
+<bt-warehouse-create-modal #createModalComponent />
+
+<bt-warehouse-edit-modal #editModalComponent />
+
+<bt-warehouse-delete-modal
+  #deleteModalComponent
+  [warehouseName]="selectedWarehouse()?.name || ''"
+  [generalError]="state.generalError()" />

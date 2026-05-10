@@ -3,6 +3,7 @@ import { CategoriesComponent } from './categories/pages/categories/categories';
 import { UnitsComponent } from './units/pages/units/units';
 import { ProductsComponent } from './products/pages/products/products';
 import { SuppliersComponent } from './suppliers/pages/suppliers/suppliers';
+import { WarehousesComponent } from './warehouses/pages/warehouses/warehouses';
 
 export const PARAMETRIZATION_ROUTES: Routes = [
   {
@@ -20,5 +21,9 @@ export const PARAMETRIZATION_ROUTES: Routes = [
   {
     path: 'suppliers',
     component: SuppliersComponent,
+  },
+  {
+    path: 'warehouses',
+    component: WarehousesComponent,
   },
 ];
