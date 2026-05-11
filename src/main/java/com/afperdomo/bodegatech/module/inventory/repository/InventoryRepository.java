@@ -17,4 +17,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID>, Jpa
 
     @Query("SELECT CASE WHEN COUNT(i) > 0 THEN true ELSE false END FROM Inventory i WHERE i.product.id = :productId AND i.warehouse.id = :warehouseId")
     boolean existsByProductIdAndWarehouseId(UUID productId, UUID warehouseId);
+
+    Optional<Inventory> findByProductIdAndWarehouseId(UUID productId, UUID warehouseId);
 }
