@@ -26,9 +26,14 @@ export class SidebarComponent {
 
   mainMenuItems: MenuItem[] = [
     { label: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
-    { label: 'Inventario', path: '/inventory', icon: 'inventory_2' },
     { label: 'Reportes', path: '/reports', icon: 'assessment' },
     { label: 'Administración', path: '/admin', icon: 'admin_panel_settings' },
+  ];
+
+  inventoryMenuItems: MenuItem[] = [
+    { label: 'Inventario', path: '/inventory', icon: 'inventory_2' },
+    { label: 'Movimientos', path: '/inventory/movements', icon: 'swap_vert' },
+    { label: 'Registrar Movimiento', path: '/inventory/movements-register', icon: 'swap_horiz' },
   ];
 
   parametrizationMenuItems: MenuItem[] = [

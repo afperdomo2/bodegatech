@@ -1,0 +1,117 @@
+<div class="flex flex-col gap-6 p-6 md:p-8">
+  <bt-page-header [title]="'Inventario'" [subtitle]="'Gestión de inventario por bodega'">
+    <div class="flex items-center gap-4">
+      <button
+        (click)="onRefresh()"
+        class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-on-surface text-sm font-medium rounded-lg hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-lg">refresh</span>
+        Refrescar
+      </button>
+    </div>
+  </bt-page-header>
+
+  <div class="flex flex-col sm:flex-row gap-3 p-4 bg-surface-container rounded-lg border border-outline-variant">
+    <select
+      [value]="selectedWarehouseId()"
+      (change)="onWarehouseFilterChange($any($event.target).value)"
+      class="px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm
+             focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors min-w-[200px]">
+      <option value="">Todas las bodegas</option>
+      @for (wh of warehouses(); track wh.id) {
+        <option [value]="wh.id">{{ wh.name }} ({{ wh.code }})</option>
+      }
+    </select>
+
+    <button
+      (click)="onLowStockToggle()"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+      [class.bg-warning/10]="lowStockFilter()"
+      [class.text-warning]="lowStockFilter()"
+      [class.border-warning/30]="lowStockFilter()"
+      [class.bg-surface]="!lowStockFilter()"
+      [class.text-on-surface]="!lowStockFilter()"
+      [class.border-outline-variant]="!lowStockFilter()">
+      <span class="material-symbols-outlined text-lg">warning</span>
+      Solo stock bajo
+    </button>
+  </div>
+
+  @if (state.isLoading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-on-surface-variant">Cargando inventario...</p>
+      </div>
+    </div>
+  } @else if (state.isEmpty()) {
+    <div class="flex items-center justify-center py-12 bg-surface-container rounded-lg">
+      <div class="text-center">
+        <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4">inventory_2</span>
+        <p class="text-on-surface-variant">No hay registros de inventario</p>
+      </div>
+    </div>
+  } @else {
+    <bt-data-table
+      [columns]="tableColumns"
+      [data]="state.items()"
+      [currentPage]="getCurrentPageForDataTable()"
+      [pageSize]="state.pageSize()"
+      [totalItems]="state.totalElements()"
+      [loading]="state.isLoading()"
+      (pageChange)="onPageChange($event)">
+      <ng-template btCell="productName" let-row="row">
+        <div class="py-1">
+          <p class="text-sm font-medium text-on-surface leading-tight">{{ row.productName }}</p>
+          <p class="text-xs text-on-surface-variant mt-0.5">{{ row.productSku }}</p>
+        </div>
+      </ng-template>
+
+      <ng-template btCell="warehouseName" let-row="row">
+        <div class="py-1">
+          <p class="text-sm text-on-surface leading-tight">{{ row.warehouseName }}</p>
+          <p class="text-xs text-on-surface-variant mt-0.5">{{ row.warehouseCode }}</p>
+        </div>
+      </ng-template>
+
+      <ng-template btCell="stock" let-row="row">
+        <div class="py-1 text-right">
+          <p class="text-sm font-semibold text-on-surface">{{ formatAvailableQuantity(row) }}</p>
+          <p class="text-xs text-on-surface-variant mt-0.5">Reservado: {{ formatReservedQuantity(row) }}</p>
+        </div>
+      </ng-template>
+
+      <ng-template btCell="isLowStock" let-row="row">
+        @if (row.isLowStock) {
+          <span class="inline-flex items-center px-2 py-1 bg-warning/10 text-warning text-xs font-medium rounded-full">
+            Stock bajo
+          </span>
+        } @else {
+          <span class="inline-flex items-center px-2 py-1 bg-success/10 text-success text-xs font-medium rounded-full">
+            OK
+          </span>
+        }
+      </ng-template>
+
+      <ng-template btCell="actions" let-row="row">
+        <div class="flex items-center justify-center">
+          <div class="relative group">
+            <button
+              (click)="onRowDetailClick(row)"
+              class="p-2 hover:bg-surface-200 rounded-lg transition-colors text-surface-600 hover:text-surface-900"
+              aria-label="Ver detalle">
+              <span class="material-symbols-outlined text-xl">visibility</span>
+            </button>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-surface-900 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              Ver detalle
+            </span>
+          </div>
+        </div>
+      </ng-template>
+    </bt-data-table>
+  }
+</div>
+
+<bt-inventory-detail-modal
+  #detailModalComponent
+  [detail]="state.selectedDetail()"
+  [isLoading]="state.isLoadingDetail()" />
