@@ -14,6 +14,7 @@
 |------|-----------|
 | Backend | Java 25 + Spring Boot 4.0.5 + Gradle |
 | BD | PostgreSQL 16 (Docker) |
+| Migraciones | Liquibase (`spring-boot-starter-liquibase`) |
 | Mapeo | MapStruct 1.6.0 + Lombok |
 | API Docs | SpringDoc OpenAPI **3.0.3** (3.x obligatorio — ver docs/backend.md) |
 | Frontend | Angular **21.2** standalone + Tailwind CSS v4 + pnpm 10.30.3 |
@@ -93,3 +94,4 @@ pnpm ng generate service core/services/{service}
 7. **MapStruct** requiere `annotationProcessor` además de `implementation` en `build.gradle`.
 8. **Tests de integración** usan Testcontainers — Docker debe estar corriendo o fallan.
 9. **Frontend lockfile:** si cambias `frontend/package.json`, debes actualizar `frontend/pnpm-lock.yaml` o el CI falla — usar `pnpm install` para actualizar ambos.
+10. **Flyway NO tiene auto-config en Spring Boot 4.** Flyway fue removido de la auto-configuración de SB 4. No usar `flyway-core` + esperar auto-config. Usar Liquibase (`spring-boot-starter-liquibase`) que sí tiene auto-config completa con `@Import(DatabaseInitializationDependencyConfigurer.class)`. Consultar `docs/architecture.md` → sección Migraciones.

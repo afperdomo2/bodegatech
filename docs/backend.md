@@ -103,3 +103,12 @@ Si hay diferencia de nombres entre entidad y DTO (ej: `isBase` → `isBaseUnit`)
 
 - Tests de integración usan Testcontainers PostgreSQL — requieren Docker corriendo.
 - Para correr un test individual: `./gradlew test --tests "com.afperdomo.bodegatech.module.X*"`
+
+## Migraciones — Liquibase
+
+Ver `docs/architecture.md` → sección **Migraciones de base de datos (Liquibase)**.
+
+- Scripts en `src/main/resources/db/changelog/`
+- Naming SQL: `V{YYYYMMDD}{NNN}__{descripcion}.sql`
+- Master changelog: `db/changelog/db.changelog-master.yaml`
+- Nunca modificar un SQL ya aplicado. Crear nueva migración siempre.

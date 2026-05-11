@@ -1,12 +1,8 @@
 spring:
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/bodegatech_db}
-    username: ${DB_USER:bodegatech_user}
-    password: ${DB_PASSWORD:bodegatech_password}
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
 
 logging:
   level:

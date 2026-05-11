@@ -3,7 +3,7 @@ spring:
     name: bodegatech
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
@@ -11,27 +11,21 @@ spring:
         use_sql_comments: true
     open-in-view: false
   datasource:
-    url: jdbc:postgresql://localhost:5432/bodegatech_db
-    username: bodegatech_user
-    password: bodegatech_password
     driver-class-name: org.postgresql.Driver
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
   profiles:
     active: dev
 
-# Logging
 logging:
   level:
     root: INFO
-    com.afperdomo.bodegatech: DEBUG
-    org.springframework.web: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.afperdomo.bodegatech: INFO
 
-# Server
 server:
   port: 8080
 
-# OpenAPI / Swagger
 spring-doc:
   api-docs:
     path: /docs
@@ -41,7 +35,6 @@ spring-doc:
     operations-sorter: method
     tags-sorter: alpha
 
-# CORS Configuration
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}

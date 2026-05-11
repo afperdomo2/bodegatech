@@ -7,6 +7,7 @@
 | Backend | Java 25 + Spring Boot 4.0.5 + Gradle |
 | Base de datos | PostgreSQL 16 (Docker) |
 | ORM | Spring Data JPA + Hibernate |
+| Migraciones | Liquibase (`spring-boot-starter-liquibase`) |
 | Validación | Bean Validation (`spring-boot-starter-validation`) |
 | Mapeo | MapStruct 1.6.0 + Lombok |
 | API Docs | SpringDoc OpenAPI 3.0.3 |
@@ -69,7 +70,26 @@ Page (smart)
 
 ## Perfiles de entorno
 
-| Perfil | ddl-auto | Activación |
-|--------|----------|-----------|
-| `dev` | `update` | Por defecto |
-| `prod` | `validate` | Requiere env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `SERVER_PORT` |
+| Perfil | ddl-auto | Liquibase | Activación |
+|--------|----------|-----------|------------|
+| `dev` | `validate` | `enabled` | Por defecto |
+| `prod` | `validate` | `enabled` | Requiere env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `SERVER_PORT` |
+
+## Migraciones de base de datos (Liquibase)
+
+Scripts SQL versionados en `src/main/resources/db/changelog/`.
+
+### Convenciones
+
+- **Estructura:** `db/changelog/db.changelog-master.yaml` incluye todos los SQL en orden.
+- **Naming SQL:** `V{YYYYMMDD}{NNN}__{descripcion}.sql` — ejemplo: `V20260510001__create_measurement_units.sql`
+- **Regla absoluta:** nunca modificar un SQL ya aplicado. Si hay un cambio, crear una nueva migración.
+- **Orden de ejecución:** Liquibase aplica los cambiosets en orden lexicográfico dentro del master YAML.
+- **Tests de integración:** Liquibase corre automáticamente antes de Hibernate gracias a la auto-config de Spring Boot 4.
+
+### Agregar una nueva migración
+
+1. Crear archivo SQL en `src/main/resources/db/changelog/` con naming `V{YYYYMMDD}{NNN}__{descripcion}.sql`
+2. Agregar el `include` correspondiente en `db.changelog-master.yaml` **en orden**
+3. Ejecutar `./gradlew bootRun` — Liquibase detecta y aplica automáticamente
+4. En producción, Liquibase detecta la nueva migración al hacer deploy y la aplica

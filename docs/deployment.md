@@ -14,7 +14,7 @@ docker-compose up -d
 
 # 2. Backend
 ./gradlew bootRun
-# Activa perfil 'dev' por defecto: ddl-auto=update, logs detallados
+# Activa perfil 'dev' por defecto: Liquibase aplica migraciones, Hibernate valida esquema
 
 # 3. Frontend (en otra terminal)
 cd frontend
@@ -39,7 +39,7 @@ pnpm build
 
 ## Variables de entorno — perfil `prod`
 
-El perfil `prod` usa `ddl-auto: validate` (no modifica el esquema). Requiere estas variables:
+El perfil `prod` usa `ddl-auto: validate` (Hibernate solo valida, no modifica). Liquibase gestiona el esquema. Requiere estas variables:
 
 | Variable | Descripción |
 |----------|-------------|

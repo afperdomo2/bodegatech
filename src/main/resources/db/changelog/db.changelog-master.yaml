@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/V20260510001__create_measurement_units.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/V20260510002__create_categories.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/V20260510003__create_suppliers.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/V20260510004__create_warehouses.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/V20260510005__create_products.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/V20260510006__create_product_images.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/V20260510007__create_inventories.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/V20260510008__create_inventory_movements.sql
+      relativeToChangelogFile: false

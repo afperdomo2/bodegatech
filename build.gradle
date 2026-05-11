@@ -27,16 +27,21 @@ dependencies {
 	// Database
 	runtimeOnly 'org.postgresql:postgresql'
 
+	// Liquibase — database migrations
+	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+
 	// Swagger / OpenAPI
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
 
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
 	// MapStruct
 	implementation 'org.mapstruct:mapstruct:1.6.0'
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.0'
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
 	// AWS SDK v2
 	implementation platform('software.amazon.awssdk:bom:2.25.0')
