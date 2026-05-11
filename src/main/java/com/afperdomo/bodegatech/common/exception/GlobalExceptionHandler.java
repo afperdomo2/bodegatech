@@ -1,6 +1,6 @@
 package com.afperdomo.bodegatech.common.exception;
 
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import tools.jackson.databind.exc.InvalidFormatException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,8 +16,10 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Manejador global de excepciones.
@@ -48,6 +50,11 @@ public class GlobalExceptionHandler {
         if (tipo == BigDecimal.class || tipo == Double.class) return "un número decimal";
         if (tipo == Boolean.class) return "un valor true o false";
         if (tipo == LocalDateTime.class) return "una fecha con formato yyyy-MM-ddTHH:mm:ss";
+        if (tipo.isEnum()) {
+            return "uno de: " + Arrays.stream(tipo.getEnumConstants())
+                    .map(e -> ((Enum<?>) e).name())
+                    .collect(Collectors.joining(", "));
+        }
         return "un valor de tipo " + tipo.getSimpleName();
     }
 
@@ -222,10 +229,10 @@ public class GlobalExceptionHandler {
         Throwable causa = ex.getCause();
 
         if (causa instanceof InvalidFormatException invalidFormat) {
-            String campo = invalidFormat.getPath().isEmpty()
-                    ? "desconocido"
-                    : invalidFormat.getPath().getFirst().getFieldName();
-            errors.put(campo, "Se esperaba " + traducirTipo(invalidFormat.getTargetType()));
+            Object valorInvalido = invalidFormat.getValue();
+            String tipoEsperado = traducirTipo(invalidFormat.getTargetType());
+            String mensaje = "Valor '" + valorInvalido + "' inválido. " + tipoEsperado;
+            errors.put("type", mensaje);
         } else {
             errors.put("body", "El JSON enviado tiene un formato inválido");
         }

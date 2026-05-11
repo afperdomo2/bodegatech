@@ -12,6 +12,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.afperdomo.bodegatech.module.inventorymovement.entity.MovementType;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +25,12 @@ import java.util.UUID;
 public class CreateMovementRequest {
 
     @NotNull(message = "El tipo de movimiento es obligatorio")
-    @Schema(description = "Tipo de movimiento", example = "PURCHASE_ENTRY")
-    private String type;
+    @Schema(
+            description = "Tipo de movimiento",
+            example = "PURCHASE_ENTRY",
+            implementation = MovementType.class
+    )
+    private MovementType type;
 
     @NotNull(message = "La bodega es obligatoria")
     @Schema(description = "ID de la bodega", example = "123e4567-e89b-12d3-a456-426614174002")

@@ -61,7 +61,7 @@ public class InventoryMovementService {
                 request.getType(), request.getWarehouseId(),
                 request.getDetails() != null ? request.getDetails().size() : 0);
 
-        MovementType type = MovementType.valueOf(request.getType().toUpperCase());
+        MovementType type = request.getType();
 
         Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Bodega", request.getWarehouseId()));

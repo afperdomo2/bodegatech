@@ -459,11 +459,11 @@ terraform init
 Generar un plan especulativo de ejecución
 
 ```bash
-# Generar el plan y lo guarda con el nombre dado
-terraform plan -out plan.out
-
 # Plan de cambios con variables
 terraform plan -out plan.out -var="environment=dev"
+
+# Generar el plan y lo guarda con el nombre dado
+terraform plan -out plan.out
 ```
 
 Aplicar cambios
