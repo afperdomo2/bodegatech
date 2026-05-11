@@ -1,0 +1,167 @@
+<div class="flex flex-col gap-6 p-6 md:p-8">
+  <bt-page-header
+    [title]="'Registrar Movimiento'"
+    [subtitle]="'Registro de entradas, salidas y ajustes de inventario'"
+  >
+  </bt-page-header>
+
+  <div class="w-full max-w-7xl mx-auto">
+    <form (submit)="submitForm(); $event.preventDefault()" class="space-y-6">
+      <!-- Sección 1: Información del Movimiento -->
+      <div class="bg-surface border border-outline-variant rounded-xl p-6 space-y-5">
+        <div class="flex items-center gap-3 pb-4 border-b border-outline-variant">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+            <span class="material-symbols-outlined text-primary">info</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-on-surface">Información del Movimiento</h2>
+            <p class="text-sm text-on-surface-variant">Datos generales del movimiento</p>
+          </div>
+        </div>
+
+        <!-- Tipo de movimiento -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">
+            Tipo de Movimiento <span class="text-error font-semibold">*</span>
+          </label>
+          <select
+            [(ngModel)]="formType"
+            name="type"
+            (change)="onTypeChange($any($event.target).value)"
+            (blur)="markTypeTouched()"
+            [class.border-error]="typeError()"
+            class="w-full px-3 py-2.5 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+          >
+            <option [value]="null">Seleccionar tipo de movimiento...</option>
+            @for (option of movementTypeOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          @if (selectedTypeOption(); as typeOpt) {
+            <p class="mt-2 flex items-center gap-2 text-xs text-on-surface-variant">
+              <span class="material-symbols-outlined text-sm">{{ typeOpt.icon }}</span>
+              {{ typeOpt.description }}
+            </p>
+          }
+          @if (typeError()) {
+            <p
+              class="flex items-center gap-1.5 text-xs text-error animate-fade-in font-medium mt-1"
+            >
+              <span class="material-symbols-outlined text-sm flex-shrink-0">error</span>
+              {{ typeError() }}
+            </p>
+          }
+        </div>
+
+        <!-- Bodega y Proveedor -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <bt-rich-select
+            [options]="warehouseOptions()"
+            label="Bodega"
+            placeholder="Seleccionar bodega"
+            [required]="true"
+            [fieldError]="warehouseError()"
+            [loading]="isLoadingOptions()"
+            [selectedValue]="formWarehouseId()"
+            (selectedValueChange)="onWarehouseChange($event)"
+            (blurEvent)="markWarehouseTouched()"
+          />
+
+          <bt-rich-select
+            [options]="supplierOptions()"
+            label="Proveedor (opcional)"
+            placeholder="Seleccionar proveedor"
+            [required]="false"
+            [clearable]="true"
+            [loading]="isLoadingOptions()"
+            [selectedValue]="formSupplierId()"
+            (selectedValueChange)="onSupplierChange($event)"
+          />
+        </div>
+
+        <!-- Documento de referencia y Observaciones -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">
+              Documento de Referencia
+            </label>
+            <input
+              type="text"
+              [(ngModel)]="formReferenceDocument"
+              name="referenceDocument"
+              maxlength="100"
+              class="w-full px-3 py-2.5 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+              placeholder="Ej: FACT-001, ORD-123"
+            />
+            <p class="text-xs text-on-surface-variant mt-1">Máximo 100 caracteres</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5"> Observaciones </label>
+            <textarea
+              [(ngModel)]="formObservations"
+              name="observations"
+              rows="2"
+              class="w-full px-3 py-2.5 border border-outline-variant rounded-lg bg-surface text-on-surface text-sm placeholder:text-on-surface-variant resize-none focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+              placeholder="Notas adicionales sobre el movimiento..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 2: Productos del Movimiento -->
+      <div class="bg-surface border border-outline-variant rounded-xl p-6">
+        <bt-movement-items-form
+          [products]="productOptions()"
+          [fieldErrors]="fieldErrors()"
+          [submitTrigger]="submitTrigger()"
+          [resetTrigger]="resetTrigger()"
+          (itemsChange)="onItemsChange($event)"
+          (hasErrors)="onItemsHasErrors($event)"
+        />
+      </div>
+
+      <!-- Sección 3: Error general y acciones -->
+      <div class="bg-surface border border-outline-variant rounded-xl p-6">
+        @if (generalError(); as error) {
+          <div
+            class="flex items-center gap-3 p-4 mb-4 bg-error/10 border border-error/30 rounded-lg"
+          >
+            <span class="material-symbols-outlined text-error">error</span>
+            <p class="text-sm text-error">{{ error }}</p>
+          </div>
+        }
+
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <button
+            type="button"
+            (click)="resetForm()"
+            [disabled]="isFormEmpty() || isLoading()"
+            [class.opacity-50]="isFormEmpty()"
+            [class.cursor-not-allowed]="isFormEmpty()"
+            class="px-6 py-2.5 border border-outline-variant rounded-lg text-on-surface font-medium hover:bg-surface-container transition-colors disabled:hover:bg-surface flex items-center justify-center gap-2"
+          >
+            <span class="material-symbols-outlined">restart_alt</span>
+            Limpiar
+          </button>
+
+          <button
+            type="submit"
+            [disabled]="isLoading()"
+            class="px-8 py-2.5 bg-primary text-on-primary font-medium rounded-lg hover:bg-on-primary-fixed-variant transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[200px]"
+          >
+            @if (isLoading()) {
+              <span
+                class="inline-block w-5 h-5 border-2 border-on-primary border-t-transparent rounded-full animate-spin"
+              ></span>
+              <span>Registrando...</span>
+            } @else {
+              <span class="material-symbols-outlined">check_circle</span>
+              <span>Registrar Movimiento</span>
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

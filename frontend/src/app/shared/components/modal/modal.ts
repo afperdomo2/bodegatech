@@ -15,11 +15,12 @@ export class Modal {
 
   protected sizeClass = computed(() => {
     const sizeMap: Record<ModalSize, string> = {
-      sm: 'max-w-[24rem]',   // 384px
-      md: 'max-w-[28rem]',   // 448px
-      lg: 'max-w-[32rem]',   // 512px
-      xl: 'max-w-[36rem]',   // 576px
-      '2xl': 'max-w-[42rem]', // 672px
+      sm: 'max-w-[24rem]',
+      md: 'max-w-[28rem]',
+      lg: 'max-w-[32rem]',
+      xl: 'max-w-[36rem]',
+      '2xl': 'max-w-[42rem]',
+      '3xl': 'max-w-[48rem]',
     };
     return sizeMap[this.modalService.size()];
   });

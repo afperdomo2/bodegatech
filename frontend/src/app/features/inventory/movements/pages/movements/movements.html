@@ -1,0 +1,81 @@
+<div class="flex flex-col gap-6 p-6 md:p-8">
+  <bt-page-header [title]="'Movimientos'" [subtitle]="'Historial de movimientos contables'">
+    <div class="flex items-center gap-4">
+      <button
+        (click)="onRefresh()"
+        class="flex items-center gap-2 px-4 py-2 border border-[#bfc9c3] text-[#0b1c30] text-sm font-medium rounded-lg hover:bg-[#e5eeff] transition-colors">
+        <span class="material-symbols-outlined text-lg">refresh</span>
+        Refrescar
+      </button>
+    </div>
+  </bt-page-header>
+
+  @if (state.isLoading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-8 h-8 border-4 border-[#003527] border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-[#404944]">Cargando movimientos...</p>
+      </div>
+    </div>
+  } @else if (state.isEmpty()) {
+    <div class="flex items-center justify-center py-12 bg-[#e5eeff] rounded-lg">
+      <div class="text-center">
+        <span class="material-symbols-outlined text-5xl text-[#404944]/30 mb-4">swap_horiz</span>
+        <p class="text-[#404944]">No hay movimientos registrados</p>
+      </div>
+    </div>
+  } @else {
+    <bt-data-table
+      [columns]="tableColumns"
+      [data]="state.items()"
+      [currentPage]="getCurrentPageForDataTable()"
+      [pageSize]="state.pageSize()"
+      [totalItems]="state.totalElements()"
+      [loading]="state.isLoading()"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template btCell="type" let-row="row">
+        <bt-movement-type-badge [type]="row.type" size="sm" />
+      </ng-template>
+
+      <ng-template btCell="warehouseName" let-row="row">
+        <div class="py-1">
+          <p class="text-sm font-medium text-[#0b1c30] leading-tight">{{ row.warehouseName }}</p>
+          <p class="text-xs text-[#404944] mt-0.5">{{ row.warehouseCode }}</p>
+        </div>
+      </ng-template>
+
+      <ng-template btCell="detailCount" let-row="row">
+        <span class="inline-flex items-center px-2 py-1 bg-[#f0f2f8] text-[#404944] text-xs font-medium rounded">
+          {{ row.detailCount }}
+        </span>
+      </ng-template>
+
+      <ng-template btCell="createdAt" let-row="row">
+        <span class="text-sm text-[#0b1c30]">{{ formatDate(row.createdAt) }}</span>
+      </ng-template>
+
+      <ng-template btCell="actions" let-row="row">
+        <div class="flex items-center justify-center">
+          <div class="relative group">
+            <button
+              (click)="onRowDetailClick(row)"
+              class="p-2 hover:bg-[#f0f2f8] rounded-lg transition-colors text-[#404944] hover:text-[#0b1c30]"
+              aria-label="Ver detalle">
+              <span class="material-symbols-outlined text-xl">visibility</span>
+            </button>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-[#2d2d2d] text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              Ver detalle
+            </span>
+          </div>
+        </div>
+      </ng-template>
+
+    </bt-data-table>
+  }
+</div>
+
+<bt-movement-detail-modal
+  #detailModalComponent
+  [detail]="state.selectedDetail()"
+  [isLoading]="state.isLoadingDetail()" />
