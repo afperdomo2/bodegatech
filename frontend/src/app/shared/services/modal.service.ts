@@ -1,6 +1,6 @@
 import { Injectable, signal, TemplateRef } from '@angular/core';
 
-export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
 
 export interface ModalConfig {
   title?: string;

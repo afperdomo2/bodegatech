@@ -16,6 +16,7 @@ export interface MovementDetailDto {
   productId: string;
   productName: string;
   productSku: string;
+  mainImageUrl: string | null;
   quantity: number;
   previousStock: number;
   currentStock: number;

@@ -85,7 +85,7 @@ export class MovementsComponent implements OnInit {
     this.modalService.open({
       title: 'Detalle de Movimiento',
       template: this.detailModalComponent.templateRef,
-      size: 'xl',
+      size: '4xl',
       hideFooter: true,
     });
   }

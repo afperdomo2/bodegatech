@@ -21,6 +21,7 @@ export class Modal {
       xl: 'max-w-[36rem]',
       '2xl': 'max-w-[42rem]',
       '3xl': 'max-w-[48rem]',
+      '4xl': 'max-w-[56rem]',
     };
     return sizeMap[this.modalService.size()];
   });

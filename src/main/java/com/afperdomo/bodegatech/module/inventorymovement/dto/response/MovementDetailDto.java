@@ -40,4 +40,7 @@ public class MovementDetailDto {
 
     @Schema(description = "Fecha de creación del detalle", example = "2025-03-10T14:30:00")
     private LocalDateTime createdAt;
+
+    @Schema(description = "URL pública de la imagen principal del producto")
+    private String mainImageUrl;
 }

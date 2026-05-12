@@ -1,5 +1,6 @@
 package com.afperdomo.bodegatech.module.inventorymovement.mapper;
 
+import com.afperdomo.bodegatech.config.AwsProperties;
 import com.afperdomo.bodegatech.module.inventorymovement.dto.response.InventoryMovementDto;
 import com.afperdomo.bodegatech.module.inventorymovement.dto.response.InventoryMovementSummaryDto;
 import com.afperdomo.bodegatech.module.inventorymovement.dto.response.MovementDetailDto;
@@ -7,15 +8,19 @@ import com.afperdomo.bodegatech.module.inventorymovement.entity.InventoryMovemen
 import com.afperdomo.bodegatech.module.inventorymovement.entity.MovementDetail;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface InventoryMovementMapper {
+public abstract class InventoryMovementMapper {
 
-    InventoryMovementDto toDto(InventoryMovement movement);
+    @Autowired
+    protected AwsProperties awsProperties;
 
-    default InventoryMovementSummaryDto toSummaryDto(InventoryMovement movement) {
+    public abstract InventoryMovementDto toDto(InventoryMovement movement);
+
+    public InventoryMovementSummaryDto toSummaryDto(InventoryMovement movement) {
         if (movement == null) {
             return null;
         }
@@ -35,14 +40,14 @@ public interface InventoryMovementMapper {
                 .build();
     }
 
-    default List<MovementDetailDto> toDetailDtoList(List<MovementDetail> details) {
+    public List<MovementDetailDto> toDetailDtoList(List<MovementDetail> details) {
         if (details == null) {
             return null;
         }
         return details.stream().map(this::toDetailDto).toList();
     }
 
-    default MovementDetailDto toDetailDto(MovementDetail detail) {
+    public MovementDetailDto toDetailDto(MovementDetail detail) {
         if (detail == null) {
             return null;
         }
@@ -56,10 +61,18 @@ public interface InventoryMovementMapper {
                 .previousStock(detail.getPreviousStock())
                 .currentStock(detail.getCurrentStock())
                 .createdAt(detail.getCreatedAt())
+                .mainImageUrl(product != null ? mapMainImageUrl(product.getMainImageKey()) : null)
                 .build();
     }
 
-    static InventoryMovementDto.WarehouseInfo warehouseInfo(com.afperdomo.bodegatech.module.warehouse.entity.Warehouse w) {
+    protected String mapMainImageUrl(String mainImageKey) {
+        if (mainImageKey == null) {
+            return null;
+        }
+        return awsProperties.getS3().getPublicUrl() + "/" + mainImageKey;
+    }
+
+    public static InventoryMovementDto.WarehouseInfo warehouseInfo(com.afperdomo.bodegatech.module.warehouse.entity.Warehouse w) {
         if (w == null) return null;
         return InventoryMovementDto.WarehouseInfo.builder()
                 .id(w.getId())
@@ -68,7 +81,7 @@ public interface InventoryMovementMapper {
                 .build();
     }
 
-    static InventoryMovementDto.SupplierInfo supplierInfo(com.afperdomo.bodegatech.module.supplier.entity.Supplier s) {
+    public static InventoryMovementDto.SupplierInfo supplierInfo(com.afperdomo.bodegatech.module.supplier.entity.Supplier s) {
         if (s == null) return null;
         return InventoryMovementDto.SupplierInfo.builder()
                 .id(s.getId())
