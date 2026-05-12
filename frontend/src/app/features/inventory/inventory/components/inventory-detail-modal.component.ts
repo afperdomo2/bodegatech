@@ -20,24 +20,24 @@ import type { InventoryDto } from '../../../../core/models/responses/inventory.r
       @if (isLoading()) {
         <div class="space-y-6 animate-pulse">
           <div class="flex items-center gap-4">
-            <div class="w-16 h-16 bg-surface-200 rounded-lg"></div>
+            <div class="w-16 h-16 bg-gray-50 rounded-lg"></div>
             <div class="flex-1 space-y-2">
-              <div class="h-5 bg-surface-200 rounded w-3/4"></div>
-              <div class="h-4 bg-surface-200 rounded w-1/4"></div>
+              <div class="h-5 bg-gray-50 rounded w-3/4"></div>
+              <div class="h-4 bg-gray-50 rounded w-1/4"></div>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
-            <div class="h-20 bg-surface-200 rounded-lg"></div>
-            <div class="h-20 bg-surface-200 rounded-lg"></div>
-            <div class="h-20 bg-surface-200 rounded-lg col-span-2"></div>
+            <div class="h-20 bg-gray-50 rounded-lg"></div>
+            <div class="h-20 bg-gray-50 rounded-lg"></div>
+            <div class="h-20 bg-gray-50 rounded-lg col-span-2"></div>
           </div>
         </div>
       } @else if (detail()) {
         <div class="space-y-6">
 
           <!-- Producto Header -->
-          <div class="flex items-start gap-4 p-4 bg-surface-container rounded-lg">
-            <div class="flex-shrink-0 w-16 h-16 bg-surface-100 rounded-lg flex items-center justify-center border border-dashed border-surface-200">
+          <div class="flex items-start gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div class="flex-shrink-0 w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center border border-dashed border-gray-200">
               <span class="material-symbols-outlined text-2xl text-surface-300">inventory_2</span>
             </div>
             <div class="flex-1 min-w-0">
@@ -56,7 +56,7 @@ import type { InventoryDto } from '../../../../core/models/responses/inventory.r
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             <!-- Sección: Producto -->
-            <div class="p-4 bg-surface-container rounded-lg space-y-3">
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-3">
               <div class="flex items-center gap-2 text-on-surface font-medium">
                 <span class="material-symbols-outlined text-lg text-primary">category</span>
                 Producto
@@ -84,7 +84,7 @@ import type { InventoryDto } from '../../../../core/models/responses/inventory.r
             </div>
 
             <!-- Sección: Bodega -->
-            <div class="p-4 bg-surface-container rounded-lg space-y-3">
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-3">
               <div class="flex items-center gap-2 text-on-surface font-medium">
                 <span class="material-symbols-outlined text-lg text-primary">warehouse</span>
                 Bodega
@@ -130,7 +130,7 @@ import type { InventoryDto } from '../../../../core/models/responses/inventory.r
             </div>
 
             <!-- Timestamps -->
-            <div class="col-span-2 p-3 bg-surface-container rounded-lg">
+            <div class="col-span-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-on-surface-variant">
                 <div>
                   <span class="font-medium text-on-surface">Último movimiento</span>
