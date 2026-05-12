@@ -1,18 +1,12 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  type TemplateRef,
-  ViewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, type TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { InventoryDto } from '../../../../core/models/responses/inventory.responses';
+import { ImageThumbnail } from '../../../../shared/components/image-thumbnail/image-thumbnail';
 
 @Component({
   selector: 'bt-inventory-detail-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ImageThumbnail],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { style: 'display: none' },
   template: `
@@ -37,9 +31,7 @@ import type { InventoryDto } from '../../../../core/models/responses/inventory.r
 
           <!-- Producto Header -->
           <div class="flex items-start gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <div class="flex-shrink-0 w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center border border-dashed border-gray-200">
-              <span class="material-symbols-outlined text-2xl text-surface-300">inventory_2</span>
-            </div>
+            <bt-image-thumbnail [src]="detail()!.product.mainImageUrl" [size]="64" alt="producto" />
             <div class="flex-1 min-w-0">
               <h3 class="text-lg font-semibold text-on-surface truncate">{{ detail()!.product.name }}</h3>
               <p class="text-sm text-on-surface-variant">SKU: {{ detail()!.product.sku }}</p>

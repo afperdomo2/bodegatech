@@ -54,7 +54,7 @@ import { ImageThumbnail } from '../../../../shared/components/image-thumbnail/im
                 <div class="p-1.5 bg-secondary/10 rounded-lg">
                   <span class="material-symbols-outlined text-base text-secondary">warehouse</span>
                 </div>
-                <span class="text-sm font-semibold text-on-surface">Bodega 333</span>
+                <span class="text-sm font-semibold text-on-surface">Bodega</span>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-sm text-on-surface-variant">Nombre</span>
@@ -123,7 +123,7 @@ import { ImageThumbnail } from '../../../../shared/components/image-thumbnail/im
                     <th class="px-4 py-3 text-right text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Stock Actual</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-outline-variant">
+                <tbody class="divide-y divide-gray-200">
                   @for (item of detail()!.details; track item.id) {
                     <tr class="hover:bg-gray-100 transition-colors">
                       <td class="px-4 py-3">

@@ -63,7 +63,7 @@ public class InventoryService {
                 .createdAt(inventory.getCreatedAt())
                 .updatedAt(inventory.getUpdatedAt())
                 .version(inventory.getVersion())
-                .product(InventoryMapper.productInfo(inventory.getProduct()))
+                .product(inventoryMapper.productInfo(inventory.getProduct()))
                 .warehouse(InventoryMapper.warehouseInfo(inventory.getWarehouse()))
                 .quantity(inventory.getQuantity())
                 .reservedQuantity(inventory.getReservedQuantity())

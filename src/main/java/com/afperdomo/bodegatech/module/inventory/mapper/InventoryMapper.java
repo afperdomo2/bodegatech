@@ -60,7 +60,7 @@ public abstract class InventoryMapper {
         return awsProperties.getS3().getPublicUrl() + "/" + mainImageKey;
     }
 
-    public static InventoryDto.ProductInfo productInfo(com.afperdomo.bodegatech.module.product.entity.Product p) {
+    public InventoryDto.ProductInfo productInfo(com.afperdomo.bodegatech.module.product.entity.Product p) {
         if (p == null) return null;
         return InventoryDto.ProductInfo.builder()
                 .id(p.getId())
@@ -70,6 +70,7 @@ public abstract class InventoryMapper {
                 .costPrice(p.getCostPrice())
                 .minStock(p.getMinStock())
                 .maxStock(p.getMaxStock())
+                .mainImageUrl(p.getMainImageKey() != null ? mapMainImageUrl(p.getMainImageKey()) : null)
                 .build();
     }
 

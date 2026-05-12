@@ -70,6 +70,9 @@ public class InventoryDto {
 
         @Schema(description = "Stock máximo", example = "500.0000")
         private BigDecimal maxStock;
+
+        @Schema(description = "URL pública de la imagen principal del producto")
+        private String mainImageUrl;
     }
 
     @Data

@@ -24,6 +24,7 @@ export interface InventoryProductInfo {
   costPrice: number;
   minStock: number;
   maxStock: number | null;
+  mainImageUrl: string | null;
 }
 
 export interface InventoryWarehouseInfo {
