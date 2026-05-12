@@ -11,6 +11,7 @@ export interface InventorySummaryDto {
   availableQuantity: number;
   minStock: number;
   isLowStock: boolean;
+  mainImageUrl: string | null;
   lastMovementAt: string | null;
   createdAt: string;
 }

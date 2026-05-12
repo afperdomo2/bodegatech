@@ -50,6 +50,9 @@ public class InventorySummaryDto {
     @Schema(description = "Stock mínimo del producto", example = "20.0000")
     private BigDecimal minStock;
 
+    @Schema(description = "URL pública de la imagen principal del producto")
+    private String mainImageUrl;
+
     @Schema(description = "Indica si el stock está bajo (quantity <= minStock)", example = "false")
     private Boolean isLowStock;
 

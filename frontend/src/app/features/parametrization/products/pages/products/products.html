@@ -65,8 +65,11 @@
         [totalItems]="state.totalElements()"
         [loading]="state.isLoading()"
         (pageChange)="onPageChange($event)">
-        <ng-template btCell="mainImageUrl" let-value>
-          <bt-image-thumbnail [src]="value" alt="producto" />
+        <ng-template btCell="name" let-row="row">
+          <div class="flex items-center gap-3 py-1">
+            <bt-image-thumbnail [src]="row.mainImageUrl" alt="producto" />
+            <p class="text-sm font-medium text-on-surface leading-tight">{{ row.name }}</p>
+          </div>
         </ng-template>
         <ng-template btCell="actions" let-row="row">
           <div class="flex items-center justify-center gap-2">

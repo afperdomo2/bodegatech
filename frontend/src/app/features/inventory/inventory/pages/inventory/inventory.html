@@ -60,9 +60,12 @@
       [loading]="state.isLoading()"
       (pageChange)="onPageChange($event)">
       <ng-template btCell="productName" let-row="row">
-        <div class="py-1">
-          <p class="text-sm font-medium text-on-surface leading-tight">{{ row.productName }}</p>
-          <p class="text-xs text-on-surface-variant mt-0.5">{{ row.productSku }}</p>
+        <div class="flex items-center gap-3 py-1">
+          <bt-image-thumbnail [src]="row.mainImageUrl" alt="producto" />
+          <div>
+            <p class="text-sm font-medium text-on-surface leading-tight">{{ row.productName }}</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">{{ row.productSku }}</p>
+          </div>
         </div>
       </ng-template>
 

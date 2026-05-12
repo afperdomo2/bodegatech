@@ -11,6 +11,7 @@ import { ToastService } from '../../../../../shared/services/toast.service';
 import { InventoryStateService } from '../../state/inventory-state.service';
 import { InventoryDetailModalComponent } from '../../components/inventory-detail-modal.component';
 import { WarehouseService } from '../../../../../core/services/warehouse.service';
+import { ImageThumbnail } from '../../../../../shared/components/image-thumbnail/image-thumbnail';
 
 @Component({
   selector: 'bt-inventory',
@@ -21,6 +22,7 @@ import { WarehouseService } from '../../../../../core/services/warehouse.service
     DataTable,
     BtCellDirective,
     InventoryDetailModalComponent,
+    ImageThumbnail,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './inventory.html',
